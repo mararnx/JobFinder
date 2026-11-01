@@ -7,9 +7,9 @@ JobFinder runs entirely on the job seeker's Mac. AI runs through **their own Cla
 1. Install the **Claude desktop app** from [claude.ai/download](https://claude.ai/download) and log in with your Claude (Max) account.
 2. Open the **Code** tab and start a new session. When it asks for a folder, choose **Clone from GitHub** (or "Clone repository") and paste:
    ```
-   https://github.com/mararnx/kompass
+   https://github.com/mararnx/JobFinder
    ```
-   Pick where it should go, e.g. your Documents folder. (No clone option? Install Git with `xcode-select --install` in Terminal, then in Terminal run `git clone https://github.com/mararnx/kompass ~/Documents/kompass` and open that folder in the Code tab.)
+   Pick where it should go, e.g. your Documents folder. (No clone option? Install Git with `xcode-select --install` in Terminal, then in Terminal run `git clone https://github.com/mararnx/JobFinder ~/Documents/JobFinder` and open that folder in the Code tab.)
 3. Type:
    > Set up JobFinder for me and start it.
 
@@ -34,10 +34,10 @@ The steps below are the same thing done by hand.
 ## 2. Install JobFinder
 
 ```bash
-git clone https://github.com/mararnx/kompass ~/Documents/kompass
+git clone https://github.com/mararnx/JobFinder ~/Documents/JobFinder
 ```
 ```bash
-cd ~/Documents/kompass
+cd ~/Documents/JobFinder
 ```
 ```bash
 npm install
