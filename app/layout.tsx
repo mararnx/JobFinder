@@ -6,7 +6,8 @@ import "./globals.css";
 export const metadata: Metadata = { title: "Kompass", description: "Your local job search funnel" };
 export const dynamic = "force-dynamic";
 
-const THEME_BOOT = `try{var t=localStorage.getItem("kompass-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}`;
+// light by default; the toggle in the top bar remembers dark
+const THEME_BOOT = `var t="light";try{t=localStorage.getItem("kompass-theme")||t}catch(e){}document.documentElement.dataset.theme=t`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
