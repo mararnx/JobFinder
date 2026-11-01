@@ -42,6 +42,20 @@
         "dev"
       ],
       "port": 4319
+    },
+    {
+      "name": "kompass-prod-demo",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "KOMPASS_DATA=./data-demo",
+        "KOMPASS_CLAUDE=mock",
+        "KOMPASS_DRY_SEND=1",
+        "KOMPASS_NO_NOTIFY=1",
+        "PORT=4400",
+        "node",
+        "scripts/start.mjs"
+      ],
+      "port": 4400
     }
   ]
 }
