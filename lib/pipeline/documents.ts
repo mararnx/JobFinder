@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { FILES_DIR, get, logEvent, run } from "@/lib/db";
+import { FILES_DIR, get, getSettings, logEvent, run } from "@/lib/db";
 import { claude, renderPrompt } from "@/lib/claude/runner";
 import { CvFacts, ReferenceSummary, StyleGuide } from "@/lib/claude/schemas";
 import { enqueue, PRIORITY } from "@/lib/queue";
@@ -83,8 +83,9 @@ export async function parseDocument(docId: number) {
 
 export async function buildStyleGuide() {
   const letters = all<{ name: string; text: string }>("SELECT name, text FROM documents WHERE kind = 'letter' AND text IS NOT NULL AND text != ''");
-  if (!letters.length) return;
-  const body = letters.map((l, i) => `<letter n="${i + 1}" file="${l.name}">\n${l.text.slice(0, 6000)}\n</letter>`).join("\n\n");
-  const g = await claude({ name: "style-guide", model: "sonnet", schema: StyleGuide, prompt: renderPrompt("style-guide", { letters: body }), mockInput: {} });
+  const own = getSettings().letterInstructions.trim();
+  if (!letters.length && !own) return;
+  const body = letters.map((l, i) => `<letter n="${i + 1}" file="${l.name}">\n${l.text.slice(0, 6000)}\n</letter>`).join("\n\n") || "(no letters uploaded)";
+  const g = await claude({ name: "style-guide", model: "sonnet", schema: StyleGuide, prompt: renderPrompt("style-guide", { letters: body, instructions: own || "(none)" }), mockInput: {} });
   setStyleGuide(g);
 }

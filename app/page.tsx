@@ -22,12 +22,14 @@ export default function Today() {
   const discover = n("SELECT COUNT(*) AS n FROM jobs WHERE stage = 'discover'");
   const dreams = n("SELECT COUNT(*) AS n FROM jobs WHERE stage = 'discover' AND (dream = 1 OR score >= 88)");
   const review = n("SELECT COUNT(*) AS n FROM jobs WHERE stage = 'review'");
+  const ready = n("SELECT COUNT(*) AS n FROM jobs WHERE stage = 'ready'");
   const avgReview = get<{ v: number | null }>("SELECT AVG(review_seconds) AS v FROM applications WHERE review_seconds IS NOT NULL")?.v;
 
   const steps: Step[] = [];
   if (!cvFacts()) steps.push({ icon: FileUp, title: "Upload your CV", meta: "Needed before Claude can write applications", time: "≈ 2 min", href: "/documents", warn: true });
   if (discover) steps.push({ icon: Sparkles, title: "Go through new matches", meta: `${discover} jobs${dreams ? ` · ${dreams} strong match${dreams > 1 ? "es" : ""}` : ""}`, time: `≈ ${Math.max(1, Math.round(discover / 3))} min`, href: "/discover", keys: ["G", "D"], hot: true });
   if (review) steps.push({ icon: PenLine, title: "Approve drafts", meta: `${review} application${review > 1 ? "s" : ""}${avgReview ? ` · avg ${Math.round(avgReview)} s review` : ""}`, time: `≈ ${Math.max(1, Math.round((review * (avgReview ?? 90)) / 60))} min`, href: "/review", keys: ["G", "R"] });
+  if (ready) steps.push({ icon: Send, title: "Send approved applications", meta: `${ready} ready – by email or the company's form`, time: `≈ ${ready * 2} min`, href: "/send", keys: ["G", "E"] });
   for (const j of all<JobRow>(`${JOB_SELECT} WHERE j.stage = 'applied' AND j.next_action IS NOT NULL ORDER BY j.stage_changed_at LIMIT 3`)) {
     steps.push({ icon: MailQuestion, title: j.next_action!.startsWith("Follow up") ? `Follow up with ${j.company}` : `${j.company}: ${j.next_action}`, meta: `${j.title}`, time: "≈ 1 min", job: j.id });
   }
@@ -73,7 +75,8 @@ export default function Today() {
           <div className="cta-row">
             {discover > 0 && <Link className="btn primary lg" href="/discover"><Play />Start triage <kbd>G</kbd><kbd>D</kbd></Link>}
             {review > 0 && <Link className="btn lg" href="/review"><PenLine />Review {review} draft{review > 1 ? "s" : ""}</Link>}
-            {!discover && !review && <Link className="btn lg" href="/pipeline">Open pipeline</Link>}
+            {ready > 0 && <Link className="btn lg" href="/send"><Send />Send {ready}</Link>}
+            {!discover && !review && !ready && <Link className="btn lg" href="/pipeline">Open pipeline</Link>}
           </div>
         </div>
         <div className="goal card" aria-label={`Weekly goal: ${sentWeek} of ${s.weeklyGoal} applications`}>

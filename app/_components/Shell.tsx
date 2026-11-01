@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartNoAxesCombined, Compass, FolderOpen, Kanban, Keyboard, Link as LinkIcon, LoaderCircle, PenLine, Plus, Radar, RefreshCw, Search, Settings2, Sparkles, Sun, SunMoon, UserRound, Upload, Briefcase, Check, X, TriangleAlert } from "lucide-react";
+import { ChartNoAxesCombined, Compass, Send, FolderOpen, Kanban, Keyboard, Link as LinkIcon, LoaderCircle, PenLine, Plus, Radar, RefreshCw, Search, Settings2, Sparkles, Sun, SunMoon, UserRound, Upload, Briefcase, Check, X, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -9,7 +9,7 @@ import { act, openAddAd, openJob, toast, type ToastMsg } from "@/lib/client";
 import { JobDrawer } from "./JobDrawer";
 
 export type ShellStatus = {
-  counts: { discover: number; review: number; documents: number };
+  counts: { discover: number; review: number; ready: number; documents: number };
   claude: { mock: boolean; callsWindow: number; pausedUntil: string | null; failing: number };
   worker: { alive: boolean; queued: number; running: number };
   onboarded: boolean;
@@ -20,6 +20,7 @@ const NAV = [
   { href: "/discover", label: "Discover", icon: Sparkles, key: "d", badge: "discover" as const, hot: true },
   { href: "/pipeline", label: "Pipeline", icon: Kanban, key: "p" },
   { href: "/review", label: "Review", icon: PenLine, key: "r", badge: "review" as const },
+  { href: "/send", label: "Send", icon: Send, key: "e", badge: "ready" as const },
   { href: "/insights", label: "Insights", icon: ChartNoAxesCombined, key: "i" },
 ];
 const SETUP = [
@@ -27,7 +28,7 @@ const SETUP = [
   { href: "/sources", label: "Sources", icon: Radar, key: "s" },
   { href: "/profile", label: "Profile", icon: UserRound, key: "o" },
 ];
-const TITLES: Record<string, string> = { "/": "Today", "/discover": "Discover", "/pipeline": "Pipeline", "/review": "Review", "/insights": "Insights", "/documents": "Documents", "/sources": "Sources", "/profile": "Profile", "/onboarding": "Set up Kompass" };
+const TITLES: Record<string, string> = { "/": "Today", "/discover": "Discover", "/pipeline": "Pipeline", "/review": "Review", "/send": "Ready to send", "/insights": "Insights", "/documents": "Documents", "/sources": "Sources", "/profile": "Profile", "/onboarding": "Set up Kompass" };
 
 export function Shell({ status, children }: { status: ShellStatus; children: React.ReactNode }) {
   const path = usePathname();
@@ -127,7 +128,7 @@ export function Shell({ status, children }: { status: ShellStatus; children: Rea
   }, [router]);
 
   const title = TITLES[path] ?? "Kompass";
-  const sub = path === "/discover" ? `${status.counts.discover} to go through · by score` : path === "/review" ? `${status.counts.review} drafts` : "";
+  const sub = path === "/discover" ? `${status.counts.discover} to go through · by score` : path === "/review" ? `${status.counts.review} drafts` : path === "/send" ? `${status.counts.ready} approved` : "";
   const quotaPct = status.claude.mock ? 0 : Math.min(100, Math.round((status.claude.callsWindow / 120) * 100));
   const paused = status.claude.pausedUntil ? new Date(status.claude.pausedUntil) : null;
 

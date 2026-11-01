@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CircleCheck, CircleDot, Circle, ExternalLink, FileText, Info, LoaderCircle, Mail, MousePointerClick, Pencil, Send, ShieldCheck, ShieldAlert, Star, WandSparkles, X } from "lucide-react";
+import { Ban, Check, CircleAlert, CircleCheck, CircleDot, Circle, CircleX, ExternalLink, FileText, Info, LoaderCircle, Mail, MousePointerClick, Pencil, ShieldCheck, ShieldAlert, Star, WandSparkles, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { act, toast } from "@/lib/client";
@@ -35,48 +35,84 @@ export function ReviewClient({ items, initialJob, profile }: { items: ReviewItem
   const [jobId, setJobId] = useState<number>(initialJob && items.some((i) => i.jobId === initialJob) ? initialJob : items[0].jobId);
   const item = items.find((i) => i.jobId === jobId) ?? items[0];
   const [tab, setTab] = useState<"letter" | "pdf" | "email">("letter");
-  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(item.letter);
+  const [subject, setSubject] = useState(item.subject);
+  const [emailBody, setEmailBody] = useState(item.emailBody);
+  const [saveState, setSaveState] = useState<"idle" | "dirty" | "saving" | "saved">("idle");
+  const editor = useRef<HTMLTextAreaElement>(null);
+  const saved = useRef({ appId: item.appId, letter: item.letter, subject: item.subject, emailBody: item.emailBody });
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [details, setDetails] = useState(item.answers);
   const [rewrite, setRewrite] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [warned, setWarned] = useState(false);
   const shownAt = useRef(Date.now());
 
+  // a new draft (another job, or a rewrite = new version) resets the editor; saves of the same draft don't
   useEffect(() => {
     setDraft(item.letter);
-    setEditing(false);
+    setSubject(item.subject);
+    setEmailBody(item.emailBody);
+    setDetails(item.answers);
+    saved.current = { appId: item.appId, letter: item.letter, subject: item.subject, emailBody: item.emailBody };
+    setSaveState("idle");
     setRewrite(null);
     setWarned(false);
     setTab("letter");
     shownAt.current = Date.now();
-  }, [item.appId, item.letter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.appId]);
 
   const counts = useMemo(() => ({
     ok: item.claims.filter((c) => c.status === "ok").length,
     reworded: item.claims.filter((c) => c.status === "reworded").length,
     unsupported: item.claims.filter((c) => c.status === "unsupported").length,
   }), [item.claims]);
-  const pending = items.filter((i) => i.status !== "approved");
   const pos = items.findIndex((i) => i.jobId === item.jobId);
+
+
+  /** Saves the text if it changed since the last save. The server rebuilds the PDF when letter or subject changed. */
+  const flush = useCallback(async () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    const now = { appId: item.appId, letter: draft, subject, emailBody };
+    const last = saved.current;
+    if (last.appId !== now.appId || (last.letter === now.letter && last.subject === now.subject && last.emailBody === now.emailBody)) return;
+    setSaveState("saving");
+    try {
+      await act("saveLetter", { appId: now.appId, letter: now.letter, subject: now.subject, emailBody: now.emailBody });
+      saved.current = now;
+      setSaveState("saved");
+      router.refresh();
+    } catch (e) {
+      setSaveState("dirty");
+      toast((e as Error).message, undefined, "error");
+    }
+  }, [item.appId, draft, subject, emailBody, router]);
 
   const go = useCallback((delta: number) => {
     const n = items[(pos + delta + items.length) % items.length];
+    void flush();
     if (n) setJobId(n.jobId);
-  }, [items, pos]);
+  }, [items, pos, flush]);
 
-  const save = async () => {
-    setBusy("save");
-    try {
-      await act("saveLetter", { appId: item.appId, letter: draft });
-      toast("Saved · PDF updated");
-      setEditing(false);
-      router.refresh();
-    } catch (e) {
-      toast((e as Error).message, undefined, "error");
-    } finally {
-      setBusy(null);
-    }
-  };
+  // autosave 1.2 s after the last keystroke
+  useEffect(() => {
+    const last = saved.current;
+    if (last.appId !== item.appId || (last.letter === draft && last.subject === subject && last.emailBody === emailBody)) return;
+    setSaveState("dirty");
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => void flush(), 1200);
+    return () => { if (timer.current) clearTimeout(timer.current); };
+  }, [draft, subject, emailBody, item.appId, flush]);
+
+  // grow the editor with its text, so the page scrolls instead of the textarea
+  useEffect(() => {
+    const t = editor.current;
+    if (!t) return;
+    t.style.height = "auto";
+    t.style.height = `${t.scrollHeight}px`;
+  }, [draft, tab]);
 
   const approve = useCallback(async () => {
     if (counts.unsupported && !warned) {
@@ -85,23 +121,34 @@ export function ReviewClient({ items, initialJob, profile }: { items: ReviewItem
     }
     setBusy("approve");
     try {
-      if (editing && draft !== item.letter) await act("saveLetter", { appId: item.appId, letter: draft });
-      const r = await act<{ ok: boolean; message: string; channel: string }>("approve", { appId: item.appId, seconds: (Date.now() - shownAt.current) / 1000 });
-      toast(r.message, undefined, r.ok ? "ok" : "error");
+      await flush();
+      await act("approve", { appId: item.appId, seconds: (Date.now() - shownAt.current) / 1000 });
+      const done = item;
+      toast(`${done.company} is ready to send`, async () => {
+        await act("unapprove", { jobId: done.jobId });
+        setJobId(done.jobId);
+        router.refresh();
+      });
+      const next = items.find((i) => i.jobId !== done.jobId);
+      if (next) setJobId(next.jobId);
       router.refresh();
     } catch (e) {
       toast((e as Error).message, undefined, "error");
     } finally {
       setBusy(null);
     }
-  }, [counts.unsupported, warned, editing, draft, item, router]);
+  }, [counts.unsupported, warned, flush, item, items, router]);
 
-  const markSent = async () => {
-    setBusy("sent");
+  const discard = async () => {
+    setBusy("discard");
     try {
-      await act("markSent", { jobId: item.jobId });
-      toast(`Marked as sent – good luck with ${item.company}!`);
-      const next = pending.find((i) => i.jobId !== item.jobId) ?? items.find((i) => i.jobId !== item.jobId);
+      const r = await act<{ prev: string }>("move", { jobId: item.jobId, to: "closed", closedReason: "not applying" });
+      const done = item;
+      toast(`Not applying to ${done.company}`, async () => {
+        await act("move", { jobId: done.jobId, to: r.prev });
+        router.refresh();
+      });
+      const next = items.find((i) => i.jobId !== done.jobId);
       if (next) setJobId(next.jobId);
       router.refresh();
     } finally {
@@ -109,10 +156,46 @@ export function ReviewClient({ items, initialJob, profile }: { items: ReviewItem
     }
   };
 
-  const doRewrite = async () => {
+  const saveDetail = async (key: keyof ReviewItem["answers"]) => {
+    if ((details[key] ?? "") === (item.answers[key] ?? "")) return;
+    try {
+      await act("saveAnswers", { appId: item.appId, [key]: details[key] ?? "" });
+      toast(key === "recipient" ? "Saved · letter head updated" : "Saved");
+      router.refresh();
+    } catch (e) {
+      toast((e as Error).message, undefined, "error");
+    }
+  };
+
+  /** Selects the claim in the editor so it can be retyped right away. */
+  const selectClaim = (text: string) => {
+    setTab("letter");
+    requestAnimationFrame(() => {
+      const t = editor.current;
+      const i = t?.value.indexOf(text.trim()) ?? -1;
+      if (!t || i < 0) return t?.focus();
+      t.focus();
+      t.setSelectionRange(i, i + text.trim().length);
+      document.querySelectorAll<HTMLElement>(".editor-bg .claim.bad").forEach((el) => el.textContent === text.trim() && el.scrollIntoView({ block: "center", behavior: "smooth" }));
+    });
+  };
+
+  const showClaim = (text: string) => {
+    setTab("letter");
+    requestAnimationFrame(() => {
+      const el = [...document.querySelectorAll<HTMLElement>(".editor-bg .claim.bad")].find((x) => x.textContent === text.trim());
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.remove("flash");
+      void el.offsetWidth;
+      el.classList.add("flash");
+    });
+  };
+
+  const doRewrite = async (instruction = rewrite ?? "") => {
     setBusy("rewrite");
     try {
-      await act("regenerate", { jobId: item.jobId, instruction: rewrite ?? "" });
+      await act("regenerate", { jobId: item.jobId, instruction });
       toast("Claude is rewriting – it comes back here when done");
       setRewrite(null);
       router.refresh();
@@ -126,8 +209,7 @@ export function ReviewClient({ items, initialJob, profile }: { items: ReviewItem
       const t = e.target as HTMLElement;
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && !document.querySelector(".palette.show")) {
         e.preventDefault();
-        if (item.status === "approved") void markSent();
-        else void approve();
+        void approve();
         return;
       }
       if (t.closest?.("input, textarea, select, [contenteditable]") || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -135,14 +217,33 @@ export function ReviewClient({ items, initialJob, profile }: { items: ReviewItem
       const k = e.key.toLowerCase();
       if (k === "j") go(1);
       if (k === "k") go(-1);
-      if (k === "e") setEditing(true);
+      if (k === "e") { e.preventDefault(); setTab("letter"); requestAnimationFrame(() => editor.current?.focus()); }
       if (k === "r") { e.preventDefault(); setRewrite(""); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  const parts = highlight(item.letter, item.claims);
+  const parts = highlight(draft, item.claims);
+  const words = draft.split(/\s+/).filter(Boolean).length;
+  const covered = item.coverage.filter((c) => c.status !== "missing").length;
+  const unsupported = item.claims.filter((c) => c.status === "unsupported");
+  const missingDetails = [["salary", details.salary || profile.salary], ["start date", details.start_date || profile.start], ["notice period", details.notice_period || profile.notice]].filter(([, v]) => !v).map(([k]) => k);
+  type CheckItem = { tone: "ok" | "warn" | "bad"; title: string; sub?: string; action?: { label: string; run: () => void } };
+  const checks: CheckItem[] = [
+    unsupported.length
+      ? { tone: "bad", title: `${unsupported.length} claim${unsupported.length > 1 ? "s" : ""} not backed by your CV`, sub: "Fix or remove before sending", action: { label: "Show", run: () => showClaim(unsupported[0].text) } }
+      : { tone: "ok", title: "Every claim is backed by your CV" },
+    item.coverage.length
+      ? { tone: covered === item.coverage.length ? "ok" : covered >= item.coverage.length / 2 ? "warn" : "bad", title: `${covered} of ${item.coverage.length} requirements addressed`, sub: covered < item.coverage.length ? "Missing ones are fine if you simply don't have them" : undefined }
+      : { tone: "warn", title: "No requirements found in the ad" },
+    missingDetails.length ? { tone: "warn", title: `Missing: ${missingDetails.join(", ")}`, sub: "Many forms ask for these – fill them in below" } : { tone: "ok", title: "Salary, start date and notice period set" },
+    details.recipient ? { tone: "ok", title: `Addressed to ${details.recipient}` } : { tone: "warn", title: "No contact person – generic greeting", sub: "Add a name below if the ad mentions one" },
+    { tone: words < 150 || words > 420 ? "warn" : "ok", title: `${words} words`, sub: words > 420 ? "Long – recruiters skim; aim for 200–350" : words < 150 ? "Short – may feel generic" : undefined },
+    item.channel === "none" ? { tone: "bad", title: "No email or link to apply", sub: "Add an address on the next step, or send the PDF yourself" } : { tone: "ok", title: item.channel === "email" ? `Goes by email to ${item.applyEmail}` : "Goes through the company's online form" },
+    item.hasPdf ? { tone: "ok", title: "PDF with letter, CV and attachments ready" } : { tone: "bad", title: "PDF missing", sub: "Save the letter once to rebuild it" },
+  ];
+  const blocking = checks.filter((c) => c.tone === "bad").length;
 
   return (
     <div className="review">
@@ -163,6 +264,34 @@ export function ReviewClient({ items, initialJob, profile }: { items: ReviewItem
           {item.dream && <span className="tag warn"><Star />Dream job</span>}
           {item.url && <a className="tag" href={item.url} target="_blank" rel="noreferrer"><ExternalLink />Ad</a>}
         </div>
+        <h4>Before you send</h4>
+        <ul className="checklist" aria-label="Checklist">
+          {checks.map((c) => (
+            <li key={c.title} className={c.tone}>
+              {c.tone === "ok" ? <CircleCheck /> : c.tone === "warn" ? <CircleAlert /> : <CircleX />}
+              <div>{c.title}{c.sub && <small>{c.sub}</small>}</div>
+              {c.action && <button className="link" onClick={c.action.run}>{c.action.label}</button>}
+            </li>
+          ))}
+        </ul>
+        {unsupported.length > 0 && (
+          <>
+            <h4>Not backed by your CV</h4>
+            <ul className="claims-list">
+              {unsupported.map((c) => (
+                <li key={c.text}>
+                  <q>{c.text}</q>
+                  <span className="note">{c.note}</span>
+                  <div className="row">
+                    <button className="btn ghost sm" onClick={() => showClaim(c.text)}>Show in letter</button>
+                    <button className="btn ghost sm" onClick={() => selectClaim(c.text)}><Pencil />Edit</button>
+                    <button className="btn ghost sm" onClick={() => void doRewrite(`Remove this claim, it is not in my CV: "${c.text}"`)} disabled={busy === "rewrite"}><WandSparkles />Rewrite without it</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
         <h4>Requirements from the ad</h4>
         <ul className="req">
           {item.coverage.length ? item.coverage.map((c) => (
@@ -173,10 +302,11 @@ export function ReviewClient({ items, initialJob, profile }: { items: ReviewItem
         </ul>
         <h4>Required details</h4>
         <div className="fields">
-          <div className="field"><label>Salary expectation</label><div className="mono">{item.answers.salary || profile.salary || "—"}</div></div>
-          <div className="field"><label>Earliest start</label><div>{item.answers.start_date || profile.start || "—"}</div></div>
-          <div className="field"><label>Notice period</label><div>{item.answers.notice_period || profile.notice || "—"}</div></div>
-          <div className="field"><label>Contact person</label><div>{item.answers.recipient || "—"}</div></div>
+          {([["salary", "Salary expectation", profile.salary], ["start_date", "Earliest start", profile.start], ["notice_period", "Notice period", profile.notice], ["recipient", "Contact person", "e.g. Ms Jansen"]] as const).map(([k, label, ph]) => (
+            <label key={k} className="field"><span className="faint" style={{ display: "block", fontSize: 11, marginBottom: 2 }}>{label}</span>
+              <input value={details[k] ?? ""} placeholder={ph || "—"} onChange={(e) => setDetails((d) => ({ ...d, [k]: e.target.value }))} onBlur={() => void saveDetail(k)} onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()} />
+            </label>
+          ))}
         </div>
         {item.answers.why_us && <><h4>“Why us” answer for forms</h4><p className="muted" style={{ fontSize: 13, margin: 0 }}>{item.answers.why_us}</p></>}
       </section>
@@ -188,33 +318,33 @@ export function ReviewClient({ items, initialJob, profile }: { items: ReviewItem
             <button aria-pressed={tab === "pdf"} onClick={() => setTab("pdf")}>PDF</button>
             <button aria-pressed={tab === "email"} onClick={() => setTab("email")}>Email</button>
           </div>
-          <span className="tag ok" style={{ marginLeft: "auto" }}><ShieldCheck />{counts.ok} backed</span>
+          <span className="letter-meta" style={{ marginLeft: "auto" }}>{words} words · ~{Math.max(1, Math.round(words / 200))} min read</span>
+          <span className="tag ok"><ShieldCheck />{counts.ok} backed</span>
           {counts.reworded > 0 && <span className="tag warn"><Info />{counts.reworded} reworded</span>}
-          {counts.unsupported > 0 && <span className="tag bad"><ShieldAlert />{counts.unsupported} unsupported</span>}
-          {tab === "letter" && !editing && <button className="btn ghost sm" onClick={() => setEditing(true)}><Pencil />Edit <kbd>E</kbd></button>}
+          {counts.unsupported > 0 && <button className="tag bad" onClick={() => showClaim(unsupported[0].text)}><ShieldAlert />{counts.unsupported} unsupported</button>}
+          <span className={`save-state ${saveState}`} aria-live="polite">{saveState === "saving" ? <><LoaderCircle className="spin-icon" />Saving…</> : saveState === "saved" ? <><Check />Saved · PDF updated</> : saveState === "dirty" ? "Editing…" : <><Pencil />Click the text to edit</>}</span>
         </div>
         <div className="letter-scroll">
           {tab === "letter" && (
             <div className="paper">
-              <div className="subj">{item.subject}</div>
-              {editing ? (
-                <textarea className="letter-edit" value={draft} onChange={(e) => setDraft(e.target.value)} aria-label="Edit cover letter" autoFocus />
-              ) : (
-                <div className="letter-text">
+              <input className="subj-edit" value={subject} onChange={(e) => setSubject(e.target.value)} onBlur={() => void flush()} aria-label="Subject" />
+              <div className="editor">
+                <div className="editor-bg letter-text" aria-hidden="true">
                   {parts.map((p, i) => p.claim ? (
-                    <span key={i} className={`claim ${p.claim.status === "ok" ? "ok" : p.claim.status === "reworded" ? "warn" : "bad"}`} title={`${p.claim.status === "ok" ? "Backed" : p.claim.status === "reworded" ? "Reworded" : "Not in your CV"}${p.claim.fact_id ? ` (${p.claim.fact_id})` : ""}: ${p.claim.note}`}>{p.text}</span>
+                    <mark key={i} className={`claim ${p.claim.status === "ok" ? "ok" : p.claim.status === "reworded" ? "warn" : "bad"}`}>{p.text}</mark>
                   ) : <span key={i}>{p.text}</span>)}
+                  {"\n"}
                 </div>
-              )}
-              {editing && <div className="edit-bar"><button className="btn ghost" onClick={() => { setDraft(item.letter); setEditing(false); }}>Cancel</button><button className="btn" onClick={save} disabled={busy === "save"}><Check />Save</button></div>}
+                <textarea ref={editor} className="letter-edit" value={draft} onChange={(e) => setDraft(e.target.value)} onBlur={() => void flush()} aria-label="Cover letter" spellCheck />
+              </div>
             </div>
           )}
           {tab === "pdf" && (item.hasPdf ? <iframe className="pdf-frame" src={`/api/file?app=${item.appId}#view=FitH`} title="Application PDF" /> : <p className="muted">No PDF yet.</p>)}
           {tab === "email" && (
             <div className="paper">
               <div className="addr">To: {item.applyEmail ?? "(no email in the ad)"}</div>
-              <div className="subj">{item.subject}</div>
-              <div className="letter-text">{item.emailBody}</div>
+              <div className="subj">{subject}</div>
+              <textarea className="letter-edit email-edit" value={emailBody} onChange={(e) => setEmailBody(e.target.value)} onBlur={() => void flush()} aria-label="Email text" rows={10} spellCheck />
               <div className="addr" style={{ marginTop: 20 }}><FileText style={{ verticalAlign: "-3px" }} /> PDF attached</div>
             </div>
           )}
@@ -227,27 +357,17 @@ export function ReviewClient({ items, initialJob, profile }: { items: ReviewItem
             <button className="icon-btn" type="button" onClick={() => setRewrite(null)} aria-label="Cancel"><X /></button>
           </form>
         )}
-        {warned && item.status !== "approved" && (
+        {warned && (
           <div className="warn-bar" role="alert"><ShieldAlert />{counts.unsupported} claim{counts.unsupported > 1 ? "s are" : " is"} not backed by your CV (marked red). Edit {counts.unsupported > 1 ? "them" : "it"}, rewrite, or approve anyway.</div>
         )}
         <div className="review-foot">
           {item.hasPdf && <a className="file" href={`/api/file?app=${item.appId}`} target="_blank" rel="noreferrer"><FileText />Application PDF</a>}
           <div className="grow" />
-          {item.status === "approved" ? (
-            <>
-              <span className="faint" style={{ fontSize: 13 }}>Approved – sent it?</span>
-              {item.channel === "email" && <button className="btn ghost" onClick={() => act("openMail", { jobId: item.jobId }).then(() => toast("Mail draft opened"))}><Mail />Mail draft</button>}
-              {item.channel === "form" && <button className="btn ghost" onClick={() => act("openForm", { jobId: item.jobId }).then(() => toast("Form opened"))}><MousePointerClick />Form</button>}
-              <button className="btn primary" onClick={markSent} disabled={busy === "sent"}><Send />Mark as sent <kbd>⌘↵</kbd></button>
-            </>
-          ) : (
-            <>
-              <button className="btn ghost" onClick={() => setRewrite("")}><WandSparkles />Rewrite <kbd>R</kbd></button>
-              <button className="btn primary" onClick={approve} disabled={busy === "approve"} title={item.channel === "email" ? "Approve and open an Apple Mail draft" : "Approve and open the application form"}>
-                {busy === "approve" ? <LoaderCircle className="spin-icon" /> : <Check />}{warned ? "Approve anyway" : "Approve"} <kbd>⌘↵</kbd>
-              </button>
-            </>
-          )}
+          <button className="btn ghost" onClick={discard} disabled={busy === "discard"}><Ban />Don&apos;t apply</button>
+          <button className="btn ghost" onClick={() => setRewrite("")}><WandSparkles />Rewrite <kbd>R</kbd></button>
+          <button className="btn primary" onClick={approve} disabled={busy === "approve"} title="Approve – then choose email or form on the next step">
+            {busy === "approve" ? <LoaderCircle className="spin-icon" /> : <Check />}{warned ? "Approve anyway" : blocking ? `Approve (${blocking} to check)` : "Approve"} <kbd>⌘↵</kbd>
+          </button>
         </div>
       </section>
     </div>

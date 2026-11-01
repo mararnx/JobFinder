@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { Settings } from "@/lib/db";
 import { act, toast } from "@/lib/client";
 
-type Section = "personal" | "application" | "filters" | "app";
+type Section = "personal" | "application" | "filters" | "writing" | "app";
 
 export function SettingsForm({ initial, sections, onSaved, submitLabel = "Save" }: { initial: Settings; sections: Section[]; onSaved?: (s: Settings) => void; submitLabel?: string }) {
   const [s, setS] = useState(initial);
@@ -64,6 +64,14 @@ export function SettingsForm({ initial, sections, onSaved, submitLabel = "Save" 
             <input className="input" value={s.blockKeywords.join(", ")} onChange={(e) => set("blockKeywords", e.target.value.split(",").map((x) => x.trim()).filter(Boolean))} />
           </label>
           <label className="check wide"><input type="checkbox" checked={s.excludeAgencies} onChange={(e) => set("excludeAgencies", e.target.checked)} /><span>Hide recruiters and temp agencies (Personalvermittlung, Zeitarbeit)</span></label>
+        </>
+      )}
+      {sections.includes("writing") && (
+        <>
+          <div className="form-sec wide">Cover letters <span className="faint">– your own rules, e.g. from a Claude project you already use</span></div>
+          <label className="fld wide"><span>Instructions for every letter</span>
+            <textarea className="input" rows={8} value={s.letterInstructions} onChange={(e) => set("letterInstructions", e.target.value)} placeholder={"e.g. Max 250 words. Open with a concrete result from my last role. Never use 'leidenschaftlich'. Close with availability and salary in one sentence."} />
+          </label>
         </>
       )}
       {sections.includes("app") && (

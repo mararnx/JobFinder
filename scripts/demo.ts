@@ -138,7 +138,7 @@ const decide = (company: string, kind: string, reason?: string) => dispatch("dec
 
 await decide("Hafenwerk", "dream");
 await decide("Deichgraf", "dream");
-for (const c of ["Hafenwerk", "Nordlicht", "Kranich", "Elbtal", "Fjord", "Alster", "Deichgraf", "Polarstern", "Speicherstadt", "Hanse Cloud", "Seeblick", "Wattwurm"]) await decide(c, "apply");
+for (const c of ["Hafenwerk", "Nordlicht", "Kranich", "Elbtal", "Fjord", "Alster", "Deichgraf", "Polarstern", "Speicherstadt", "Hanse Cloud", "Seeblick", "Wattwurm", "Leuchtturm", "Lotsenhaus"]) await decide(c, "apply");
 await dispatch("decide", { jobId: manual.jobId, kind: "apply" });
 await decide("Containerhafen", "reject", "Wrong field");
 await decide("Elbe Retail", "reject", "Wrong field");
@@ -156,6 +156,13 @@ const send = async (company: string) => {
   await dispatch("markSent", { jobId });
   return jobId;
 };
+// two approved and waiting in Ready to send: one by email, one through a form
+for (const c of ["Marlin", "Leuchtturm"]) {
+  const app = get<{ id: number }>("SELECT id FROM applications WHERE job_id = ? ORDER BY version DESC", [id(c)]);
+  if (app) await dispatch("approve", { appId: app.id, seconds: 70 });
+}
+run("UPDATE jobs SET apply_email = NULL, apply_channel = 'form' WHERE id = ?", [id("Leuchtturm")]);
+
 const flow: [string, number, string[], string?][] = [
   // company, days ago sent, later stages, note
   ["Nordlicht", 24, ["contact", "round1", "final"], "Final round with the CPO – Thu 14:00"],

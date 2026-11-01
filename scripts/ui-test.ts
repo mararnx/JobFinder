@@ -77,7 +77,7 @@ try {
   page.on("dialog", (d) => void d.accept());
 
   console.log("[ui] pages");
-  for (const p of ["/", "/discover", "/pipeline", "/review", "/insights", "/documents", "/sources", "/profile", "/onboarding"]) {
+  for (const p of ["/", "/discover", "/pipeline", "/review", "/send", "/insights", "/documents", "/sources", "/profile", "/onboarding"]) {
     await check(`${p} loads`, async () => {
       const r = await go(page, p);
       ok(r?.ok(), `status ${r?.status()}`);
@@ -156,26 +156,76 @@ try {
     await page.getByRole("button", { name: "Email", exact: true }).click();
     await page.getByRole("button", { name: "Cover letter", exact: true }).click();
   });
-  await check("edit and save the letter", async () => {
-    await page.getByRole("button", { name: /Edit/ }).first().click();
-    const ta = page.locator("textarea").first();
-    await ta.fill(((await ta.inputValue()) + "\n\nPS: UI test.").trim());
-    await page.getByRole("button", { name: /^Save/ }).click();
-    await toast(page, /saved/i);
+  await check("type straight into the letter, it saves itself", async () => {
+    const ed = page.getByRole("textbox", { name: "Cover letter" });
+    await ed.click();
+    await page.keyboard.press("End");
+    await page.keyboard.type(" Edited in the UI test.");
+    await page.locator(".save-state.saved").waitFor({ timeout: 15_000 });
+    await page.reload();
+    await page.locator("html[data-ready]").waitFor();
+    ok((await page.getByRole("textbox", { name: "Cover letter" }).inputValue()).includes("Edited in the UI test."), "edit not saved");
+  });
+  await check("edit the email text", async () => {
+    await page.getByRole("button", { name: "Email", exact: true }).click();
+    const ed = page.getByRole("textbox", { name: "Email text" });
+    await ed.fill((await ed.inputValue()) + "\nPS from the test");
+    await page.locator(".save-state.saved").waitFor({ timeout: 15_000 });
+    await page.getByRole("button", { name: "Cover letter", exact: true }).click();
   });
   await check("rewrite with an instruction", async () => {
-    await page.getByRole("button", { name: /Rewrite/ }).first().click();
+    await page.getByRole("button", { name: /^Rewrite R$/ }).click();
     await page.getByPlaceholder(/What should change/).fill("shorter");
     await page.getByPlaceholder(/What should change/).press("Enter");
     await toast(page, /rewrit|draft|claude/i);
   });
-  await check("approve, then mark as sent", async () => {
+  await check("checklist shows and a detail can be edited", async () => {
     await go(page, "/review");
-    await page.getByRole("button", { name: /Approve/ }).first().click();
+    await page.getByRole("list", { name: "Checklist" }).waitFor();
+    const contact = page.locator("label.field", { hasText: "Contact person" }).locator("input");
+    await contact.fill("Frau Jansen");
+    await contact.press("Enter");
+    await toast(page, /letter head updated/i);
+  });
+  await check("approve moves the draft to Ready to send", async () => {
+    await go(page, "/review");
+    const company = (await page.locator(".ad-pane > div").first().locator("div > div").first().textContent())!.trim();
+    await page.getByRole("button", { name: /^Approve/ }).click();
     const anyway = page.getByRole("button", { name: /Approve anyway/ });
     if (await anyway.isVisible({ timeout: 1500 }).catch(() => false)) await anyway.click();
-    await page.getByRole("button", { name: /Mark as sent/ }).click({ timeout: 8000 });
-    await toast(page, /sent|applied/i);
+    await toast(page, /ready to send/i);
+    await go(page, "/send");
+    await page.locator(".send-row", { hasText: company }).first().waitFor({ timeout: 8000 });
+  });
+
+  console.log("[ui] ready to send");
+  await check("email: open in Apple Mail, then mark as sent", async () => {
+    await go(page, "/send");
+    const row = page.locator(".send-row").filter({ has: page.locator("svg.lucide-mail") }).first();
+    await row.click();
+    const company = (await row.locator(".c").textContent())!;
+    await page.getByRole("tab", { name: /By email/ }).click();
+    await page.getByRole("button", { name: /Open in Apple Mail/ }).click();
+    await toast(page, /dry run|Apple Mail/i);
+    await page.getByRole("button", { name: /Mark as sent/ }).click();
+    await toast(page, new RegExp(`Sent to ${company}`));
+  });
+  await check("form: fill in Chrome, copy answers, download parts", async () => {
+    await go(page, "/send");
+    await page.locator(".send-row").filter({ has: page.locator("svg.lucide-globe") }).first().click();
+    await page.getByRole("tab", { name: /Online form/ }).click();
+    await page.getByRole("button", { name: /Fill form in Chrome/ }).click();
+    await toast(page, /dry run|form/i);
+    for (const part of ["", "&part=letter", "&part=cv"]) {
+      const href = await page.locator(`a[href*="/api/file"][href$="${part}&download=1"]`).first().getAttribute("href");
+      const r = await page.request.get(new URL(href!, BASE).toString());
+      ok(r.ok() && (r.headers()["content-type"] ?? "").includes("pdf"), `download ${part || "bundle"} failed (${r.status()})`);
+    }
+  });
+  await check("back to review", async () => {
+    await go(page, "/send");
+    await page.getByRole("button", { name: /Back to review/ }).click();
+    await page.waitForURL(/\/review\?job=/);
   });
 
   console.log("[ui] shell");
@@ -226,6 +276,18 @@ try {
     await go(page, "/profile");
     await page.locator("form.form-grid button[type=submit]").click();
     await toast(page, /saved/i);
+  });
+  await check("setup wizard: writing style step saves Claude project instructions", async () => {
+    await go(page, "/onboarding");
+    await page.getByRole("button", { name: /Let.s go/ }).click();
+    await page.getByRole("button", { name: /^(Next|Skip for now)/ }).click();
+    await page.getByRole("heading", { name: "How you write" }).waitFor();
+    await page.locator("input[aria-label='Upload cover letters']").setInputFiles("tests/fixtures/docs/Anschreiben_Brandt_2019.txt");
+    await page.getByLabel("Instructions from your Claude project").fill("Max 250 words. Never use 'hochmotiviert'.");
+    await page.getByRole("button", { name: /^Next/ }).click();
+    await page.getByRole("heading", { name: "About you" }).waitFor();
+    await go(page, "/profile");
+    ok((await page.locator("textarea").filter({ hasText: "Max 250 words" }).count()) === 1, "instructions not in Profile settings");
   });
   await check("learn now rewrites the profile", async () => {
     await page.getByRole("button", { name: /Update now/ }).first().click();

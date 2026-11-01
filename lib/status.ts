@@ -11,6 +11,7 @@ export function shellStatus(): ShellStatus {
     counts: {
       discover: n("SELECT COUNT(*) AS n FROM jobs WHERE stage = 'discover'"),
       review: n("SELECT COUNT(*) AS n FROM jobs WHERE stage = 'review'"),
+      ready: n("SELECT COUNT(*) AS n FROM jobs WHERE stage = 'ready'"),
       documents: n("SELECT COUNT(*) AS n FROM documents"),
     },
     claude: {

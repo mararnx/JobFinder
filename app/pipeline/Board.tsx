@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Clock, Ghost, LoaderCircle, PenLine, Star, TriangleAlert } from "lucide-react";
+import { Calendar, Clock, Ghost, Globe, LoaderCircle, Mail, PenLine, Star, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -10,7 +10,7 @@ import { Tile } from "../_components/ui";
 
 export type BoardCard = { id: number; title: string; company: string; stage: string; col: string; sub: string | null; score: number | null; days: number; dream: boolean; note: string | null; ghost: boolean };
 
-const DOT: Record<string, string> = { prep: "var(--info)", applied: "var(--text-2)", contact: "var(--ok)", round1: "var(--accent-fg)", final: "var(--danger)" };
+const DOT: Record<string, string> = { prep: "var(--info)", ready: "var(--dream)", applied: "var(--text-2)", contact: "var(--ok)", round1: "var(--accent-fg)", final: "var(--danger)" };
 
 export function Board({ cards, columns, closed }: { cards: BoardCard[]; columns: { key: string; name: string }[]; closed: number }) {
   const router = useRouter();
@@ -27,7 +27,7 @@ export function Board({ cards, columns, closed }: { cards: BoardCard[]; columns:
     try {
       const r = await act<{ prev: string }>("move", { jobId: c.id, to });
       const name = columns.find((x) => x.key === to)?.name;
-      toast(`${c.company} → ${name}${to === "round1" ? " · creating prep pack" : to === "prep" ? " · Claude will draft" : ""}`, async () => {
+      toast(`${c.company} → ${name}${to === "round1" ? " · creating prep pack" : to === "prep" && from !== "ready" ? " · Claude will draft" : ""}`, async () => {
         await act("move", { jobId: c.id, to: r.prev });
         setLocal((l) => ({ ...l, [c.id]: from }));
         router.refresh();
@@ -60,7 +60,7 @@ export function Board({ cards, columns, closed }: { cards: BoardCard[]; columns:
               }}
             >
               <div className="col-h"><span className="dot" style={{ background: DOT[col.key] }} />{col.name}<span className="badge">{cs.length}</span></div>
-              {cs.length === 0 && <div className="col-empty">{ci === 0 ? "Apply to jobs in Discover" : "Drag cards here"}</div>}
+              {cs.length === 0 && <div className="col-empty">{ci === 0 ? "Apply to jobs in Discover" : col.key === "ready" ? "Approved drafts land here" : "Drag cards here"}</div>}
               {cs.map((c) => (
                 <article
                   key={c.id}
@@ -89,8 +89,9 @@ export function Board({ cards, columns, closed }: { cards: BoardCard[]; columns:
                     {colOf(c) === "prep" && c.sub === "drafting" && <span className="tag info"><LoaderCircle className="spin-icon" />Claude writing</span>}
                     {colOf(c) === "prep" && c.sub === "ready" && <Link className="tag warn" href={`/review?job=${c.id}`} onClick={(e) => e.stopPropagation()}><PenLine />Ready to review</Link>}
                     {colOf(c) === "prep" && (c.sub === "blocked" || c.sub === "failed") && <span className="tag bad" title={c.note ?? ""}><TriangleAlert />{c.sub === "blocked" ? "Needs CV" : "Draft failed"}</span>}
+                    {colOf(c) === "ready" && c.stage === "ready" && <Link className="tag accent" href={`/send?job=${c.id}`} onClick={(e) => e.stopPropagation()}>{c.sub === "email" ? <Mail /> : <Globe />}{c.sub === "email" ? "Send by email" : c.sub === "form" ? "Fill the form" : "Send"}</Link>}
                     {c.ghost && colOf(c) === "applied" && <span className="tag bad"><Ghost />Follow up?</span>}
-                    {c.note && !["prep"].includes(colOf(c)) && !c.ghost && <span className="tag accent" title={c.note}><Calendar />{c.note.length > 26 ? c.note.slice(0, 25) + "…" : c.note}</span>}
+                    {c.note && !["prep", "ready"].includes(colOf(c)) && !c.ghost && <span className="tag accent" title={c.note}><Calendar />{c.note.length > 26 ? c.note.slice(0, 25) + "…" : c.note}</span>}
                     {c.score != null && <span className="tag mono" style={{ color: scoreColor(c.score) }}>{c.score}</span>}
                     <span className="age">{c.days === 0 ? "today" : `${c.days} d`}</span>
                   </div>

@@ -19,6 +19,10 @@ Salary expectation: {{salary}} · Notice period: {{notice}} · Earliest start: {
 ## Their writing style
 {{style}}
 
+## Their own instructions for cover letters
+They wrote these for the Claude project they used before. Follow them (structure, tone, length, what to stress), except where they conflict with the absolute rules above – truthfulness and the ad's language always win.
+{{own_instructions}}
+
 ## Company brief
 {{brief}}
 

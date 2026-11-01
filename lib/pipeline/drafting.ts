@@ -87,6 +87,7 @@ export async function draftApplication(jobId: number, instruction?: string) {
       start: s.earliestStart || "by arrangement",
       facts,
       style: style?.markdown ?? "(no style guide yet – write plainly and concretely)",
+      own_instructions: s.letterInstructions.trim() || "(none)",
       brief,
       title: job.title,
       company: job.company,
@@ -133,29 +134,57 @@ export function applicationView(a: AppRow) {
   return {
     ...a,
     cv: json<{ summary: string; skill_order: string[]; highlight_fact_ids: string[] }>(a.cv_json, { summary: "", skill_order: [], highlight_fact_ids: [] }),
-    answers: json<{ salary: string; start_date: string; notice_period: string; why_us: string; recipient?: string | null }>(a.answers_json, { salary: "", start_date: "", notice_period: "", why_us: "" }),
+    answers: json<Answers>(a.answers_json, { salary: "", start_date: "", notice_period: "", why_us: "" }),
     factcheck: json<FactCheck>(a.factcheck_json, { claims: [] }),
     coverage: json<{ requirement: string; status: "covered" | "partial" | "missing"; where: string }[]>(a.coverage_json, []),
   };
 }
 
 /** Saves edits from the Review screen and rebuilds the PDF. */
-export async function saveLetterEdit(appId: number, letter: string, subject?: string) {
-  run("UPDATE applications SET letter = ?, subject = COALESCE(?, subject) WHERE id = ?", [letter, subject ?? null, appId]);
-  await buildBundle(appId);
+export async function saveLetterEdit(appId: number, letter: string, subject?: string, emailBody?: string) {
+  const before = get<{ letter: string; subject: string }>("SELECT letter, subject FROM applications WHERE id = ?", [appId]);
+  if (!before) throw new Error("application not found");
+  run("UPDATE applications SET letter = ?, subject = COALESCE(?, subject), email_body = COALESCE(?, email_body) WHERE id = ?", [letter, subject ?? null, emailBody ?? null, appId]);
+  // the PDF only shows letter and subject; email text edits don't need a rebuild
+  if (before.letter !== letter || (subject != null && before.subject !== subject)) await buildBundle(appId);
 }
 
+/** Approves the draft: the job moves to "Ready to send", where the job seeker picks email or form. */
 export function approve(appId: number, reviewSeconds: number) {
   const a = get<{ job_id: number }>("SELECT job_id FROM applications WHERE id = ?", [appId]);
   if (!a) throw new Error("application not found");
-  run("UPDATE applications SET status = 'approved', approved_at = datetime('now'), review_seconds = ? WHERE id = ?", [Math.round(reviewSeconds), appId]);
-  logEvent(a.job_id, "approved", `Draft approved · ${Math.round(reviewSeconds)} s review`);
+  // 0 = approved without the Review screen (dragged on the board): keep any earlier review time
+  run("UPDATE applications SET status = 'approved', approved_at = datetime('now'), review_seconds = CASE WHEN ? > 0 THEN ? ELSE review_seconds END WHERE id = ?", [Math.round(reviewSeconds), Math.round(reviewSeconds), appId]);
+  logEvent(a.job_id, "approved", reviewSeconds > 0 ? `Draft approved · ${Math.round(reviewSeconds)} s review` : "Draft approved");
+  setStage(a.job_id, "ready");
+  run("UPDATE jobs SET prep_sub = NULL WHERE id = ?", [a.job_id]);
   return a.job_id;
 }
 
-export function markSent(jobId: number) {
+/** Takes an approved application back to Review for more edits. */
+export function unapprove(jobId: number) {
   const a = latestApplication(jobId);
-  if (a) run("UPDATE applications SET status = 'sent', sent_at = datetime('now') WHERE id = ?", [a.id]);
+  if (!a) throw new Error("no application for this job");
+  run("UPDATE applications SET status = 'draft', approved_at = NULL WHERE id = ?", [a.id]);
+  setStage(jobId, "review");
+  run("UPDATE jobs SET prep_sub = 'ready' WHERE id = ?", [jobId]);
+}
+
+export function markSent(jobId: number, channel?: string | null) {
+  const a = latestApplication(jobId);
+  if (a) run("UPDATE applications SET status = 'sent', sent_at = datetime('now'), approved_at = COALESCE(approved_at, datetime('now')), channel = COALESCE(?, channel) WHERE id = ?", [channel ?? null, a.id]);
   setStage(jobId, "applied");
   run("UPDATE jobs SET prep_sub = NULL WHERE id = ?", [jobId]);
+}
+
+export type Answers = { salary: string; start_date: string; notice_period: string; why_us: string; recipient?: string | null };
+
+/** Saves the details shown next to the letter (salary, start, notice, contact person) and rebuilds the PDF. */
+export async function saveAnswers(appId: number, patch: Partial<Answers>) {
+  const a = get<{ answers_json: string }>("SELECT answers_json FROM applications WHERE id = ?", [appId]);
+  if (!a) throw new Error("application not found");
+  const next = { ...json<Answers>(a.answers_json, { salary: "", start_date: "", notice_period: "", why_us: "" }), ...patch };
+  run("UPDATE applications SET answers_json = ? WHERE id = ?", [JSON.stringify(next), appId]);
+  if ("recipient" in patch) await buildBundle(appId); // the contact person is printed in the letter head
+  return next;
 }

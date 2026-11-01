@@ -61,7 +61,7 @@ export function ProfileClient({ profile, history, settings }: { profile: P; hist
         </div>
         <div className="card col-12" id="settings">
           <div className="card-h"><Settings2 />Settings</div>
-          <SettingsForm initial={settings} sections={["personal", "application", "filters", "app"]} onSaved={() => router.refresh()} />
+          <SettingsForm initial={settings} sections={["personal", "application", "filters", "writing", "app"]} onSaved={() => router.refresh()} />
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ export default function Pipeline() {
   const stages = BOARD.flatMap((b) => [...b.stages]);
   const cards: BoardCard[] = jobsInStages(stages, "j.dream DESC, j.stage_changed_at DESC").map((j) => ({
     id: j.id, title: j.title, company: j.company, stage: j.stage, col: BOARD.find((b) => (b.stages as readonly string[]).includes(j.stage))!.key,
-    sub: j.stage === "drafting" ? "drafting" : j.stage === "review" ? "ready" : j.prep_sub === "blocked" ? "blocked" : j.stage === "shortlist" ? (j.next_action?.startsWith("Draft failed") ? "failed" : "queued") : null,
+    sub: j.stage === "drafting" ? "drafting" : j.stage === "review" ? "ready" : j.stage === "ready" ? (j.apply_email ? "email" : j.url ? "form" : "none") : j.prep_sub === "blocked" ? "blocked" : j.stage === "shortlist" ? (j.next_action?.startsWith("Draft failed") ? "failed" : "queued") : null,
     score: j.score, days: daysSince(j.stage_changed_at), dream: !!j.dream, note: j.next_action,
     ghost: j.stage === "applied" && daysSince(j.stage_changed_at) >= 14,
   }));

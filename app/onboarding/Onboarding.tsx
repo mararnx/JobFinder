@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Bot, Check, CircleCheck, Compass, LoaderCircle, Plus, Sparkles, ThumbsDown, ThumbsUp, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bot, Check, CircleCheck, Compass, FileText, LoaderCircle, PenLine, Plus, Sparkles, ThumbsDown, ThumbsUp, Trash2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { Settings } from "@/lib/db";
@@ -8,9 +8,9 @@ import { act, toast } from "@/lib/client";
 import { SettingsForm } from "../_components/SettingsForm";
 
 type Ex = { text: string; reason: string };
-const STEPS = ["Welcome", "Documents", "About you", "Search", "Examples", "Done"];
+const STEPS = ["Welcome", "Documents", "Writing style", "About you", "Search", "Examples", "Done"];
 
-export function Onboarding({ settings, docs, profiles, claude }: { settings: Settings; docs: { id: number; kind: string; name: string; status: string; note: string | null }[]; profiles: { id: number; name: string; keywords: string[]; location: string; radius_km: number }[]; claude: { cli: string | null; mock: boolean } }) {
+export function Onboarding({ settings, docs, profiles, claude, style }: { style: string | null; settings: Settings; docs: { id: number; kind: string; name: string; status: string; note: string | null }[]; profiles: { id: number; name: string; keywords: string[]; location: string; radius_km: number }[]; claude: { cli: string | null; mock: boolean } }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [liked, setLiked] = useState<Ex[]>([{ text: "", reason: "" }, { text: "", reason: "" }, { text: "", reason: "" }]);
@@ -20,10 +20,13 @@ export function Onboarding({ settings, docs, profiles, claude }: { settings: Set
   const [radius, setRadius] = useState(profiles[0]?.radius_km ?? 30);
   const [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const letterInput = useRef<HTMLInputElement>(null);
+  const [instructions, setInstructions] = useState(settings.letterInstructions);
 
-  const upload = async (files: FileList) => {
+  const upload = async (files: FileList, kind?: string) => {
     const fd = new FormData();
     [...files].forEach((f) => fd.append("files", f));
+    if (kind) fd.append("kind", kind);
     setBusy(true);
     await fetch("/api/documents", { method: "POST", body: fd });
     setBusy(false);
@@ -31,10 +34,20 @@ export function Onboarding({ settings, docs, profiles, claude }: { settings: Set
     router.refresh();
   };
 
+  const saveWriting = async () => {
+    try {
+      await act("saveSettings", { patch: { letterInstructions: instructions } });
+      setStep(3);
+      router.refresh();
+    } catch (e) {
+      toast((e as Error).message, undefined, "error");
+    }
+  };
+
   const saveSearch = async () => {
     try {
       await act("saveSearch", { id: profiles[0]?.id, name: "Main search", keywords: kw, location: loc, radius });
-      setStep(4);
+      setStep(5);
       router.refresh();
     } catch (e) {
       toast((e as Error).message, undefined, "error");
@@ -45,7 +58,7 @@ export function Onboarding({ settings, docs, profiles, claude }: { settings: Set
     setBusy(true);
     try {
       await act("finishOnboarding", { liked, disliked });
-      setStep(5);
+      setStep(6);
     } catch (e) {
       toast((e as Error).message, undefined, "error");
     } finally {
@@ -67,6 +80,7 @@ export function Onboarding({ settings, docs, profiles, claude }: { settings: Set
   );
 
   const cv = docs.find((d) => d.kind === "cv");
+  const letters = docs.filter((d) => d.kind === "letter");
 
   return (
     <div className="view-inner onboarding enter">
@@ -91,7 +105,7 @@ export function Onboarding({ settings, docs, profiles, claude }: { settings: Set
       {step === 1 && (
         <section className="ob-card card">
           <h2>Your documents</h2>
-          <p>Upload your CV (Word is best), 2–5 cover letters you wrote yourself, and your references and certificates. You can add more later under Documents.</p>
+          <p>Upload your CV (Word is best) and your references and certificates. Cover letters come on the next step. You can add more later under Documents.</p>
           <label className="drop" tabIndex={0} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); void upload(e.dataTransfer.files); }} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && input.current?.click()}>
             <input ref={input} type="file" multiple className="sr-only" accept=".pdf,.doc,.docx,.odt,.txt,.md,.png,.jpg,.jpeg" onChange={(e) => e.target.files && void upload(e.target.files)} />
             <span className="drop-ic">{busy ? <LoaderCircle className="spin-icon" /> : <Upload />}</span>
@@ -107,15 +121,48 @@ export function Onboarding({ settings, docs, profiles, claude }: { settings: Set
       )}
 
       {step === 2 && (
-        <section className="ob-card card">
-          <h2>About you</h2>
-          <p>Used in letter heads and application forms, and as hard filters.</p>
-          <SettingsForm initial={settings} sections={["personal", "application", "filters"]} submitLabel="Save and continue" onSaved={(saved) => { if (!loc && saved.home) setLoc(saved.home); setStep(3); }} />
-          <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(1)}><ArrowLeft />Back</button></div>
+        <section className="ob-card card wide">
+          <h2>How you write</h2>
+          <p>Kompass writes every letter in your voice. Give it something to learn from – ideally both.</p>
+
+          <h3><FileText />Cover letters you&apos;ve sent</h3>
+          <p className="faint">2–5 letters you were happy with – your own, or ones your Claude project wrote that you sent. Kompass learns tone, openings and phrasing from them.</p>
+          <label className="drop" tabIndex={0} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); void upload(e.dataTransfer.files, "letter"); }} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && letterInput.current?.click()}>
+            <input ref={letterInput} type="file" multiple className="sr-only" accept=".pdf,.doc,.docx,.odt,.txt,.md" onChange={(e) => e.target.files && void upload(e.target.files, "letter")} aria-label="Upload cover letters" />
+            <span className="drop-ic">{busy ? <LoaderCircle className="spin-icon" /> : <Upload />}</span>
+            <span className="drop-t">Drop cover letters here or <u>browse</u></span>
+            <span className="drop-s">PDF, Word or text</span>
+          </label>
+          {letters.length > 0 && (
+            <ul className="list compact">
+              {letters.map((d) => <li key={d.id}>{d.status === "reading" ? <LoaderCircle className="spin-icon" /> : <CircleCheck style={{ color: "var(--ok)" }} />}<div className="grow"><b>{d.name}</b><span className="faint">{d.status === "reading" ? "reading…" : d.note}</span></div></li>)}
+            </ul>
+          )}
+
+          <h3><Bot />Already using a Claude project for cover letters?</h3>
+          <p className="faint">Paste its instructions here and Kompass follows them for every letter. In claude.ai, open the project, then <b>Project instructions → Edit</b>, select all and copy. Rules about facts and the ad&apos;s language still apply.</p>
+          <textarea className="input" rows={8} value={instructions} onChange={(e) => setInstructions(e.target.value)} aria-label="Instructions from your Claude project" placeholder={"e.g. Write max 250 words. Open with a concrete result from my last role. Never use 'leidenschaftlich' or 'hochmotiviert'. Mention that I can start in 3 months."} />
+
+          {style && (
+            <details className="style-preview">
+              <summary><PenLine />Your style guide so far</summary>
+              <div className="faint" style={{ whiteSpace: "pre-wrap", fontSize: 13, marginTop: 8 }}>{style}</div>
+            </details>
+          )}
+          <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(1)}><ArrowLeft />Back</button><button className="btn primary" onClick={saveWriting}>{letters.length || instructions.trim() ? "Next" : "Skip for now"}<ArrowRight /></button></div>
         </section>
       )}
 
       {step === 3 && (
+        <section className="ob-card card">
+          <h2>About you</h2>
+          <p>Used in letter heads and application forms, and as hard filters.</p>
+          <SettingsForm initial={settings} sections={["personal", "application", "filters"]} submitLabel="Save and continue" onSaved={(saved) => { if (!loc && saved.home) setLoc(saved.home); setStep(4); }} />
+          <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(2)}><ArrowLeft />Back</button></div>
+        </section>
+      )}
+
+      {step === 4 && (
         <section className="ob-card card">
           <h2>What are you looking for?</h2>
           <p>Keywords are searched one by one, like typing them into a job portal. Use the titles you&apos;d apply for, in German and English.</p>
@@ -124,11 +171,11 @@ export function Onboarding({ settings, docs, profiles, claude }: { settings: Set
             <label className="fld"><span>City</span><input className="input" value={loc} onChange={(e) => setLoc(e.target.value)} placeholder="Hamburg (empty = all of Germany)" /></label>
             <label className="fld"><span>Radius (km)</span><input className="input" type="number" min={0} max={200} value={radius} onChange={(e) => setRadius(Number(e.target.value))} /></label>
           </div>
-          <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(2)}><ArrowLeft />Back</button><button className="btn primary" onClick={saveSearch} disabled={!kw.trim()}>Next<ArrowRight /></button></div>
+          <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(3)}><ArrowLeft />Back</button><button className="btn primary" onClick={saveSearch} disabled={!kw.trim()}>Next<ArrowRight /></button></div>
         </section>
       )}
 
-      {step === 4 && (
+      {step === 5 && (
         <section className="ob-card card wide">
           <h2>Teach it your taste</h2>
           <p>Paste a few ads you&apos;d love and a few you&apos;d never take, with a short reason. This gives Kompass its first preference profile. It keeps learning from every decision after that. Optional, but it makes the first scores much better.</p>
@@ -136,11 +183,11 @@ export function Onboarding({ settings, docs, profiles, claude }: { settings: Set
           {exList(liked, setLiked, "like")}
           <h3><ThumbsDown style={{ color: "var(--danger)" }} />Ads you&apos;d never take</h3>
           {exList(disliked, setDisliked, "dislike")}
-          <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(3)}><ArrowLeft />Back</button><button className="btn primary lg" onClick={finish} disabled={busy}>{busy ? <><LoaderCircle className="spin-icon" />Writing your profile…</> : <><Sparkles />Finish setup</>}</button></div>
+          <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(4)}><ArrowLeft />Back</button><button className="btn primary lg" onClick={finish} disabled={busy}>{busy ? <><LoaderCircle className="spin-icon" />Writing your profile…</> : <><Sparkles />Finish setup</>}</button></div>
         </section>
       )}
 
-      {step === 5 && (
+      {step === 6 && (
         <section className="ob-card card">
           <div className="brand-mark big"><Check /></div>
           <h1 className="serif">You&apos;re set.</h1>

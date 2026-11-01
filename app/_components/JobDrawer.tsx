@@ -25,10 +25,10 @@ type JobData = {
 };
 
 const MOVES = [
-  { to: "prep", label: "Preparing (draft)" }, { to: "applied", label: "Applied" }, { to: "contact", label: "In contact" },
+  { to: "prep", label: "Preparing (draft)" }, { to: "ready", label: "Ready to send" }, { to: "applied", label: "Applied" }, { to: "contact", label: "In contact" },
   { to: "round1", label: "Round 1 (interview)" }, { to: "final", label: "Final" },
 ];
-const STAGE_COL: Record<string, string> = { shortlist: "prep", drafting: "prep", review: "prep", applied: "applied", contact: "contact", round1: "round1", final: "final" };
+const STAGE_COL: Record<string, string> = { shortlist: "prep", drafting: "prep", review: "prep", ready: "ready", applied: "applied", contact: "contact", round1: "round1", final: "final" };
 const CLOSE = ["rejected", "ghosted", "withdrawn", "offer declined", "accepted 🎉"];
 
 export function JobDrawer() {
@@ -121,10 +121,11 @@ export function JobDrawer() {
                     <CalendarClock style={{ color: "var(--accent-fg)" }} />
                     <div style={{ flex: 1 }}>{nextStepText(stage, j, data!)}</div>
                     {stage === "review" && <Link className="btn" href={`/review?job=${j.id}`} onClick={close}>Open</Link>}
+                    {stage === "ready" && <Link className="btn" href={`/send?job=${j.id}`} onClick={close}>Send</Link>}
                   </div>
 
                   <div className="drawer-actions">
-                    {(stage === "review" || stage === "applied") && data!.application?.bundle_path && (
+                    {(stage === "review" || stage === "ready" || stage === "applied") && data!.application?.bundle_path && (
                       <a className="btn" href={`/api/file?app=${data!.application.id}`} target="_blank" rel="noreferrer"><FileText />PDF</a>
                     )}
                     {data!.application?.status === "approved" && (
@@ -229,7 +230,8 @@ function nextStepText(stage: string, j: JobData["job"], d: JobData) {
     case "shortlist": return "Queued – Claude will write the draft";
     case "drafting": return "Claude is writing the application…";
     case "review": return "Review and approve the draft";
-    case "applied": return d.application?.status === "approved" ? "Send it, then mark as sent" : "Waiting for a reply";
+    case "ready": return "Approved – send it by email or through the form";
+    case "applied": return "Waiting for a reply";
     case "contact": return "Add the next appointment as a note";
     case "round1": return d.prep ? "Prep pack is ready – see the tab above" : "Interview coming up – create a prep pack";
     case "final": return "Final round – good luck!";

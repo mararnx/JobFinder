@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { get, getSettings, logEvent, run, setSettings, type Settings } from "@/lib/db";
 import { addSignal, BOARD, getJob, setStage, type Stage } from "@/lib/jobs";
-import { approve, latestApplication, markSent, saveLetterEdit } from "@/lib/pipeline/drafting";
+import { approve, latestApplication, markSent, saveAnswers, saveLetterEdit, unapprove } from "@/lib/pipeline/drafting";
 import { DOC_KINDS, type DocKind } from "@/lib/pipeline/documents";
 import { initialProfile } from "@/lib/pipeline/scoring";
 import { addManualAd, watchlistAdd } from "@/lib/pipeline/sources";
@@ -63,6 +63,26 @@ export const actions: Record<string, (a: A) => Promise<unknown> | unknown> = {
     const stage = (col ? (to === "prep" ? "shortlist" : col.stages[0]) : to) as Stage;
     const job = getJob(jobId);
     if (!job) throw new Error("job not found");
+    const app = latestApplication(jobId);
+    // the send stages are tied to the application: approve, take back to review, or record the send
+    if (stage === "ready") {
+      if (!app) throw new Error("No draft yet – let Claude write one first");
+      if (app.status !== "approved") approve(app.id, 0);
+      else setStage(jobId, "ready");
+      return { prev: job.stage };
+    }
+    if (stage === "shortlist" && (job.stage === "ready" || job.stage === "review") && app) {
+      if (job.stage === "ready") unapprove(jobId);
+      return { prev: job.stage };
+    }
+    if (stage === "review" && job.stage === "ready") {
+      unapprove(jobId);
+      return { prev: job.stage };
+    }
+    if (stage === "applied" && app && app.status !== "sent") {
+      markSent(jobId);
+      return { prev: job.stage };
+    }
     setStage(jobId, stage, { closedReason: a.closedReason ? s(a.closedReason, 200) : undefined, note: a.note ? s(a.note, 200) : undefined });
     if (stage === "shortlist") {
       run("UPDATE jobs SET prep_sub = 'queued' WHERE id = ?", [jobId]);
@@ -94,23 +114,29 @@ export const actions: Record<string, (a: A) => Promise<unknown> | unknown> = {
     return { ok: true };
   },
   saveLetter: async (a) => {
-    await saveLetterEdit(n(a.appId), s(a.letter), a.subject ? s(a.subject, 300) : undefined);
+    await saveLetterEdit(n(a.appId), s(a.letter), a.subject ? s(a.subject, 300) : undefined, typeof a.emailBody === "string" ? s(a.emailBody) : undefined);
     return { ok: true };
   },
-  approve: async (a) => {
+  approve: (a) => {
     const jobId = approve(n(a.appId), Number(a.seconds) || 0);
-    const job = getJob(jobId)!;
-    if (job.apply_email) return { channel: "email", ...openMailDraft(jobId) };
-    if (job.url) {
-      const r = await openApplyForm(jobId).catch((e) => ({ ok: false, message: String(e instanceof Error ? e.message : e), filled: [] }));
-      return { channel: "form", ...r };
-    }
-    return { channel: "none", ok: true, message: "Approved. No email or link in the ad – send the PDF yourself." };
+    return { ok: true, jobId };
+  },
+  unapprove: (a) => unapprove(n(a.jobId)),
+  saveAnswers: async (a) => {
+    const patch: Record<string, string> = {};
+    for (const k of ["salary", "start_date", "notice_period", "why_us", "recipient"]) if (typeof a[k] === "string") patch[k] = s(a[k], 2000);
+    return saveAnswers(n(a.appId), patch);
+  },
+  setApplyEmail: (a) => {
+    const email = s(a.email, 200).trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("That isn't a valid email address");
+    run("UPDATE jobs SET apply_email = ?, apply_channel = CASE WHEN ? IS NULL THEN apply_channel ELSE 'email' END WHERE id = ?", [email || null, email || null, n(a.jobId)]);
+    return { ok: true };
   },
   openForm: async (a) => openApplyForm(n(a.jobId)),
   openMail: (a) => openMailDraft(n(a.jobId)),
   markSent: (a) => {
-    markSent(n(a.jobId));
+    markSent(n(a.jobId), a.channel ? s(a.channel, 20) : null);
     return { ok: true };
   },
 
@@ -137,7 +163,10 @@ export const actions: Record<string, (a: A) => Promise<unknown> | unknown> = {
   /* ── Profile & settings ── */
   saveSettings: (a) => {
     const patch = (a.patch ?? {}) as Partial<Settings>;
+    const before = getSettings().letterInstructions;
     setSettings(patch);
+    // own letter instructions feed the style guide, so rebuild it when they change
+    if (typeof patch.letterInstructions === "string" && patch.letterInstructions !== before) enqueue("style_guide", {}, { priority: PRIORITY.parse, dedupeKey: "style_guide" });
     return getSettings();
   },
   saveProfile: (a) => ({ version: saveProfile(s(a.markdown, 8000), "you", s(a.summary, 200) || "Edited by you") }),

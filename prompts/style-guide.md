@@ -2,4 +2,9 @@ Below are cover letters the job seeker wrote themselves. Describe their personal
 
 {{letters}}
 
+The job seeker also uses these instructions for cover letters in their own Claude project. Treat them as their stated preferences: fold them into the guide, and where letters and instructions disagree, the instructions win.
+<instructions>
+{{instructions}}
+</instructions>
+
 Reply with ONLY JSON: {"markdown": "…", "banned_phrases": ["…"]}

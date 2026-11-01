@@ -18,12 +18,13 @@ export type RawJob = {
   companyDomain?: string | null;
 };
 
-export const STAGES = ["new", "excluded", "discover", "later", "shortlist", "drafting", "review", "applied", "contact", "round1", "final", "closed"] as const;
+export const STAGES = ["new", "excluded", "discover", "later", "shortlist", "drafting", "review", "ready", "applied", "contact", "round1", "final", "closed"] as const;
 export type Stage = (typeof STAGES)[number];
 
 /** Board columns: the three machine prep stages collapse into one column. */
 export const BOARD = [
   { key: "prep", name: "Preparing", stages: ["shortlist", "drafting", "review"] },
+  { key: "ready", name: "Ready to send", stages: ["ready"] },
   { key: "applied", name: "Applied", stages: ["applied"] },
   { key: "contact", name: "In contact", stages: ["contact"] },
   { key: "round1", name: "Round 1", stages: ["round1"] },
@@ -159,7 +160,7 @@ export function addSignal(jobId: number, kind: string, reason: string | null) {
 }
 
 const STAGE_LABEL: Record<string, string> = {
-  discover: "Discover", later: "Saved for later", shortlist: "Shortlist", drafting: "Drafting", review: "Ready to review",
+  discover: "Discover", later: "Saved for later", shortlist: "Shortlist", drafting: "Drafting", review: "Ready to review", ready: "Ready to send",
   applied: "Applied", contact: "In contact", round1: "Round 1", final: "Final", closed: "Closed", excluded: "Excluded", new: "New",
 };
 

@@ -164,6 +164,7 @@ export type Settings = {
   excludeAgencies: boolean;
   blockKeywords: string[];
   weeklyGoal: number;
+  letterInstructions: string; // pasted from the job seeker's own Claude project, if they have one
   claudeMode: "auto" | "real" | "mock";
   claudeParallel: number;
   chromeEnabled: boolean;
@@ -187,6 +188,7 @@ export const DEFAULT_SETTINGS: Settings = {
   excludeAgencies: true,
   blockKeywords: [],
   weeklyGoal: 30,
+  letterInstructions: "",
   claudeMode: "auto",
   claudeParallel: 1,
   chromeEnabled: false,

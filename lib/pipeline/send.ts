@@ -50,27 +50,35 @@ export async function openApplyForm(jobId: number): Promise<{ ok: boolean; messa
     [/notice|kündigungsfrist/i, s.noticePeriod],
     [/start|eintritt|verfügbar|available/i, s.earliestStart],
   ];
-  if (process.env.KOMPASS_DRY_SEND) return { ok: true, message: "dry run", filled: [] };
+  if (process.env.KOMPASS_DRY_SEND) return { ok: true, message: "dry run: the form would open in Chrome", filled: [] };
+  const dir = app?.bundle_path ? path.dirname(app.bundle_path) : null;
+  const part = (...names: string[]) => (dir ? names.map((n) => path.join(dir, n)).find((f) => fs.existsSync(f)) : undefined);
+  const files = { bundle: app?.bundle_path ?? undefined, letter: part("Anschreiben.pdf", "Cover_letter.pdf"), cv: part("Lebenslauf.pdf", "CV.pdf") };
   const { chromium } = await import("playwright");
-  const browser = await chromium.launch({ headless: false }).catch(() => chromium.launch({ headless: false, channel: "chrome" }));
+  // the job seeker's installed Chrome first; Playwright's Chromium if Chrome isn't there
+  const browser = await chromium.launch({ headless: false, channel: "chrome" }).catch(() => chromium.launch({ headless: false }));
   const page = await browser.newPage();
   await page.goto(job.url, { waitUntil: "domcontentloaded", timeout: 45_000 });
   const filled: string[] = [];
-  for (const input of await page.locator("input:visible, textarea:visible").all()) {
+  const uploaded = new Set<string>();
+  for (const input of await page.locator("input, textarea").all()) {
     const meta = [await input.getAttribute("name"), await input.getAttribute("id"), await input.getAttribute("placeholder"), await input.getAttribute("aria-label"), await input.getAttribute("autocomplete")].filter(Boolean).join(" ");
     const type = (await input.getAttribute("type")) ?? "text";
     if (["hidden", "submit", "button", "checkbox", "radio", "password"].includes(type)) continue;
     if (type === "file") {
-      const dir = app?.bundle_path ? path.dirname(app.bundle_path) : null;
-      if (dir && fs.existsSync(dir) && !filled.includes("files")) {
-        await input.setInputFiles(app!.bundle_path!).catch(() => {});
-        filled.push("files");
+      // upload fields are often hidden behind a styled button, so they are not checked for visibility
+      const want = /lebenslauf|\bcv\b|resume|curriculum/i.test(meta) ? "cv" : /anschreiben|cover|letter|motivation/i.test(meta) ? "letter" : "bundle";
+      const file = files[want] ?? files.bundle;
+      if (file && !uploaded.has(want)) {
+        await input.setInputFiles(file).then(() => { uploaded.add(want); filled.push(want === "bundle" ? "documents" : want); }).catch(() => {});
       }
       continue;
     }
-    const hit = fields.find(([re, v]) => v && re.test(meta));
+    if (!(await input.isVisible().catch(() => false))) continue;
+    const isText = (await input.evaluate((el) => el.tagName)) === "TEXTAREA";
+    const hit = isText && /anschreiben|cover|letter|motivation|message|nachricht/i.test(meta) ? app?.letter : fields.find(([re, v]) => v && re.test(meta))?.[1];
     if (hit && !(await input.inputValue().catch(() => ""))) {
-      await input.fill(hit[1]).catch(() => {});
+      await input.fill(hit).catch(() => {});
       filled.push(meta.split(" ")[0] || "field");
     }
   }

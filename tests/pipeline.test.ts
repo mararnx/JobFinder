@@ -112,11 +112,21 @@ test("edit, rewrite with an instruction, approve, send", async () => {
   const v2 = get<{ id: number; version: number; instruction: string }>("SELECT id, version, instruction FROM applications WHERE job_id = ? ORDER BY version DESC", [jobId])!;
   assert.equal(v2.version, 2);
   assert.equal(v2.instruction, "shorter");
-  const res = (await dispatch("approve", { appId: v2.id, seconds: 42 })) as { channel: string; ok: boolean };
-  assert.equal(res.channel, "email");
-  assert.ok(res.ok);
-  await dispatch("markSent", { jobId });
+  await dispatch("saveAnswers", { appId: v2.id, recipient: "Frau Jansen", salary: "€90,000" });
+  assert.match(get<{ answers_json: string }>("SELECT answers_json FROM applications WHERE id = ?", [v2.id])!.answers_json, /Frau Jansen.*|€90,000/);
+  await dispatch("approve", { appId: v2.id, seconds: 42 });
+  assert.equal(getJob(jobId)!.stage, "ready", "approved drafts wait in Ready to send");
+  await dispatch("unapprove", { jobId });
+  assert.equal(getJob(jobId)!.stage, "review", "can go back for more edits");
+  await dispatch("move", { jobId, to: "ready" });
+  assert.equal(getJob(jobId)!.stage, "ready", "dragging to Ready to send approves");
+  const mail = (await dispatch("openMail", { jobId })) as { ok: boolean; message: string };
+  assert.ok(mail.ok, mail.message);
+  const form = (await dispatch("openForm", { jobId })) as { ok: boolean; message: string };
+  assert.ok(!form.ok && /No application link/.test(form.message), "no form without a link");
+  await dispatch("markSent", { jobId, channel: "email" });
   assert.equal(getJob(jobId)!.stage, "applied");
+  assert.equal(get<{ channel: string }>("SELECT channel FROM applications WHERE id = ?", [v2.id])!.channel, "email");
   assert.equal(get<{ review_seconds: number }>("SELECT review_seconds FROM applications WHERE id = ?", [v2.id])!.review_seconds, 42);
 });
 
