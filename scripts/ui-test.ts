@@ -18,7 +18,7 @@ const data = fs.mkdtempSync(path.join(os.tmpdir(), "kompass-ui-"));
 fs.cpSync("data-demo", data, { recursive: true, filter: (f) => !/worker\.lock|chrome-profile/.test(f) });
 
 const server = spawn("node", ["scripts/start.mjs"], {
-  env: { ...process.env, PORT: String(PORT), KOMPASS_DATA: data, KOMPASS_CLAUDE: "mock", KOMPASS_MOCK_DELAY: "0", KOMPASS_DRY_SEND: "1", KOMPASS_NO_NOTIFY: "1" },
+  env: { ...process.env, PORT: String(PORT), KOMPASS_DIST_DIR: ".next-test", KOMPASS_DATA: data, KOMPASS_CLAUDE: "mock", KOMPASS_MOCK_DELAY: "0", KOMPASS_DRY_SEND: "1", KOMPASS_NO_NOTIFY: "1" },
   stdio: ["ignore", "pipe", "pipe"],
   detached: true,
 });
@@ -289,7 +289,36 @@ try {
     await go(page, "/profile");
     ok((await page.locator("textarea").filter({ hasText: "Max 250 words" }).count()) === 1, "instructions not in Profile settings");
   });
+  await check("setup wizard: more sources step", async () => {
+    await go(page, "/onboarding");
+    await page.getByRole("button", { name: /Let.s go/ }).click();
+    await page.getByRole("button", { name: /^(Next|Skip for now)/ }).click();
+    await page.getByRole("button", { name: /^(Next|Skip for now)/ }).click();
+    await page.getByRole("button", { name: "Save and continue" }).click();
+    await page.getByRole("button", { name: /^Next/ }).click();
+    await page.getByRole("heading", { name: "More places to find jobs" }).waitFor();
+    const href = (await page.locator("a.bookmarklet").getAttribute("href")) ?? "";
+    ok(href.startsWith("javascript:") && decodeURIComponent(href).includes(`${BASE}/api/capture`), "bookmark button has no capture code");
+    await page.getByRole("button", { name: /Connect & check/ }).click();
+    await toast(page, /dry run: would read "Job alerts"/);
+    const indeed = page.getByLabel("Chrome search on Indeed");
+    await indeed.check();
+    await page.waitForTimeout(800);
+    ok(await indeed.isChecked(), "Indeed switch didn't stay on");
+    await indeed.uncheck();
+    await page.getByRole("button", { name: /^Next/ }).click();
+    await page.getByRole("heading", { name: /Teach it your taste/ }).waitFor();
+  });
+  await check("“Add to JobFinder” button endpoint adds the posted page", async () => {
+    const desc = "Du verantwortest den Checkout. ".repeat(20);
+    const html = `<html><head><script type="application/ld+json">{"@type":"JobPosting","title":"Product Owner Checkout","hiringOrganization":{"name":"Zalando SE"},"jobLocation":{"address":{"addressLocality":"Berlin"}},"description":"${desc}"}</script></head><body></body></html>`;
+    const r = await page.request.post(`${BASE}/api/capture`, { form: { url: "https://de.indeed.com/viewjob?jk=feedbeef12345678", title: "PO", html }, headers: { Origin: "https://de.indeed.com" } });
+    ok(r.ok() && (await r.text()).includes("Added to JobFinder"), `capture failed (${r.status()})`);
+    await go(page, "/sources");
+    await page.getByText("Set up more sources").waitFor();
+  });
   await check("learn now rewrites the profile", async () => {
+    await go(page, "/profile");
     await page.getByRole("button", { name: /Update now/ }).first().click();
     await toast(page, /updating/i);
   });

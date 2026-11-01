@@ -80,9 +80,19 @@ npm run browser
 | Prompts Claude gets | `prompts/*.md` – edit to change tone or rules |
 | Usage | Sidebar shows Claude calls in the last 5 hours; when the Max limit is hit, AI work pauses until it resets |
 
+## More job sources (setup wizard step "More sources", or Sources page)
+
+StepStone and Indeed block programs that browse them, so JobFinder gets their jobs the ways they allow:
+
+- **Job alerts by email** – save a search with alerts on StepStone, Indeed, LinkedIn and XING, collect the alert emails in one Apple Mail mailbox (e.g. "Job alerts") with a Mail rule, and enter that mailbox name. JobFinder reads it every 2 hours through Apple Mail (no passwords).
+- **Adzuna and Jooble** – free API keys (developer.adzuna.com, jooble.org/api/about); they aggregate many German portals.
+- **"Add to JobFinder" button** – drag it from the wizard into the browser's bookmarks bar; on any job ad, click it to add the ad with its full text.
+- **Chrome search** – XING works; LinkedIn runs once a day; StepStone and Indeed are off by default.
+
 ## Troubleshooting
 
 - **"Mock AI" badge although Claude Code is installed** – run `claude --version` in Terminal. If it isn't found, the app can't see it either; reinstall, or set `CLAUDE_BIN=/full/path/to/claude` before `npm start`. Sources → Claude lets you force "Always real".
 - **"Worker not running"** in the sidebar – start with `npm start` (not `npm run web`), or check `data/kompass.log`.
-- **Apple Mail asks for permission** the first time JobFinder opens a draft – allow it (System Settings → Privacy & Security → Automation).
+- **Apple Mail asks for permission** the first time JobFinder opens a draft or reads the job-alert mailbox – allow it (System Settings → Privacy & Security → Automation).
+- **"No mailbox called … in Apple Mail"** – the name in Sources must match the mailbox exactly (it can be under any account or On My Mac).
 - **Run the tests**: `npm test` (uses a temporary database and simulated AI; touches nothing in `data/`).

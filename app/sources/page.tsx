@@ -12,9 +12,23 @@ export const dynamic = "force-dynamic";
 export default function Sources() {
   const s = getSettings();
   const last = (src: string) => all<{ status: string; started_at: string; added: number; found: number; message: string | null }>("SELECT status, started_at, added, found, message FROM source_runs WHERE source = ? ORDER BY id DESC LIMIT 1", [src])[0] ?? null;
+  // a group of sources (feeds, APIs) shown as one: their latest runs combined
+  const lastOf = (srcs: string[]) => {
+    const runs = srcs.map(last).filter((r) => r !== null);
+    if (!runs.length) return null;
+    return {
+      status: runs.some((r) => r.status === "error") ? "error" : runs.some((r) => r.status === "running") ? "running" : "ok",
+      started_at: runs.map((r) => r.started_at).sort().at(-1)!,
+      added: runs.reduce((n, r) => n + r.added, 0),
+      found: runs.reduce((n, r) => n + r.found, 0),
+      message: runs.map((r) => r.message).filter(Boolean).join(" · ") || null,
+    };
+  };
   const sources = [
     { key: "arbeitsagentur", name: "Arbeitsagentur", kind: "api" as const, detail: "Public job search API · every 3 hours", last: last("arbeitsagentur"), used: null, blocked: null },
-    { key: "feeds", name: "Job feeds", kind: "api" as const, detail: `${Object.values(FEEDS).join(", ")} · every 4 hours`, last: all<{ status: string; started_at: string; added: number; found: number; message: string | null }>(`SELECT status, MAX(started_at) AS started_at, SUM(added) AS added, SUM(found) AS found, group_concat(message, ' · ') AS message FROM source_runs WHERE source IN (${Object.keys(FEEDS).map((k) => `'${k}'`).join(",")}) AND started_at >= (SELECT MAX(started_at) FROM source_runs WHERE source IN (${Object.keys(FEEDS).map((k) => `'${k}'`).join(",")})) GROUP BY 1=1`)[0] ?? null, used: null, blocked: null },
+    { key: "feeds", name: "Job feeds", kind: "api" as const, detail: `${Object.values(FEEDS).join(", ")} · every 4 hours`, last: lastOf(Object.keys(FEEDS)), used: null, blocked: null },
+    { key: "apis", name: "Job search APIs", kind: "api" as const, detail: (s.adzunaAppId && s.adzunaAppKey) || s.joobleKey ? `${[s.adzunaAppId && s.adzunaAppKey ? "Adzuna" : "", s.joobleKey ? "Jooble" : ""].filter(Boolean).join(", ")} · every 3 hours` : "Not set up – add free keys below", last: lastOf(["adzuna", "jooble"]), used: null, blocked: null },
+    { key: "alerts", name: "Job alert emails", kind: "api" as const, detail: s.alertsMailbox ? `Apple Mail “${s.alertsMailbox}” · every 2 hours` : "Not set up – see below", last: last("alerts"), used: null, blocked: null },
     { key: "watchlist", name: "Company watchlist", kind: "api" as const, detail: "Career-page feeds · daily", last: last("watchlist"), used: null, blocked: null },
     ...(Object.keys(PORTALS) as Portal[]).map((p) => ({ key: p, name: PORTALS[p].name, kind: "chrome" as const, detail: `Chrome · ${pagesUsedToday(p)}/${s.chromeDailyPages} pages today`, last: last(p), used: pagesUsedToday(p), blocked: portalBlockedToday(p) })),
   ];
@@ -34,6 +48,8 @@ export default function Sources() {
       runs={runs}
       failed={failed}
       chromeEnabled={s.chromeEnabled}
+      chromePortals={s.chromePortals}
+      more={{ keyword: searchProfiles()[0]?.keywords[0] ?? "", city: searchProfiles()[0]?.location ?? s.home, settings: s }}
       chromeDailyPages={s.chromeDailyPages}
       claude={{ mock: isMock(), cli: cli.ok ? cli.version ?? "installed" : null, mode: s.claudeMode, pausedUntil: claudePausedUntil()?.toISOString() ?? null }}
     />

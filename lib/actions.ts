@@ -6,6 +6,7 @@ import { DOC_KINDS, type DocKind } from "@/lib/pipeline/documents";
 import { initialProfile } from "@/lib/pipeline/scoring";
 import { addManualAd, watchlistAdd } from "@/lib/pipeline/sources";
 import { openApplyForm, openMailDraft } from "@/lib/pipeline/send";
+import { readMailbox } from "@/lib/sources/alerts";
 import { saveProfile } from "@/lib/profile";
 import { enqueue, PRIORITY, setMeta } from "@/lib/queue";
 
@@ -141,6 +142,16 @@ export const actions: Record<string, (a: A) => Promise<unknown> | unknown> = {
   },
 
   /* ── Sources ── */
+  checkAlerts: (a) => {
+    const box = s(a.mailbox, 120).trim();
+    if (!box) throw new Error("Enter the mailbox name first");
+    setSettings({ alertsMailbox: box });
+    // dry-run installs (tests, demo) never touch Apple Mail
+    if (process.env.KOMPASS_DRY_SEND) return { ok: true, count: 0, message: `dry run: would read "${box}" in Apple Mail` };
+    const mails = readMailbox(box, 14);
+    enqueue("fetch_source", { source: "alerts" }, { priority: PRIORITY.userAction, dedupeKey: "fetch:alerts" });
+    return { ok: true, count: mails.length, message: mails.length ? `Found ${mails.length} email${mails.length > 1 ? "s" : ""} from the last 2 weeks – reading the jobs now` : `"${box}" is connected but empty so far – alerts land there once the portals send them` };
+  },
   fetchSources: () => enqueue("fetch_source", { source: "all" }, { priority: PRIORITY.userAction, dedupeKey: "fetch:all" }),
   fetchSource: (a) => enqueue("fetch_source", { source: s(a.source, 40) }, { priority: PRIORITY.userAction, dedupeKey: `fetch:${s(a.source, 40)}` }),
   addManual: async (a) => ({ jobId: await addManualAd({ url: s(a.url, 2000), text: s(a.text, 30000), note: s(a.note, 300), applyNow: Boolean(a.applyNow) }) }),

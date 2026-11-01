@@ -17,6 +17,10 @@ export const ParsedAd = z.object({
 });
 export type ParsedAd = z.infer<typeof ParsedAd>;
 
+export const AlertJobs = z.object({
+  jobs: z.array(z.object({ title: str, company: str.catch(""), location: str.nullable().catch(null), url: str, snippet: str.catch("") })),
+});
+
 const n100 = z.number().min(0).max(100);
 
 export const ScoreItem = z.object({

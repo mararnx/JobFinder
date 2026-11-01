@@ -177,6 +177,27 @@ test("blocking a company hides its open ads", async () => {
   assert.equal(getJob(j.id)!.stage, "excluded");
 });
 
+test("job alerts from Apple Mail become jobs, each email once", async () => {
+  const { runAlerts } = await import("@/lib/pipeline/sources");
+  const { ALERT } = await import("./fixtures/alert-email");
+  setSettings({ alertsMailbox: "Job alerts" });
+  const mails = [{ id: "<m1@linkedin.com>", sender: "LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>", subject: "Product Manager in Berlin", source: ALERT }];
+  assert.match(await runAlerts(() => mails), /2 new of 2 from 1 email/);
+  const j = get<{ title: string; source: string }>("SELECT j.title, p.source FROM jobs j JOIN postings p ON p.job_id = j.id WHERE p.source_id = 'linkedin:4012345678'");
+  assert.equal(j?.source, "alert-linkedin");
+  assert.match(await runAlerts(() => mails), /0 new of 0 from 0 emails/, "same email is not read twice");
+});
+
+test("an ad captured from the browser is added with its full text", async () => {
+  const { addManualAd } = await import("@/lib/pipeline/sources");
+  const html = `<html><head><script type="application/ld+json">{"@type":"JobPosting","title":"Product Owner Checkout","hiringOrganization":{"name":"Zalando SE"},"jobLocation":{"address":{"addressLocality":"Berlin"}},"description":"${"Du gestaltest den Checkout. ".repeat(20)}"}</script></head><body>…</body></html>`;
+  const id = await addManualAd({ url: "https://de.indeed.com/viewjob?jk=1234567890abcdef", html });
+  const j = getJob(id)!;
+  assert.equal(j.company, "Zalando SE");
+  assert.equal(j.manual, 1);
+  assert.match(j.description, /Checkout/);
+});
+
 test("no task failed along the way", () => {
   assert.deepEqual(all("SELECT type, error FROM tasks WHERE status = 'failed'"), []);
 });

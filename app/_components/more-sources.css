@@ -1,0 +1,25 @@
+/* "More sources" setup: alerts, API keys, bookmark button, Chrome portals */
+.more-sources { display: flex; flex-direction: column; gap: 14px; }
+.ms-card { padding: 18px 20px; border-radius: 14px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
+.ms-card h3 { display: flex; align-items: center; gap: 8px; font-size: 15px; margin: 0 0 6px; }
+.ms-card h3 svg { width: 17px; height: 17px; color: var(--accent-fg); }
+.ms-card > p { margin: 0 0 12px; font-size: 13px; }
+.ms-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; font-size: 13.5px; line-height: 1.5; }
+.ms-portals { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.ms-portals a { display: grid; grid-template-columns: auto 1fr; column-gap: 6px; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); font-weight: 600; font-size: 13px; color: var(--text); text-decoration: none; min-width: 150px; }
+.ms-portals a:hover { box-shadow: inset 0 0 0 1px var(--border-strong, var(--text-3)); background: var(--surface); }
+.ms-portals a svg { width: 13px; height: 13px; color: var(--text-3); grid-row: 1; grid-column: 2; justify-self: end; }
+.ms-portals small { grid-column: 1 / -1; font-size: 11px; color: var(--text-3); font-weight: 400; }
+.ms-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.ms-row .input { max-width: 260px; }
+.ms-ok { display: flex; gap: 6px; align-items: center; color: var(--ok); font-size: 12.5px; margin: 8px 0 0; }
+.ms-ok svg { width: 14px; height: 14px; }
+.ms-keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.ms-keys .fld span a { margin-left: 6px; color: var(--accent-fg); font-weight: 400; }
+.bookmarklet { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 13px; cursor: grab; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.ms-chrome { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ms-chrome li { display: grid; grid-template-columns: 160px 1fr; gap: 12px; align-items: center; font-size: 13px; }
+@media (max-width: 860px) {
+  .ms-keys { grid-template-columns: 1fr; }
+  .ms-chrome li { grid-template-columns: 1fr; gap: 2px; }
+}

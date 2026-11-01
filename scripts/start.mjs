@@ -27,9 +27,10 @@ const add = (p) => {
   else hash.update(p).update(fs.readFileSync(p));
 };
 ["app", "lib", "next.config.mjs", "package.json"].forEach(add);
-const STAMP = ".next/kompass-source";
+const DIST = process.env.KOMPASS_DIST_DIR || ".next";
+const STAMP = `${DIST}/kompass-source`;
 const source = hash.digest("hex");
-const built = fs.existsSync(".next/BUILD_ID") && fs.existsSync(".next/required-server-files.json");
+const built = fs.existsSync(`${DIST}/BUILD_ID`) && fs.existsSync(`${DIST}/required-server-files.json`);
 const stamp = fs.existsSync(STAMP) ? fs.readFileSync(STAMP, "utf8") : null;
 if (!dev && (!built || stamp !== source)) {
   console.log(`[kompass] ${built ? "code changed" : "first start"}: building the app (takes a minute)…`);

@@ -16,7 +16,7 @@ const { all, run, setSettings } = await import("@/lib/db");
 const { runArbeitsagentur, runChromePortal, runFeeds, chromePortals } = await import("@/lib/pipeline/sources");
 const { closeBrowser } = await import("@/lib/sources/chrome");
 
-setSettings({ home: city, chromeEnabled: true, chromeDailyPages: 15, onboarded: true });
+setSettings({ home: city, chromeEnabled: true, chromePortals: ["stepstone", "indeed", "xing", "linkedin"], chromeDailyPages: 15, onboarded: true });
 run("INSERT INTO search_profiles(name, keywords, location, radius_km, enabled) VALUES ('Live test', ?, ?, ?, 1)", [JSON.stringify([keyword]), city, Number(radius)]);
 
 console.log(`[live] "${keyword}" in ${city} (+${radius} km)\n`);

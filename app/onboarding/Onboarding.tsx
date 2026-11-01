@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { Settings } from "@/lib/db";
 import { act, toast } from "@/lib/client";
+import { MoreSources } from "../_components/MoreSources";
 import { SettingsForm } from "../_components/SettingsForm";
 import { Logo } from "../_components/ui";
 
 type Ex = { text: string; reason: string };
-const STEPS = ["Welcome", "Documents", "Writing style", "About you", "Search", "Examples", "Done"];
+const STEPS = ["Welcome", "Documents", "Writing style", "About you", "Search", "More sources", "Examples", "Done"];
 
 export function Onboarding({ settings, docs, profiles, claude, style }: { style: string | null; settings: Settings; docs: { id: number; kind: string; name: string; status: string; note: string | null }[]; profiles: { id: number; name: string; keywords: string[]; location: string; radius_km: number }[]; claude: { cli: string | null; mock: boolean } }) {
   const router = useRouter();
@@ -59,7 +60,7 @@ export function Onboarding({ settings, docs, profiles, claude, style }: { style:
     setBusy(true);
     try {
       await act("finishOnboarding", { liked, disliked });
-      setStep(6);
+      setStep(7);
     } catch (e) {
       toast((e as Error).message, undefined, "error");
     } finally {
@@ -178,17 +179,26 @@ export function Onboarding({ settings, docs, profiles, claude, style }: { style:
 
       {step === 5 && (
         <section className="ob-card card wide">
+          <h2>More places to find jobs</h2>
+          <p>JobFinder already searches the Arbeitsagentur and public job feeds. StepStone and Indeed don&apos;t let programs browse them, so here are the ways that do work. Each one is optional – the alerts give you the most.</p>
+          <MoreSources keyword={kw.split(",")[0]?.trim() ?? ""} city={loc} settings={settings} />
+          <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(4)}><ArrowLeft />Back</button><button className="btn primary" onClick={() => setStep(6)}>Next<ArrowRight /></button></div>
+        </section>
+      )}
+
+      {step === 6 && (
+        <section className="ob-card card wide">
           <h2>Teach it your taste</h2>
           <p>Paste a few ads you&apos;d love and a few you&apos;d never take, with a short reason. This gives JobFinder its first preference profile. It keeps learning from every decision after that. Optional, but it makes the first scores much better.</p>
           <h3><ThumbsUp style={{ color: "var(--ok)" }} />Ads you&apos;d love</h3>
           {exList(liked, setLiked, "like")}
           <h3><ThumbsDown style={{ color: "var(--danger)" }} />Ads you&apos;d never take</h3>
           {exList(disliked, setDisliked, "dislike")}
-          <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(4)}><ArrowLeft />Back</button><button className="btn primary lg" onClick={finish} disabled={busy}>{busy ? <><LoaderCircle className="spin-icon" />Writing your profile…</> : <><Sparkles />Finish setup</>}</button></div>
+          <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(5)}><ArrowLeft />Back</button><button className="btn primary lg" onClick={finish} disabled={busy}>{busy ? <><LoaderCircle className="spin-icon" />Writing your profile…</> : <><Sparkles />Finish setup</>}</button></div>
         </section>
       )}
 
-      {step === 6 && (
+      {step === 7 && (
         <section className="ob-card card">
           <div className="brand-mark big"><Check /></div>
           <h1 className="serif">You&apos;re set.</h1>

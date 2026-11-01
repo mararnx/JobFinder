@@ -3,6 +3,7 @@
  * Used when the Claude Code CLI is not installed (development, tests) or claudeMode = "mock".
  */
 import { cleanTitle, detectLanguage, extractEmail, similarity, tokens, truncate } from "@/lib/text";
+import { guessAlertJobs } from "@/lib/sources/alerts";
 
 type Any = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -24,6 +25,8 @@ export async function mockResponse(name: string, input: unknown): Promise<unknow
   await delay();
   const i = (input ?? {}) as Any;
   switch (name) {
+    case "parse-alert":
+      return { jobs: guessAlertJobs(i.html ?? "", i.sender ?? "") };
     case "parse-ad": {
       const text: string = i.text ?? "";
       const ls = lines(text);

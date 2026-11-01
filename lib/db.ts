@@ -168,7 +168,12 @@ export type Settings = {
   claudeMode: "auto" | "real" | "mock";
   claudeParallel: number;
   chromeEnabled: boolean;
+  chromePortals: string[]; // which portals the Chrome search visits; Indeed and StepStone block it, so they start off
   chromeDailyPages: number;
+  adzunaAppId: string; // free keys from developer.adzuna.com
+  adzunaAppKey: string;
+  joobleKey: string; // free key from jooble.org/api/about
+  alertsMailbox: string; // Apple Mail mailbox that collects portal job-alert emails ("" = off)
   onboarded: boolean;
 };
 
@@ -192,7 +197,12 @@ export const DEFAULT_SETTINGS: Settings = {
   claudeMode: "auto",
   claudeParallel: 1,
   chromeEnabled: false,
+  chromePortals: ["xing", "linkedin"],
   chromeDailyPages: 40,
+  adzunaAppId: "",
+  adzunaAppKey: "",
+  joobleKey: "",
+  alertsMailbox: "",
   onboarded: false,
 };
 

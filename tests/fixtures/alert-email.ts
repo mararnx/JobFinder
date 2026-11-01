@@ -1,0 +1,21 @@
+// a LinkedIn-style alert: multipart, quoted-printable HTML with a soft line break and an umlaut
+export const ALERT = [
+  "From: LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>",
+  "Subject: =?UTF-8?Q?Product_Manager_in_Berlin?=",
+  'Content-Type: multipart/alternative; boundary="b1"',
+  "",
+  "--b1",
+  "Content-Type: text/plain; charset=UTF-8",
+  "",
+  "Product Manager - Superchat - Berlin",
+  "--b1",
+  "Content-Type: text/html; charset=UTF-8",
+  "Content-Transfer-Encoding: quoted-printable",
+  "",
+  '<a href=3D"https://www.linkedin.com/comm/jobs/view/4012345678/?trackingId=3Dabc&amp;refId=3Dx">Product Manager</a> Superchat =C2=B7 Berlin',
+  '<a href=3D"https://www.linkedin.com/comm/jobs/view/4012345679/?trackingId=3Ddef">Senior Product Owner =E2=80=93 Pay=',
+  'ments</a> M=C3=BCller GmbH',
+  '<a href=3D"https://www.linkedin.com/comm/jobs/search?keywords=3Dpm">Alle Jobs ansehen</a>',
+  '<a href=3D"https://www.linkedin.com/comm/psettings/email-unsubscribe">Abmelden</a>',
+  "--b1--",
+].join("\r\n");

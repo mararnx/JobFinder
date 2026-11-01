@@ -1,10 +1,10 @@
 const UA = "JobFinder/0.1 (personal job search tool; local)";
 
-export async function fetchText(url: string, opts: { headers?: Record<string, string>; timeoutMs?: number } = {}): Promise<{ status: number; text: string; finalUrl: string }> {
+export async function fetchText(url: string, opts: { headers?: Record<string, string>; timeoutMs?: number; method?: string; body?: string } = {}): Promise<{ status: number; text: string; finalUrl: string }> {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), opts.timeoutMs ?? 20_000);
   try {
-    const r = await fetch(url, { headers: { "User-Agent": UA, Accept: "*/*", ...opts.headers }, signal: ctl.signal, redirect: "follow" });
+    const r = await fetch(url, { method: opts.method ?? "GET", body: opts.body, headers: { "User-Agent": UA, Accept: "*/*", ...opts.headers }, signal: ctl.signal, redirect: "follow" });
     return { status: r.status, text: await r.text(), finalUrl: r.url };
   } finally {
     clearTimeout(timer);

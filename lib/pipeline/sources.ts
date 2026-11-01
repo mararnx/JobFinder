@@ -1,15 +1,17 @@
 import { all, get, getSettings, logEvent, run } from "@/lib/db";
 import { claude, renderPrompt } from "@/lib/claude/runner";
-import { ParsedAd } from "@/lib/claude/schemas";
+import { AlertJobs, ParsedAd } from "@/lib/claude/schemas";
 import { addSignal, ingest, type RawJob, setStage } from "@/lib/jobs";
 import { notify } from "@/lib/notify";
 import { searchKeywords, searchProfiles } from "@/lib/profile";
-import { enqueue, PRIORITY } from "@/lib/queue";
+import { enqueue, meta, PRIORITY, setMeta } from "@/lib/queue";
 import { normCompany, stripHtml, truncate } from "@/lib/text";
 import { fetchArbeitsagentur } from "@/lib/sources/arbeitsagentur";
 import { detectAts, fetchAts } from "@/lib/sources/ats";
 import { FrictionError, readPage, runCareersPage, runPortal } from "@/lib/sources/chrome";
 import { jobPostingFromHtml, PORTALS, type Portal } from "@/lib/sources/extract";
+import { alertJobId, mailBody, mailLinks, portalOf, readMailbox, type AlertMail } from "@/lib/sources/alerts";
+import { fetchAdzuna, fetchJooble } from "@/lib/sources/apis";
 import { FEED_FETCHERS, FEEDS, type Feed } from "@/lib/sources/feeds";
 import { fetchText } from "@/lib/sources/http";
 
@@ -67,6 +69,76 @@ export async function runArbeitsagentur(): Promise<string> {
   }
 }
 
+/** Adzuna and Jooble, when the job seeker has added their free keys. */
+export async function runApis(): Promise<string> {
+  const s = getSettings();
+  const profiles = searchProfiles().filter((p) => p.enabled);
+  if (!profiles.length) return "No search profile yet";
+  const apis = [
+    s.adzunaAppId && s.adzunaAppKey ? (["adzuna", (q: Parameters<typeof fetchAdzuna>[2]) => fetchAdzuna(s.adzunaAppId, s.adzunaAppKey, q)] as const) : null,
+    s.joobleKey ? (["jooble", (q: Parameters<typeof fetchJooble>[1]) => fetchJooble(s.joobleKey, q)] as const) : null,
+  ].filter((x) => x !== null);
+  if (!apis.length) return "No API keys";
+  const firstRun = (src: string) => !get("SELECT 1 FROM source_runs WHERE source = ? AND status = 'ok'", [src]);
+  const parts: string[] = [];
+  for (const [src, fetchFn] of apis) {
+    const id = startRun(src);
+    let found = 0, added = 0;
+    try {
+      for (const p of profiles) for (const kw of p.keywords) {
+        const raws = await fetchFn({ keyword: kw, location: p.location, radiusKm: p.radius_km, days: firstRun(src) ? 28 : 7, isKnown: known(src) });
+        found += raws.length;
+        added += ingestAll(raws);
+      }
+      endRun(id, "ok", found, added);
+      parts.push(`${src} ${added}/${found}`);
+    } catch (e) {
+      endRun(id, "error", found, added, e instanceof Error ? e.message : String(e));
+      parts.push(`${src} failed`);
+    }
+  }
+  return `APIs: ${parts.join(" · ")}`;
+}
+
+/** Jobs from portal alert emails in the Apple Mail mailbox chosen in Settings. */
+export async function runAlerts(readFn: (box: string, days: number) => AlertMail[] = readMailbox): Promise<string> {
+  const box = getSettings().alertsMailbox.trim();
+  if (!box) return "Job alerts off";
+  const id = startRun("alerts");
+  const seen = new Set<string>(JSON.parse(meta("alertsSeen") ?? "[]") as string[]);
+  let found = 0, added = 0, mails = 0;
+  try {
+    for (const m of readFn(box, seen.size ? 3 : 7)) {
+      if (seen.has(m.id)) continue;
+      mails++;
+      const { html, text } = mailBody(m.source);
+      const links = html ? mailLinks(html) : [];
+      const r = await claude({
+        name: "parse-alert", model: "haiku", schema: AlertJobs,
+        prompt: renderPrompt("parse-alert", { sender: m.sender, subject: m.subject, links: links.slice(0, 200).map((l) => `${l.text} → ${l.url}`).join("\n") || "(none)", text: truncate(text, 12000) }),
+        mockInput: { html: html ?? "", sender: m.sender },
+      });
+      const raws: RawJob[] = r.jobs.filter((j) => j.title && /^https?:/.test(j.url)).map((j) => {
+        const portal = portalOf(m.sender, j.url);
+        return {
+          source: `alert-${portal}`, sourceId: alertJobId(j.url, portal), url: j.url, title: j.title, company: j.company || "Unknown company", location: j.location,
+          description: [j.snippet, `From a ${portal === "other" ? "" : `${PORTALS[portal].name} `}job alert: ${m.subject}`].filter(Boolean).join("\n\n"),
+        };
+      }); // no keyword filter: the alerts are searches she set up herself
+      found += raws.length;
+      added += ingestAll(raws);
+      seen.add(m.id);
+    }
+    setMeta("alertsSeen", JSON.stringify([...seen].slice(-1000)));
+    endRun(id, "ok", found, added, `${mails} new email${mails === 1 ? "" : "s"}`);
+    return `Job alerts: ${added} new of ${found} from ${mails} email${mails === 1 ? "" : "s"}`;
+  } catch (e) {
+    setMeta("alertsSeen", JSON.stringify([...seen].slice(-1000)));
+    endRun(id, "error", found, added, e instanceof Error ? e.message : String(e));
+    throw e;
+  }
+}
+
 /** Arbeitnow, Berlin Startup Jobs and service.bund.de, filtered by every enabled search profile. */
 export async function runFeeds(): Promise<string> {
   const profiles = searchProfiles().filter((p) => p.enabled);
@@ -118,12 +190,14 @@ export async function runWatchlist(): Promise<string> {
 export async function runChromePortal(portal: Portal): Promise<string> {
   const s = getSettings();
   if (!s.chromeEnabled) return "Chrome search is off";
+  // LinkedIn rate-limits quickly: one gentle run a day
+  if (portal === "linkedin" && get("SELECT 1 FROM source_runs WHERE source = 'linkedin' AND started_at > datetime('now', 'start of day')")) return "LinkedIn: already searched today";
   const id = startRun(portal);
   let found = 0, added = 0;
   try {
     for (const p of searchProfiles().filter((x) => x.enabled)) {
       for (const kw of p.keywords) {
-        const raws = await runPortal({ portal, keyword: kw, location: p.location, radiusKm: p.radius_km, budget: s.chromeDailyPages, isKnown: known(portal), maxDetails: 10 }, (h, u) => parsePageWithClaude(h, u, portal));
+        const raws = await runPortal({ portal, keyword: kw, location: p.location, radiusKm: p.radius_km, budget: s.chromeDailyPages, isKnown: known(portal), maxDetails: portal === "linkedin" ? 5 : 10 }, (h, u) => parsePageWithClaude(h, u, portal));
         found += raws.length;
         added += ingestAll(raws);
       }
@@ -143,10 +217,12 @@ export async function runChromePortal(portal: Portal): Promise<string> {
 }
 
 /** A job ad the job seeker found themselves: link and/or pasted text. */
-export async function addManualAd(o: { url?: string; text?: string; note?: string; applyNow?: boolean }): Promise<number> {
+export async function addManualAd(o: { url?: string; text?: string; html?: string; note?: string; applyNow?: boolean }): Promise<number> {
   let raw: RawJob | null = null;
   const url = o.url?.trim() || null;
-  if (url) {
+  // the page as the job seeker saw it in their own browser ("Add to JobFinder" button): no fetching, nothing to block
+  if (url && o.html) raw = jobPostingFromHtml(o.html, url, "manual") ?? (await parsePageWithClaude(o.html, url, "manual"));
+  if (url && !raw) {
     try {
       const r = await fetchText(url, { timeoutMs: 20_000 });
       if (r.status === 200) raw = jobPostingFromHtml(r.text, r.finalUrl, "manual") ?? (stripHtml(r.text).length > 600 ? await parsePageWithClaude(r.text, r.finalUrl, "manual") : null);
@@ -175,8 +251,10 @@ export async function addManualAd(o: { url?: string; text?: string; note?: strin
   return res.jobId;
 }
 
+/** Portals the Chrome search visits (Settings → chromePortals). */
 export function chromePortals(): Portal[] {
-  return Object.keys(PORTALS) as Portal[];
+  const on = getSettings().chromePortals;
+  return (Object.keys(PORTALS) as Portal[]).filter((p) => on.includes(p));
 }
 
 export function watchlistAdd(name: string, careersUrl: string) {

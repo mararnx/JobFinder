@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { act, toast } from "@/lib/client";
 import { timeAgo } from "@/lib/ui";
+import { MoreSources, type MoreSourcesProps } from "../_components/MoreSources";
 import { Tile } from "../_components/ui";
 
 type Profile = { id: number; name: string; keywords: string[]; location: string; radius_km: number; enabled: number };
@@ -14,6 +15,7 @@ type Source = { key: string; name: string; kind: "api" | "chrome"; detail: strin
 export function SourcesClient(p: {
   profiles: Profile[]; sources: Source[]; watchlist: { id: number; name: string; ats_type: string | null; careers_url: string | null; jobs: number }[];
   blocked: { id: number; name: string }[]; runs: (Run & { source: string })[]; failed: { id: number; type: string; error: string | null; finished_at: string | null; payload: string }[];
+  more: MoreSourcesProps; chromePortals: string[];
   chromeEnabled: boolean; chromeDailyPages: number; claude: { mock: boolean; cli: string | null; mode: string; pausedUntil: string | null };
 }) {
   const router = useRouter();
@@ -86,7 +88,7 @@ export function SourcesClient(p: {
           </div>
           <div className="source-grid">
             {p.sources.map((s) => {
-              const off = s.kind === "chrome" && !p.chromeEnabled;
+              const off = (s.kind === "chrome" && (!p.chromeEnabled || !p.chromePortals.includes(s.key))) || s.detail.startsWith("Not set up");
               return (
                 <div key={s.key} className={`source${off ? " off" : ""}`}>
                   <div className="row">{s.kind === "chrome" ? <AppWindow /> : s.key === "watchlist" ? <Building2 /> : <Globe />}<b>{s.name}</b>
@@ -101,6 +103,11 @@ export function SourcesClient(p: {
             })}
           </div>
           <p className="hint">Chrome search uses its own browser profile at a slow, human pace (max {p.chromeDailyPages} pages per portal per day). It stops for the day on any CAPTCHA, bot check or login wall – it never tries to get around them. To use logged-in portals, run <code>npm run browser</code> once and log in there yourself.</p>
+        </div>
+
+        <div className="card col-12" id="more-sources">
+          <div className="card-h"><Globe />Set up more sources <span className="muted faint">· job alerts, API keys, the browser button, Chrome portals</span></div>
+          <MoreSources {...p.more} />
         </div>
 
         <div className="card col-7" id="watchlist">
