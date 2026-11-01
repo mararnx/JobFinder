@@ -50,11 +50,12 @@ export function Board({ cards, columns, closed }: { cards: BoardCard[]; columns:
               className={`col${over === col.key ? " over" : ""}`}
               aria-label={col.name}
               onDragOver={(e) => { e.preventDefault(); setOver(col.key); }}
-              onDragLeave={() => setOver(null)}
+              onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(null); }}
               onDrop={(e) => {
                 e.preventDefault();
                 setOver(null);
-                const c = cards.find((x) => x.id === drag);
+                const id = drag ?? Number(e.dataTransfer.getData("text/plain"));
+                const c = cards.find((x) => x.id === id);
                 if (c) void move(c, col.key);
               }}
             >
@@ -67,7 +68,11 @@ export function Board({ cards, columns, closed }: { cards: BoardCard[]; columns:
                   draggable
                   tabIndex={0}
                   aria-label={`${c.title}, ${c.company}. Press [ or ] to move.`}
-                  onDragStart={(e) => { setDrag(c.id); e.dataTransfer.effectAllowed = "move"; }}
+                  onDragStart={(e) => {
+                    setDrag(c.id);
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData("text/plain", String(c.id)); // Firefox starts no drag without data
+                  }}
                   onDragEnd={() => setDrag(null)}
                   onClick={() => openJob(c.id)}
                   onKeyDown={(e) => {

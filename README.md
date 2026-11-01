@@ -12,6 +12,7 @@ npm install && npx playwright install chromium && npm start
 ```bash
 npm test
 ```
+`npm run test:ui` clicks through every screen in a real browser against the production build, on a throwaway copy of the demo data.
 
 ## Demo
 

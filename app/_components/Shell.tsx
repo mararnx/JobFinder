@@ -4,6 +4,7 @@ import { ChartNoAxesCombined, Compass, FolderOpen, Kanban, Keyboard, Link as Lin
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRestoreFocus } from "./useRestoreFocus";
 import { act, openAddAd, openJob, toast, type ToastMsg } from "@/lib/client";
 import { JobDrawer } from "./JobDrawer";
 
@@ -84,6 +85,11 @@ export function Shell({ status, children }: { status: ShellStatus; children: Rea
     }, 6000);
     return () => clearInterval(t);
   }, [router]);
+
+  // marks the page interactive (the UI test waits for it)
+  useEffect(() => {
+    document.documentElement.dataset.ready = "1";
+  }, []);
 
   // keyboard
   useEffect(() => {
@@ -205,6 +211,7 @@ export function Shell({ status, children }: { status: ShellStatus; children: Rea
 type Cmd = { group: string; icon: React.ComponentType; label: string; keys?: string; run: () => void };
 
 function Palette({ open, onClose, actions }: { open: boolean; onClose: () => void; actions: { fetchSources: () => void; toggleTheme: () => void } }) {
+  useRestoreFocus(open);
   const router = useRouter();
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
@@ -288,6 +295,7 @@ function Palette({ open, onClose, actions }: { open: boolean; onClose: () => voi
 /* ── Add your own job ad ───────────────────────────────── */
 
 function AddAdDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  useRestoreFocus(open);
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");

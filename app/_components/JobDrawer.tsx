@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { act, toast } from "@/lib/client";
 import { fmtSalary, timeAgo } from "@/lib/ui";
 import { Markdown, Ring, Tile } from "./ui";
+import { useRestoreFocus } from "./useRestoreFocus";
 
 type JobData = {
   job: {
@@ -83,6 +84,7 @@ export function JobDrawer() {
   };
 
   const open = id !== null;
+  useRestoreFocus(open);
   const j = data?.job;
   const stage = j?.stage ?? "";
   const close = () => setId(null);

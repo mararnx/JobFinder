@@ -13,13 +13,17 @@ const newest = (p) => {
   if (!st.isDirectory()) return st.mtimeMs;
   return Math.max(st.mtimeMs, ...fs.readdirSync(p).map((f) => newest(`${p}/${f}`)));
 };
-const built = fs.statSync(".next/BUILD_ID", { throwIfNoEntry: false })?.mtimeMs ?? 0;
-const sources = Math.max(...["app", "lib", "next.config.mjs", "package.json"].map(newest));
-if (!dev && (!built || sources > built || !fs.existsSync(".next/required-server-files.json"))) {
+// fingerprint of the code the build was made from (BUILD_ID's own mtime is not reliable)
+const STAMP = ".next/kompass-source";
+const source = String(Math.max(...["app", "lib", "next.config.mjs", "package.json"].map(newest)));
+const built = fs.existsSync(".next/BUILD_ID") && fs.existsSync(".next/required-server-files.json");
+const stamp = fs.existsSync(STAMP) ? fs.readFileSync(STAMP, "utf8") : null;
+if (!dev && (!built || stamp !== source)) {
   console.log(`[kompass] ${built ? "code changed" : "first start"}: building the app (takes a minute)…`);
   const b = spawn(bin("next"), ["build"], { stdio: "inherit" });
   const code = await new Promise((r) => b.on("close", r));
   if (code !== 0) process.exit(code);
+  fs.writeFileSync(STAMP, source);
 }
 
 const procs = [
