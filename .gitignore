@@ -7,3 +7,4 @@ data/
 next-env.d.ts
 tsconfig.tsbuildinfo
 data-dev/
+data-demo/

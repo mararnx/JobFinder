@@ -33,7 +33,11 @@ export async function mockResponse(name: string, input: unknown): Promise<unknow
         const host = new URL(i.url).hostname.replace(/^(www|karriere|jobs|careers|career|join)\./, "");
         company = host.split(".").slice(-2, -1)[0] ?? company;
         company = company.charAt(0).toUpperCase() + company.slice(1);
-      } catch { /* no url */ }
+      } catch {
+        // pasted text: a short line with a legal form ("Marlin Mobility GmbH, Hamburg") names the company
+        const legal = ls.slice(0, 5).find((l) => l.length < 80 && /\b(GmbH|AG|SE|KG|UG|Inc|Ltd|LLC)\b/.test(l));
+        if (legal) company = legal.split(/[,·|–]/)[0].trim();
+      }
       const loc = text.match(/\b(Berlin|Hamburg|München|Munich|Köln|Cologne|Frankfurt|Stuttgart|Düsseldorf|Leipzig|Hannover|Bremen|Dresden|Nürnberg|Remote)\b/);
       const sal = text.match(/\d{2,3}[.,]?\d{0,3}\s*(?:k|€|EUR)[^\n]{0,30}/);
       return {

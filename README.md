@@ -12,3 +12,11 @@ npm install && npx playwright install chromium && npm start
 ```bash
 npm test
 ```
+
+## Demo
+
+`npm run demo` starts Kompass on a separate `data-demo/` folder filled with a fictional job seeker and ~30 fictional ads spread over every stage (matches to triage, drafts to review, applications, interviews, a final round). AI is simulated and nothing is sent; your real `data/` is untouched. `npm run demo:seed` rebuilds the demo data from scratch.
+
+```bash
+npm run demo
+```

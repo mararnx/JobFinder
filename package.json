@@ -16,7 +16,9 @@
     "test": "tsx --test tests/*.test.ts",
     "setup:launchd": "node scripts/launchd.mjs install",
     "remove:launchd": "node scripts/launchd.mjs uninstall",
-    "browser": "node scripts/browser.mjs"
+    "browser": "node scripts/browser.mjs",
+    "demo": "tsx scripts/demo.ts && env KOMPASS_DATA=./data-demo KOMPASS_CLAUDE=mock KOMPASS_DRY_SEND=1 KOMPASS_NO_NOTIFY=1 node scripts/start.mjs",
+    "demo:seed": "tsx scripts/demo.ts --reset"
   },
   "dependencies": {
     "lucide-react": "1.66.0",
