@@ -56,6 +56,7 @@ export default function Today() {
   const goalPct = Math.min(100, Math.round((sentWeek / Math.max(1, s.weeklyGoal)) * 100));
 
   const top = get<JobRow>(`${JOB_SELECT} WHERE j.stage = 'discover' ORDER BY j.dream DESC, j.score DESC LIMIT 1`);
+  const nextUp = top ? all<JobRow>(`${JOB_SELECT} WHERE j.stage = 'discover' AND j.id != ? ORDER BY j.dream DESC, j.score DESC LIMIT 3`, [top.id]) : [];
   const topSalary = top ? fmtSalary(top.salary_min, top.salary_max, top.salary_text) : "n/a";
   const topReasons = top?.score_json ? (JSON.parse(top.score_json) as { reasons_for: string[]; reasons_against: string[] }) : null;
   const feed = all<{ type: string; text: string; at: string; job_id: number | null }>("SELECT type, text, at, job_id FROM events WHERE type IN ('worker','draft','profile','quota','source','documents','approved','prep') ORDER BY id DESC LIMIT 6");
@@ -132,6 +133,18 @@ export default function Today() {
                   {topReasons.reasons_for.slice(0, 2).map((r) => <li key={r}><Check style={{ color: "var(--ok)" }} />{r}</li>)}
                   {topReasons.reasons_against.slice(0, 1).map((r) => <li key={r}><span style={{ color: "var(--dream)", width: 14 }}>–</span>{r}</li>)}
                 </ul>
+              )}
+              {nextUp.length > 0 && (
+                <div className="tm-next">
+                  <div className="tm-next-h">Also waiting</div>
+                  {nextUp.map((j) => (
+                    <JobLink key={j.id} id={j.id} className="tm-next-row">
+                      <Tile name={j.company} small />
+                      <span className="grow"><span className="t">{j.title}</span><span className="c">{j.company}</span></span>
+                      <Ring score={j.score} size={28} stroke={2.5} />
+                    </JobLink>
+                  ))}
+                </div>
               )}
               <div className="tm-actions"><Link className="btn primary" href="/discover"><Send />Decide in Discover</Link><JobLink id={top.id} className="btn ghost">Details</JobLink></div>
             </div>

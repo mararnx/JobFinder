@@ -155,6 +155,7 @@ export function DiscoverClient({ cards, later }: { cards: Card[]; later: boolean
               </div>
             )}
             <p className="excerpt">{sel.excerpt}{sel.excerpt.length >= 420 ? "…" : ""} <button className="link" onClick={() => openJob(sel.id)}>Full ad</button></p>
+            <div className="decide">
             <div className="actions">
               <button className="btn primary" onClick={() => void decide("apply")}><Send />Apply <kbd>A</kbd></button>
               <button className={`btn dream${dream ? " on" : ""}`} aria-pressed={dream} onClick={() => void toggleDream()}><Star />Dream job <kbd>D</kbd></button>
@@ -168,6 +169,7 @@ export function DiscoverClient({ cards, later }: { cards: Card[]; later: boolean
                 {REASONS.map((r, i) => <button key={r} className="chip" onClick={() => void decide("reject", r)}><kbd>{i + 1}</kbd>{r}</button>)}
                 <button className="chip" onClick={() => void decide("reject")}>Just no</button>
               </div>
+            </div>
             </div>
           </article>
         ) : (
