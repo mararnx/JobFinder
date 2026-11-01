@@ -1,21 +1,34 @@
 // Starts the web app and the background worker together. `node scripts/start.mjs dev` for development.
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
+import net from "node:net";
 
 const dev = process.argv[2] === "dev";
 const port = process.env.PORT ?? "4317";
 const bin = (n) => `node_modules/.bin/${n}`;
 
-// newest change to anything that ends up in the build
-const newest = (p) => {
+// another Kompass (or anything else) on the port: say so before building, so a running server is never rebuilt underneath
+const busy = await new Promise((r) => {
+  const sock = net.connect(Number(port), "127.0.0.1", () => { sock.destroy(); r(true); });
+  sock.on("error", () => r(false));
+});
+if (busy) {
+  console.log(`[kompass] already running at http://localhost:${port} – open that, or stop the other one first (Ctrl+C in its terminal).`);
+  process.exit(0);
+}
+
+// fingerprint of the code the build was made from: file contents, since editors touch mtimes without changing anything
+const hash = createHash("sha1");
+const add = (p) => {
   const st = fs.statSync(p, { throwIfNoEntry: false });
-  if (!st) return 0;
-  if (!st.isDirectory()) return st.mtimeMs;
-  return Math.max(st.mtimeMs, ...fs.readdirSync(p).map((f) => newest(`${p}/${f}`)));
+  if (!st) return;
+  if (st.isDirectory()) for (const f of fs.readdirSync(p).sort()) add(`${p}/${f}`);
+  else hash.update(p).update(fs.readFileSync(p));
 };
-// fingerprint of the code the build was made from (BUILD_ID's own mtime is not reliable)
+["app", "lib", "next.config.mjs", "package.json"].forEach(add);
 const STAMP = ".next/kompass-source";
-const source = String(Math.max(...["app", "lib", "next.config.mjs", "package.json"].map(newest)));
+const source = hash.digest("hex");
 const built = fs.existsSync(".next/BUILD_ID") && fs.existsSync(".next/required-server-files.json");
 const stamp = fs.existsSync(STAMP) ? fs.readFileSync(STAMP, "utf8") : null;
 if (!dev && (!built || stamp !== source)) {
