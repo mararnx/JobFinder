@@ -244,6 +244,15 @@ export function ReviewClient({ items, initialJob, profile }: { items: ReviewItem
     item.hasPdf ? { tone: "ok", title: "PDF with letter, CV and attachments ready" } : { tone: "bad", title: "PDF missing", sub: "Save the letter once to rebuild it" },
   ];
   const blocking = checks.filter((c) => c.tone === "bad").length;
+  // only what needs attention is spelled out; passed checks fold into one line
+  const passed = checks.filter((c) => c.tone === "ok");
+  const checkRow = (c: CheckItem) => (
+    <li key={c.title} className={c.tone}>
+      {c.tone === "ok" ? <CircleCheck /> : c.tone === "warn" ? <CircleAlert /> : <CircleX />}
+      <div>{c.title}{c.sub && <small>{c.sub}</small>}</div>
+      {c.action && <button className="link" onClick={c.action.run}>{c.action.label}</button>}
+    </li>
+  );
 
   return (
     <div className="review">
@@ -266,13 +275,15 @@ export function ReviewClient({ items, initialJob, profile }: { items: ReviewItem
         </div>
         <h4>Before you send</h4>
         <ul className="checklist" aria-label="Checklist">
-          {checks.map((c) => (
-            <li key={c.title} className={c.tone}>
-              {c.tone === "ok" ? <CircleCheck /> : c.tone === "warn" ? <CircleAlert /> : <CircleX />}
-              <div>{c.title}{c.sub && <small>{c.sub}</small>}</div>
-              {c.action && <button className="link" onClick={c.action.run}>{c.action.label}</button>}
+          {checks.filter((c) => c.tone !== "ok").map(checkRow)}
+          {passed.length > 0 && (
+            <li className="ok passed">
+              <details>
+                <summary><CircleCheck />{passed.length === checks.length ? "All checks passed" : `${passed.length} more check${passed.length > 1 ? "s" : ""} passed`}</summary>
+                <ul className="checklist">{passed.map(checkRow)}</ul>
+              </details>
             </li>
-          ))}
+          )}
         </ul>
         {unsupported.length > 0 && (
           <>

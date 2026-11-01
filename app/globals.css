@@ -345,7 +345,7 @@ a.stat:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px var(--bo
 
 /* ── Pipeline ─────────────────────────────────────── */
 .board-wrap { height: 100%; overflow: auto; padding: 20px 28px 28px; }
-.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(208px, 1fr); gap: 14px; min-height: 100%; }
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(176px, 1fr); gap: 12px; min-height: 100%; }
 .col { display: flex; flex-direction: column; gap: 10px; border-radius: var(--r-card); padding: 10px; background: color-mix(in srgb, var(--surface-2) 55%, transparent); min-height: 300px; transition: background .15s, box-shadow .15s; }
 .col.over { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent-fg); }
 .col-h { display: flex; align-items: center; gap: 8px; padding: 4px 6px 6px; font-weight: 600; font-size: 13px; }
@@ -823,3 +823,11 @@ code { font: 12px var(--mono); background: var(--surface-2); padding: 1px 5px; b
 .keys-grid dl > div { display: flex; align-items: center; gap: 12px; padding: 5px 0; font-size: 13px; }
 .keys-grid dt { display: flex; gap: 4px; min-width: 64px; }
 .keys-grid dd { margin: 0; color: var(--text-2); }
+.checklist li.passed { display: block; padding: 0; }
+.checklist li.passed summary { display: flex; gap: 10px; align-items: center; padding: 9px 12px; cursor: pointer; color: var(--text-2); list-style: none; }
+.checklist li.passed summary::-webkit-details-marker { display: none; }
+.checklist li.passed summary::after { content: "Show"; margin-left: auto; font-size: 12px; color: var(--accent-fg); font-weight: 500; }
+.checklist li.passed details[open] summary::after { content: "Hide"; }
+.checklist li.passed summary svg { color: var(--ok); }
+.checklist li.passed .checklist { padding: 0 6px 6px; }
+.checklist li.passed .checklist li { box-shadow: none; background: var(--surface-2); }
