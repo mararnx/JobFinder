@@ -51,6 +51,7 @@
         "KOMPASS_CLAUDE=mock",
         "KOMPASS_DRY_SEND=1",
         "KOMPASS_NO_NOTIFY=1",
+        "KOMPASS_DIST_DIR=.next-test",
         "PORT=4400",
         "node",
         "scripts/start.mjs"
