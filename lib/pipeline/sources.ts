@@ -10,6 +10,7 @@ import { fetchArbeitsagentur } from "@/lib/sources/arbeitsagentur";
 import { detectAts, fetchAts } from "@/lib/sources/ats";
 import { FrictionError, readPage, runCareersPage, runPortal } from "@/lib/sources/chrome";
 import { jobPostingFromHtml, PORTALS, type Portal } from "@/lib/sources/extract";
+import { FEED_FETCHERS, FEEDS, type Feed } from "@/lib/sources/feeds";
 import { fetchText } from "@/lib/sources/http";
 
 const known = (source: string) => (id: string) => !!get("SELECT 1 FROM postings WHERE source = ? AND source_id = ?", [source, id]);
@@ -64,6 +65,30 @@ export async function runArbeitsagentur(): Promise<string> {
     endRun(id, "error", found, added, String(e instanceof Error ? e.message : e));
     throw e;
   }
+}
+
+/** Arbeitnow, Berlin Startup Jobs and service.bund.de, filtered by every enabled search profile. */
+export async function runFeeds(): Promise<string> {
+  const profiles = searchProfiles().filter((p) => p.enabled);
+  if (!profiles.length) return "No search profile yet";
+  const parts: string[] = [];
+  for (const feed of Object.keys(FEEDS) as Feed[]) {
+    const id = startRun(feed);
+    let found = 0, added = 0;
+    try {
+      for (const p of profiles) {
+        const raws = await FEED_FETCHERS[feed]({ keywords: p.keywords, location: p.location, isKnown: (src, sid) => known(src)(sid) });
+        found += raws.length;
+        added += ingestAll(raws);
+      }
+      endRun(id, "ok", found, added);
+      parts.push(`${FEEDS[feed]} ${added}/${found}`);
+    } catch (e) {
+      endRun(id, "error", found, added, e instanceof Error ? e.message : String(e));
+      parts.push(`${FEEDS[feed]} failed`);
+    }
+  }
+  return `Feeds: ${parts.join(" · ")}`;
 }
 
 export async function runWatchlist(): Promise<string> {

@@ -108,9 +108,15 @@ export function listingLinks(html: string, baseUrl: string, portal: Portal): { i
 /** Detects pages that ask for human verification or a login. The runner stops on these and never tries to get around them. */
 export function frictionReason(html: string, url: string): string | null {
   const t = html.slice(0, 200_000).toLowerCase();
-  if (/captcha|hcaptcha|recaptcha|cf-challenge|challenge-platform|px-captcha|datadome/.test(t)) return "Human verification (CAPTCHA)";
-  if (/unusual traffic|ungewöhnlichen datenverkehr|are you a robot|bist du ein mensch|sicherheitsüberprüfung|access denied|zugriff verweigert/.test(t)) return "Bot check / access denied";
-  if (/linkedin\.com\/(authwall|login|checkpoint)/.test(url) || /\/login\b|signin|anmelden/.test(new URL(url).pathname)) return "Login required";
+  const u = new URL(url);
+  // login walls first: login pages embed captcha scripts too, which would mislabel them
+  if (/linkedin\.com\/(authwall|login|checkpoint|signup)/.test(url) || /\/login\b|signin|anmelden/.test(u.pathname)) return "Login required";
+  // LinkedIn shows logged-out visitors its sign-up page, sometimes under the jobs URL
+  if (/(^|\.)linkedin\.com$/.test(u.hostname) && (!u.pathname.startsWith("/jobs") || (!/base-search-card|jobs-search__results|job-search-card/.test(t) && /mitglied werden|join now|einloggen|sign in/.test(t)))) return "Login required";
+  if (/anfrage blockiert|sie wurden gesperrt|request blocked|you have been blocked|access denied|zugriff verweigert/.test(t)) return "Blocked by the site";
+  // a visible challenge, not just captcha scripts or config flags (LinkedIn's normal pages mention "recaptcha" everywhere)
+  if (/class="[^"]*\b(g-recaptcha|h-captcha)\b|recaptcha\/api2\/(anchor|bframe)|hcaptcha\.com\/captcha|cf-challenge|challenge-platform|px-captcha|captcha-delivery\.com/.test(t)) return "Human verification (CAPTCHA)";
+  if (/unusual traffic|ungewöhnlichen datenverkehr|are you a robot|bist du ein mensch|sicherheitsüberprüfung/.test(t)) return "Bot check";
   return null;
 }
 

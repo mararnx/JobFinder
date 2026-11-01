@@ -36,6 +36,26 @@ test("friction detection stops on CAPTCHAs and logins", () => {
   assert.match(frictionReason("<p>We detected unusual traffic</p>", "https://de.indeed.com/jobs")!, /Bot check/);
   assert.match(frictionReason("<html></html>", "https://www.linkedin.com/authwall?x")!, /Login/);
   assert.equal(frictionReason("<html><body>Jobs</body></html>", "https://www.stepstone.de/jobs/po"), null);
+  // seen live: LinkedIn sends logged-out searches to its home page, which loads captcha scripts
+  assert.match(frictionReason('<script src="https://www.google.com/recaptcha/api.js"></script>', "https://www.linkedin.com/")!, /Login required/);
+  assert.match(frictionReason('<a>Mitglied werden</a><a>Einloggen</a><script src="/recaptcha.js"></script>', "https://www.linkedin.com/jobs/search/?keywords=po")!, /Login required/);
+  assert.equal(frictionReason('<ul class="jobs-search__results-list"><li class="base-search-card">PO</li></ul><a>Einloggen</a>', "https://www.linkedin.com/jobs/search/?keywords=po"), null);
+  // seen live: a normal LinkedIn results page carries recaptcha config flags – not a challenge
+  assert.equal(frictionReason('<body data-recaptcha-v3-integration-lix-value="enabled"><ul class="jobs-search__results-list"><li class="base-search-card">PM</li></ul><a>Einloggen</a></body>', "https://www.linkedin.com/jobs/search/?keywords=pm"), null);
+  // seen live: Indeed's Cloudflare block page
+  assert.match(frictionReason("<h1>Anfrage blockiert</h1><p>Sie wurden gesperrt.</p>", "https://de.indeed.com/jobs?q=po")!, /Blocked by the site/);
+});
+
+test("public feeds: RSS items, Berlin Startup Jobs titles, service.bund.de employer and place", async () => {
+  const { parseRss, bundMeta } = await import("@/lib/sources/feeds");
+  const xml = `<rss><channel><item><title>Senior Product Manager (all genders) // GeneralMind</title><link>https://berlinstartupjobs.com/x/</link><description><![CDATA[<p>About</p>]]></description><pubDate>Thu, 29 Oct 2026 15:11:46 +0000</pubDate><guid>g1</guid></item>
+<item><title>Referent*in f&#252;r Digitales (m/w/d)</title><link>https://www.service.bund.de/IMPORTE/1.html#track=feed-jobs</link><description><![CDATA[Arbeitgeber: <strong>Bundesministerium f&#252;r Gesundheit</strong><br /> Ort: <strong>10117 Berlin</strong>]]></description><guid>https://www.service.bund.de/IMPORTE/1.html</guid></item></channel></rss>`;
+  const items = parseRss(xml);
+  assert.equal(items.length, 2);
+  assert.equal(items[0].title, "Senior Product Manager (all genders) // GeneralMind");
+  assert.equal(items[1].title, "Referent*in für Digitales (m/w/d)");
+  assert.equal(items[1].link, "https://www.service.bund.de/IMPORTE/1.html", "tracking suffix removed");
+  assert.deepEqual(bundMeta(items[1].description), { employer: "Bundesministerium für Gesundheit", place: "Berlin" });
 });
 
 test("careers page links follow keywords", () => {

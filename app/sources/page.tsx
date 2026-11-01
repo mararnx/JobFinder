@@ -4,6 +4,7 @@ import { searchProfiles } from "@/lib/profile";
 import { claudePausedUntil } from "@/lib/queue";
 import { pagesUsedToday, portalBlockedToday } from "@/lib/sources/chrome";
 import { PORTALS, type Portal } from "@/lib/sources/extract";
+import { FEEDS } from "@/lib/sources/feeds";
 import { SourcesClient } from "./SourcesClient";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ export default function Sources() {
   const last = (src: string) => all<{ status: string; started_at: string; added: number; found: number; message: string | null }>("SELECT status, started_at, added, found, message FROM source_runs WHERE source = ? ORDER BY id DESC LIMIT 1", [src])[0] ?? null;
   const sources = [
     { key: "arbeitsagentur", name: "Arbeitsagentur", kind: "api" as const, detail: "Public job search API · every 3 hours", last: last("arbeitsagentur"), used: null, blocked: null },
+    { key: "feeds", name: "Job feeds", kind: "api" as const, detail: `${Object.values(FEEDS).join(", ")} · every 4 hours`, last: all<{ status: string; started_at: string; added: number; found: number; message: string | null }>(`SELECT status, MAX(started_at) AS started_at, SUM(added) AS added, SUM(found) AS found, group_concat(message, ' · ') AS message FROM source_runs WHERE source IN (${Object.keys(FEEDS).map((k) => `'${k}'`).join(",")}) AND started_at >= (SELECT MAX(started_at) FROM source_runs WHERE source IN (${Object.keys(FEEDS).map((k) => `'${k}'`).join(",")})) GROUP BY 1=1`)[0] ?? null, used: null, blocked: null },
     { key: "watchlist", name: "Company watchlist", kind: "api" as const, detail: "Career-page feeds · daily", last: last("watchlist"), used: null, blocked: null },
     ...(Object.keys(PORTALS) as Portal[]).map((p) => ({ key: p, name: PORTALS[p].name, kind: "chrome" as const, detail: `Chrome · ${pagesUsedToday(p)}/${s.chromeDailyPages} pages today`, last: last(p), used: pagesUsedToday(p), blocked: portalBlockedToday(p) })),
   ];

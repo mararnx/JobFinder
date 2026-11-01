@@ -63,10 +63,22 @@ async function visit(page: Page, url: string, portal: string, budget: number): P
   const used = pagesUsedToday(portal);
   if (used >= budget) throw new Error(`daily page budget reached (${budget})`);
   setMeta(budgetKey(portal), String(used + 1));
-  await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45_000 });
-  await page.waitForTimeout(1500 + Math.random() * 1500);
-  const html = await page.content();
-  const reason = frictionReason(html, page.url());
+  let reason: string | null = null;
+  let html = "";
+  try {
+    const res = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45_000 });
+    if (res && (res.status() === 403 || res.status() === 429)) reason = `Blocked by the site (HTTP ${res.status()})`;
+  } catch (e) {
+    // a site that drops the connection for automated browsers (StepStone does) is a block, not a bug to retry
+    const m = String(e instanceof Error ? e.message : e).match(/net::(ERR_HTTP2_PROTOCOL_ERROR|ERR_CONNECTION_RESET|ERR_CONNECTION_CLOSED|ERR_EMPTY_RESPONSE|ERR_BLOCKED_BY_RESPONSE)/);
+    if (!m) throw e;
+    reason = `Site refused the automated browser (${m[1]})`;
+  }
+  if (!reason) {
+    await page.waitForTimeout(1500 + Math.random() * 1500);
+    html = await page.content();
+    reason = frictionReason(html, page.url());
+  }
   if (reason) {
     fs.mkdirSync(SHOTS, { recursive: true });
     const shot = path.join(SHOTS, `${portal}-${Date.now()}.png`);

@@ -11,7 +11,7 @@ import { buildStyleGuide, parseDocument } from "@/lib/pipeline/documents";
 import { draftApplication } from "@/lib/pipeline/drafting";
 import { followUpDraft, prepPack } from "@/lib/pipeline/prep";
 import { reflectProfile, scoreBatch } from "@/lib/pipeline/scoring";
-import { addManualAd, chromePortals, runArbeitsagentur, runChromePortal, runWatchlist } from "@/lib/pipeline/sources";
+import { addManualAd, chromePortals, runArbeitsagentur, runChromePortal, runFeeds, runWatchlist } from "@/lib/pipeline/sources";
 import { closeBrowser } from "@/lib/sources/chrome";
 import { closePdfBrowser } from "@/lib/pipeline/pdf";
 import { claim, claudePausedUntil, CLAUDE_TASKS, enqueue, fail, finish, meta, PRIORITY, recoverStale, requeue, setMeta, type Task } from "@/lib/queue";
@@ -24,9 +24,11 @@ export const handlers: Record<string, Handler> = {
     const src = String(p.source);
     if (src === "arbeitsagentur") return runArbeitsagentur();
     if (src === "watchlist") return runWatchlist();
+    if (src === "feeds") return runFeeds();
     if (src === "all") {
       enqueue("fetch_source", { source: "arbeitsagentur" }, { priority: PRIORITY.userAction, dedupeKey: "fetch:arbeitsagentur" });
       enqueue("fetch_source", { source: "watchlist" }, { priority: PRIORITY.userAction, dedupeKey: "fetch:watchlist" });
+      enqueue("fetch_source", { source: "feeds" }, { priority: PRIORITY.userAction, dedupeKey: "fetch:feeds" });
       if (getSettings().chromeEnabled) for (const c of chromePortals()) enqueue("fetch_source", { source: c }, { priority: PRIORITY.source, dedupeKey: `fetch:${c}` });
       return "queued";
     }
@@ -57,6 +59,7 @@ export function schedule() {
   const s = getSettings();
   if (!s.onboarded) return;
   if (due("arbeitsagentur", 180, 6)) enqueue("fetch_source", { source: "arbeitsagentur" }, { priority: PRIORITY.source, dedupeKey: "fetch:arbeitsagentur" });
+  if (due("feeds", 4 * 60, 6)) enqueue("fetch_source", { source: "feeds" }, { priority: PRIORITY.source, dedupeKey: "fetch:feeds" });
   if (due("watchlist", 24 * 60, 7)) enqueue("fetch_source", { source: "watchlist" }, { priority: PRIORITY.source, dedupeKey: "fetch:watchlist" });
   if (s.chromeEnabled && due("chrome", 6 * 60, 9)) for (const c of chromePortals()) enqueue("fetch_source", { source: c }, { priority: PRIORITY.source, dedupeKey: `fetch:${c}` });
   if (due("reflect", 24 * 60, 3)) enqueue("reflect_profile", {}, { priority: PRIORITY.maintenance, dedupeKey: "reflect" });
@@ -94,7 +97,8 @@ async function execute(task: Task) {
     const out = await handlers[task.type]?.(JSON.parse(task.payload));
     if (!handlers[task.type]) throw new Error(`unknown task ${task.type}`);
     finish(task.id);
-    if (typeof out === "string" && !/^(queued|Watchlist empty|Chrome search is off|No search profile yet)$|: 0 new of/.test(out)) logEvent(null, "worker", out);
+    const noise = typeof out === "string" && (/^(queued|Watchlist empty|Chrome search is off|No search profile yet)$|: 0 new of/.test(out) || (/^Feeds:/.test(out) && !/ [1-9]\d*\//.test(out)));
+    if (typeof out === "string" && !noise) logEvent(null, "worker", out);
     console.log(`[worker] ${task.type}#${task.id} ok ${Date.now() - started}ms${typeof out === "string" ? ` – ${out}` : ""}`);
   } catch (e) {
     if (e instanceof RateLimitError) {
