@@ -2,7 +2,7 @@
 
 A local job-search funnel for the German market: finds ads (Arbeitsagentur API, company career feeds, optional Chrome search on portals, links you add yourself), ranks them against what you actually want, drafts tailored applications you approve with one keystroke, and tracks every job to an offer. AI runs on a Claude Max subscription through the Claude Code CLI.
 
-- **Set up:** [SETUP.md](SETUP.md)
+- **Set up:** [SETUP.md](SETUP.md) – easiest is to open this repo in Claude Code and say *"Set up Kompass for me and start it"*
 - **How it works and why:** [PLAN.md](PLAN.md)
 - **Design reference:** [design/prototype.html](design/prototype.html)
 

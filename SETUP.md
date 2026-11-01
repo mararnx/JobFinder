@@ -2,6 +2,22 @@
 
 Kompass runs entirely on the job seeker's Mac. AI runs through **their own Claude Max subscription** via the Claude Code CLI. Nothing is uploaded anywhere except the text Claude reads.
 
+## The easy way: let Claude Code set it up
+
+1. Install the **Claude desktop app** from [claude.ai/download](https://claude.ai/download) and log in with your Claude (Max) account.
+2. Open the **Code** tab and start a new session. When it asks for a folder, choose **Clone from GitHub** (or "Clone repository") and paste:
+   ```
+   https://github.com/mararnx/kompass
+   ```
+   Pick where it should go, e.g. your Documents folder. (No clone option? Install Git with `xcode-select --install` in Terminal, then in Terminal run `git clone https://github.com/mararnx/kompass ~/Documents/kompass` and open that folder in the Code tab.)
+3. Type:
+   > Set up Kompass for me and start it.
+
+   Claude reads the project's instructions ([CLAUDE.md](CLAUDE.md)), installs what's missing, runs the tests and opens Kompass in the browser. Say yes when it asks for permission to run commands. Once, it will ask you to log in to Claude in Terminal – that's the login Kompass uses for its AI.
+4. Later, to get a new version: open the same folder in Claude Code and say *"Update Kompass"*.
+
+The steps below are the same thing done by hand.
+
 ## 1. Install the basics (once)
 
 1. **Node.js 22.13 or newer** – from [nodejs.org](https://nodejs.org) (LTS installer) or `brew install node`.
@@ -17,8 +33,12 @@ Kompass runs entirely on the job seeker's Mac. AI runs through **their own Claud
 
 ## 2. Install Kompass
 
-Copy this folder to the Mac (without `data/`, `data-dev/`, `node_modules/`, `.next/`), then in Terminal inside the folder:
-
+```bash
+git clone https://github.com/mararnx/kompass ~/Documents/kompass
+```
+```bash
+cd ~/Documents/kompass
+```
 ```bash
 npm install
 ```
