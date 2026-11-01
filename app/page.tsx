@@ -1,4 +1,4 @@
-import { Activity, Calendar, ChevronRight, CircleAlert, FileUp, MailQuestion, PenLine, Play, Presentation, ShieldAlert, Sparkles, Star, Send, Brain, Gauge, CopyX, Check } from "lucide-react";
+import { Activity, Calendar, ChevronRight, CircleAlert, FileUp, MailQuestion, PenLine, Play, Presentation, ShieldAlert, Sparkles, Star, Send, Mail, Brain, Gauge, CopyX, Check } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { all, get, getSettings } from "@/lib/db";
@@ -27,6 +27,7 @@ export default function Today() {
 
   const steps: Step[] = [];
   if (!cvFacts()) steps.push({ icon: FileUp, title: "Upload your CV", meta: "Needed before Claude can write applications", time: "≈ 2 min", href: "/documents", warn: true });
+  if (!s.gmailAddress && (ready || n("SELECT COUNT(*) AS n FROM jobs WHERE stage IN ('shortlist','drafting','review')"))) steps.push({ icon: Mail, title: "Connect Gmail", meta: "Applications go to your drafts with the PDF; replies move jobs on", time: "≈ 2 min", href: "/sources#gmail", warn: true });
   if (discover) steps.push({ icon: Sparkles, title: "Go through new matches", meta: `${discover} jobs${dreams ? ` · ${dreams} strong match${dreams > 1 ? "es" : ""}` : ""}`, time: `≈ ${Math.max(1, Math.round(discover / 3))} min`, href: "/discover", keys: ["G", "D"], hot: true });
   if (review) steps.push({ icon: PenLine, title: "Approve drafts", meta: `${review} application${review > 1 ? "s" : ""}${avgReview ? ` · avg ${Math.round(avgReview)} s review` : ""}`, time: `≈ ${Math.max(1, Math.round((review * (avgReview ?? 90)) / 60))} min`, href: "/review", keys: ["G", "R"] });
   if (ready) steps.push({ icon: Send, title: "Send approved applications", meta: `${ready} ready – by email or the company's form`, time: `≈ ${ready * 2} min`, href: "/send", keys: ["G", "E"] });

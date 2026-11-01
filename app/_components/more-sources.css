@@ -23,3 +23,13 @@
   .ms-keys { grid-template-columns: 1fr; }
   .ms-chrome li { grid-template-columns: 1fr; gap: 2px; }
 }
+
+/* Gmail connection card */
+.gmail-intro { margin: 8px 18px 14px; font-size: 13px; line-height: 1.55; max-width: 820px; }
+.gmail-steps { margin: 0 18px 18px; }
+.gmail-steps a { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; color: var(--accent-fg); font-weight: 500; }
+.gmail-steps a svg { width: 12px; height: 12px; }
+.gmail-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.gmail-form .input { width: 240px; max-width: 100%; }
+.gmail-on { display: flex; align-items: center; gap: 10px; padding: 12px 18px 16px; flex-wrap: wrap; }
+.gmail-on .grow { flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 1.5; }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { act, toast } from "@/lib/client";
 import { timeAgo } from "@/lib/ui";
+import { GmailCard, type GmailProps } from "../_components/GmailCard";
 import { MoreSources, type MoreSourcesProps } from "../_components/MoreSources";
 import { Tile } from "../_components/ui";
 
@@ -15,7 +16,7 @@ type Source = { key: string; name: string; kind: "api" | "chrome"; detail: strin
 export function SourcesClient(p: {
   profiles: Profile[]; sources: Source[]; watchlist: { id: number; name: string; ats_type: string | null; careers_url: string | null; jobs: number }[];
   blocked: { id: number; name: string }[]; runs: (Run & { source: string })[]; failed: { id: number; type: string; error: string | null; finished_at: string | null; payload: string }[];
-  more: MoreSourcesProps; chromePortals: string[];
+  more: MoreSourcesProps; gmail: GmailProps; chromePortals: string[];
   chromeEnabled: boolean; chromeDailyPages: number; claude: { mock: boolean; cli: string | null; mode: string; pausedUntil: string | null };
 }) {
   const router = useRouter();
@@ -81,6 +82,8 @@ export function SourcesClient(p: {
             {p.claude.pausedUntil && <button className="btn sm" onClick={() => run("resumeClaude", {}, "Resumed")}><Play />Resume now</button>}
           </div>
         </div>
+
+        <GmailCard {...p.gmail} />
 
         <div className="card col-12">
           <div className="card-h">Sources

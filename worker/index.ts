@@ -9,6 +9,7 @@ import { isMock, RateLimitError } from "@/lib/claude/runner";
 import { notify } from "@/lib/notify";
 import { buildStyleGuide, parseDocument } from "@/lib/pipeline/documents";
 import { draftApplication } from "@/lib/pipeline/drafting";
+import { syncGmail } from "@/lib/pipeline/mailsync";
 import { followUpDraft, prepPack } from "@/lib/pipeline/prep";
 import { reflectProfile, scoreBatch } from "@/lib/pipeline/scoring";
 import { addManualAd, chromePortals, runAlerts, runApis, runArbeitsagentur, runChromePortal, runFeeds, runWatchlist } from "@/lib/pipeline/sources";
@@ -46,6 +47,7 @@ export const handlers: Record<string, Handler> = {
   prep_pack: (p) => prepPack(Number(p.jobId)),
   follow_up: (p) => followUpDraft(Number(p.jobId)),
   add_manual: (p) => addManualAd(p as never),
+  gmail_sync: () => syncGmail(),
 };
 
 /* ── schedules ─────────────────────────────────────────── */
@@ -64,6 +66,7 @@ export function schedule() {
   if (!s.onboarded) return;
   if (due("arbeitsagentur", 180, 6)) enqueue("fetch_source", { source: "arbeitsagentur" }, { priority: PRIORITY.source, dedupeKey: "fetch:arbeitsagentur" });
   if (due("apis", 180, 6)) enqueue("fetch_source", { source: "apis" }, { priority: PRIORITY.source, dedupeKey: "fetch:apis" });
+  if (s.gmailAddress && due("gmail", 30, 7)) enqueue("gmail_sync", {}, { priority: PRIORITY.source, dedupeKey: "gmail_sync" });
   if (due("alerts", 120, 6)) enqueue("fetch_source", { source: "alerts" }, { priority: PRIORITY.source, dedupeKey: "fetch:alerts" });
   if (due("feeds", 4 * 60, 6)) enqueue("fetch_source", { source: "feeds" }, { priority: PRIORITY.source, dedupeKey: "fetch:feeds" });
   if (due("watchlist", 24 * 60, 7)) enqueue("fetch_source", { source: "watchlist" }, { priority: PRIORITY.source, dedupeKey: "fetch:watchlist" });
@@ -103,7 +106,7 @@ async function execute(task: Task) {
     const out = await handlers[task.type]?.(JSON.parse(task.payload));
     if (!handlers[task.type]) throw new Error(`unknown task ${task.type}`);
     finish(task.id);
-    const noise = typeof out === "string" && (/^(queued|Watchlist empty|Chrome search is off|No search profile yet|No API keys|Job alerts off|LinkedIn: already searched today)$|: 0 new of/.test(out) || (/^(Feeds|APIs):/.test(out) && !/ [1-9]\d*\//.test(out)));
+    const noise = typeof out === "string" && (/^(queued|Watchlist empty|Chrome search is off|No search profile yet|No API keys|Job alerts off|LinkedIn: already searched today|Gmail not connected|Gmail: nothing to watch)$|^Gmail: 0 new|: 0 new of/.test(out) || (/^(Feeds|APIs):/.test(out) && !/ [1-9]\d*\//.test(out)));
     if (typeof out === "string" && !noise) logEvent(null, "worker", out);
     console.log(`[worker] ${task.type}#${task.id} ok ${Date.now() - started}ms${typeof out === "string" ? ` – ${out}` : ""}`);
   } catch (e) {

@@ -8,7 +8,7 @@ import "./more-sources.css";
 
 export type MoreSourcesProps = {
   keyword: string; city: string;
-  settings: { alertsMailbox: string; adzunaAppId: string; adzunaAppKey: string; joobleKey: string; chromeEnabled: boolean; chromePortals: string[] };
+  settings: { gmailAddress: string; alertsLabel: string; adzunaAppId: string; adzunaAppKey: string; joobleKey: string; chromeEnabled: boolean; chromePortals: string[] };
 };
 
 const PORTALS = [
@@ -17,6 +17,9 @@ const PORTALS = [
   { key: "linkedin", name: "LinkedIn", save: "Jobalert aktivieren (needs login)", url: (k: string, c: string) => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(k)}&location=${encodeURIComponent(c || "Deutschland")}` },
   { key: "xing", name: "XING", save: "Suchauftrag speichern", url: (k: string, c: string) => `https://www.xing.com/jobs/search?keywords=${encodeURIComponent(k)}&location=${encodeURIComponent(c)}` },
 ];
+
+// the senders of the portals' alert emails, as a Gmail search
+const ALERT_QUERY = "from:(stepstone.de OR indeed.com OR jobalerts-noreply@linkedin.com OR xing.com)";
 
 const CHROME_NOTE: Record<string, string> = {
   xing: "Works",
@@ -33,11 +36,11 @@ function bookmarklet(origin: string) {
 
 export function MoreSources({ keyword, city, settings }: MoreSourcesProps) {
   const router = useRouter();
-  const [box, setBox] = useState(settings.alertsMailbox || "Job alerts");
+  const [box, setBox] = useState(settings.alertsLabel || "Job alerts");
   const [keys, setKeys] = useState({ adzunaAppId: settings.adzunaAppId, adzunaAppKey: settings.adzunaAppKey, joobleKey: settings.joobleKey });
   const [busy, setBusy] = useState<string | null>(null);
   const [chrome, setChrome] = useState({ on: settings.chromeEnabled, portals: settings.chromePortals });
-  const [alertMsg, setAlertMsg] = useState<string | null>(settings.alertsMailbox ? `Reading "${settings.alertsMailbox}" every 2 hours` : null);
+  const [alertMsg, setAlertMsg] = useState<string | null>(settings.alertsLabel && settings.gmailAddress ? `Reading the label "${settings.alertsLabel}" every 2 hours` : null);
   const mark = useRef<HTMLAnchorElement>(null);
 
   // React refuses javascript: links in JSX, so the bookmark's href is set directly
@@ -57,7 +60,7 @@ export function MoreSources({ keyword, city, settings }: MoreSourcesProps) {
   };
 
   const checkAlerts = () => go("alerts", async () => {
-    const r = await act<{ message: string }>("checkAlerts", { mailbox: box });
+    const r = await act<{ message: string }>("checkAlerts", { label: box });
     setAlertMsg(r.message);
     toast(r.message);
     router.refresh();
@@ -91,7 +94,7 @@ export function MoreSources({ keyword, city, settings }: MoreSourcesProps) {
     <div className="more-sources">
       <section className="ms-card">
         <h3><Bell />Job alerts by email <span className="tag accent">recommended</span></h3>
-        <p className="faint">The official way to get everything from StepStone, Indeed, LinkedIn and XING. The portals email new matches; JobFinder reads them from Apple Mail on this Mac – no passwords involved.</p>
+        <p className="faint">The official way to get everything from StepStone, Indeed, LinkedIn and XING. The portals email new matches to your Gmail; JobFinder reads them from one label.</p>
         <ol className="ms-steps">
           <li>
             <b>Save a search with alerts on each portal.</b> Each button opens your search – click the alert button there.
@@ -99,13 +102,14 @@ export function MoreSources({ keyword, city, settings }: MoreSourcesProps) {
               {PORTALS.map((p) => <a key={p.key} href={p.url(kw, city)} target="_blank" rel="noreferrer">{p.name}<ExternalLink /><small>then: {p.save}</small></a>)}
             </div>
           </li>
-          <li><b>In Apple Mail, make a mailbox</b> called <span className="mono">{box || "Job alerts"}</span> (Mailbox → New Mailbox).</li>
-          <li><b>When the first alert from a portal arrives,</b> add a rule: Mail → Settings → Rules → Add Rule → <i>From</i> is that sender → <i>Move Message</i> to <span className="mono">{box || "Job alerts"}</span>. Click <i>Apply</i> to move what&apos;s already there.</li>
           <li>
-            <b>Connect it.</b> macOS asks once whether JobFinder may use Mail – allow it.
+            <b>In Gmail, label the alerts.</b> <a className="link" href={`https://mail.google.com/mail/u/?authuser=${encodeURIComponent(settings.gmailAddress)}#search/${encodeURIComponent(ALERT_QUERY)}`} target="_blank" rel="noreferrer">Open this search in Gmail</a>, click the filter icon at the right of the search box → <i>Create filter</i> → tick <i>Apply the label</i> → <i>New label</i> <span className="mono">{box || "Job alerts"}</span> → tick <i>Also apply filter to matching conversations</i> → <i>Create filter</i>.
+          </li>
+          <li>
+            <b>Connect it.</b>{!settings.gmailAddress && <> Connect Gmail first (the card above).</>}
             <div className="ms-row">
-              <input className="input" value={box} onChange={(e) => setBox(e.target.value)} aria-label="Mailbox name" placeholder="Job alerts" />
-              <button className="btn primary" onClick={checkAlerts} disabled={busy === "alerts" || !box.trim()}>{busy === "alerts" ? <LoaderCircle className="spin-icon" /> : <Mail />}Connect &amp; check</button>
+              <input className="input" value={box} onChange={(e) => setBox(e.target.value)} aria-label="Gmail label" placeholder="Job alerts" />
+              <button className="btn primary" onClick={checkAlerts} disabled={busy === "alerts" || !box.trim() || !settings.gmailAddress}>{busy === "alerts" ? <LoaderCircle className="spin-icon" /> : <Mail />}Connect &amp; check</button>
             </div>
             {alertMsg && <p className="ms-ok"><Check />{alertMsg}</p>}
           </li>

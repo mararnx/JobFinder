@@ -1,36 +1,21 @@
-import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { getSettings, logEvent } from "@/lib/db";
+import { createGmailDraft, dryRun, openInBrowser } from "@/lib/gmail";
 import { getJob } from "@/lib/jobs";
 import { latestApplication } from "./drafting";
 
-const as = (s: string) => `"${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\r?\n/g, '" & return & "')}"`;
-
-export function mailScript(o: { to: string; subject: string; body: string; attachments: string[] }) {
-  return [
-    'tell application "Mail"',
-    `  set m to make new outgoing message with properties {subject:${as(o.subject)}, content:${as(o.body + "\n\n")}, visible:true}`,
-    "  tell m",
-    `    make new to recipient at end of to recipients with properties {address:${as(o.to)}}`,
-    ...o.attachments.map((a) => `    make new attachment with properties {file name:(POSIX file ${as(a)})} at after the last paragraph`),
-    "  end tell",
-    "  activate",
-    "end tell",
-  ].join("\n");
-}
-
-/** Opens a ready-to-send Apple Mail draft. The job seeker presses Send. */
-export function openMailDraft(jobId: number): { ok: boolean; message: string } {
+/** Puts a ready-to-send email with the PDF into Gmail Drafts and opens Gmail. The job seeker presses Send. */
+export async function createMailDraft(jobId: number): Promise<{ ok: boolean; message: string }> {
   const job = getJob(jobId);
   const app = latestApplication(jobId);
   if (!job || !app?.bundle_path) return { ok: false, message: "No approved application with a PDF yet" };
   if (!job.apply_email) return { ok: false, message: "This ad has no application email address" };
-  if (process.env.KOMPASS_DRY_SEND) return { ok: true, message: `dry run: mail to ${job.apply_email}` };
-  const r = spawnSync("osascript", ["-e", mailScript({ to: job.apply_email, subject: app.subject, body: app.email_body, attachments: [app.bundle_path] })], { encoding: "utf8", timeout: 30_000 });
-  if (r.status !== 0) return { ok: false, message: `Apple Mail: ${(r.stderr || "failed").trim().slice(0, 200)}` };
-  logEvent(jobId, "mail", `Mail draft opened for ${job.apply_email}`);
-  return { ok: true, message: `Draft to ${job.apply_email} is open in Apple Mail` };
+  if (dryRun()) return { ok: true, message: `dry run: Gmail draft to ${job.apply_email}` };
+  const { url } = await createGmailDraft({ to: job.apply_email, subject: app.subject, body: app.email_body, attachments: [app.bundle_path] });
+  openInBrowser(url);
+  logEvent(jobId, "mail", `Gmail draft created for ${job.apply_email}`);
+  return { ok: true, message: `Draft to ${job.apply_email} is in your Gmail drafts – press Send there` };
 }
 
 /** Opens the apply page in a visible browser and fills the obvious fields. Stops before submit. */

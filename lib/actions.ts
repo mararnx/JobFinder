@@ -5,8 +5,8 @@ import { approve, latestApplication, markSent, saveAnswers, saveLetterEdit, unap
 import { DOC_KINDS, type DocKind } from "@/lib/pipeline/documents";
 import { initialProfile } from "@/lib/pipeline/scoring";
 import { addManualAd, watchlistAdd } from "@/lib/pipeline/sources";
-import { openApplyForm, openMailDraft } from "@/lib/pipeline/send";
-import { readMailbox } from "@/lib/sources/alerts";
+import { createMailDraft, openApplyForm } from "@/lib/pipeline/send";
+import { cleanAppPassword, connectGmail, dryRun, forgetGmail, readLabel } from "@/lib/gmail";
 import { saveProfile } from "@/lib/profile";
 import { enqueue, PRIORITY, setMeta } from "@/lib/queue";
 
@@ -135,22 +135,39 @@ export const actions: Record<string, (a: A) => Promise<unknown> | unknown> = {
     return { ok: true };
   },
   openForm: async (a) => openApplyForm(n(a.jobId)),
-  openMail: (a) => openMailDraft(n(a.jobId)),
+  mailDraft: (a) => createMailDraft(n(a.jobId)),
   markSent: (a) => {
     markSent(n(a.jobId), a.channel ? s(a.channel, 20) : null);
     return { ok: true };
   },
 
   /* ── Sources ── */
-  checkAlerts: (a) => {
-    const box = s(a.mailbox, 120).trim();
-    if (!box) throw new Error("Enter the mailbox name first");
-    setSettings({ alertsMailbox: box });
-    // dry-run installs (tests, demo) never touch Apple Mail
-    if (process.env.KOMPASS_DRY_SEND) return { ok: true, count: 0, message: `dry run: would read "${box}" in Apple Mail` };
-    const mails = readMailbox(box, 14);
+  gmailConnect: async (a) => {
+    const address = s(a.address, 200).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) throw new Error("Enter your Gmail address");
+    const password = cleanAppPassword(s(a.password, 100));
+    if (!password) throw new Error("An app password is 16 letters, like “abcd efgh ijkl mnop” – not your normal Google password");
+    await connectGmail(address, password);
+    setSettings({ gmailAddress: address });
+    enqueue("gmail_sync", {}, { priority: PRIORITY.userAction, dedupeKey: "gmail_sync" });
+    return { ok: true, message: dryRun() ? `dry run: ${address} saved without checking` : `Connected to ${address}` };
+  },
+  gmailDisconnect: () => {
+    const { gmailAddress } = getSettings();
+    if (gmailAddress) forgetGmail(gmailAddress);
+    setSettings({ gmailAddress: "" });
+    return { ok: true };
+  },
+  gmailSync: () => enqueue("gmail_sync", {}, { priority: PRIORITY.userAction, dedupeKey: "gmail_sync" }),
+  checkAlerts: async (a) => {
+    const label = s(a.label, 120).trim();
+    if (!label) throw new Error("Enter the Gmail label first");
+    if (!getSettings().gmailAddress) throw new Error("Connect Gmail first (the card at the top of this page)");
+    setSettings({ alertsLabel: label });
+    if (dryRun()) return { ok: true, count: 0, message: `dry run: would read the label "${label}" in Gmail` };
+    const mails = await readLabel(label, 14);
     enqueue("fetch_source", { source: "alerts" }, { priority: PRIORITY.userAction, dedupeKey: "fetch:alerts" });
-    return { ok: true, count: mails.length, message: mails.length ? `Found ${mails.length} email${mails.length > 1 ? "s" : ""} from the last 2 weeks – reading the jobs now` : `"${box}" is connected but empty so far – alerts land there once the portals send them` };
+    return { ok: true, count: mails.length, message: mails.length ? `Found ${mails.length} email${mails.length > 1 ? "s" : ""} from the last 2 weeks – reading the jobs now` : `"${label}" is connected but empty so far – alerts land there once the portals send them` };
   },
   fetchSources: () => enqueue("fetch_source", { source: "all" }, { priority: PRIORITY.userAction, dedupeKey: "fetch:all" }),
   fetchSource: (a) => enqueue("fetch_source", { source: s(a.source, 40) }, { priority: PRIORITY.userAction, dedupeKey: `fetch:${s(a.source, 40)}` }),
@@ -174,6 +191,7 @@ export const actions: Record<string, (a: A) => Promise<unknown> | unknown> = {
   /* ── Profile & settings ── */
   saveSettings: (a) => {
     const patch = (a.patch ?? {}) as Partial<Settings>;
+    delete patch.gmailAddress; // only connect / disconnect change the account
     const before = getSettings().letterInstructions;
     setSettings(patch);
     // own letter instructions feed the style guide, so rebuild it when they change

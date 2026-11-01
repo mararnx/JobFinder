@@ -12,7 +12,7 @@ When asked to set up, install or start JobFinder, do this in order and fix probl
 4. **Check**: `npm test` (temporary database, simulated AI, touches nothing in `data/`).
 5. **Start**: `npm start` (run it in the background; the first start builds for about a minute). Then open http://localhost:4317 for them. The setup wizard in the app takes over from there (documents, personal details, search, example ads).
 6. **Optional**: start at login with `npm run setup:launchd` (undo: `npm run remove:launchd`). Ask before doing this.
-7. **Apple Mail** must have the account applications should be sent from; the first time JobFinder opens a draft, macOS asks for Automation permission – tell them to allow it.
+7. **Gmail**: applications are sent from their Gmail account. In the app, Sources → Gmail walks them through turning on 2-Step Verification and creating an app password; they paste it there themselves (never ask them to paste it to you). It's kept in the macOS Keychain.
 
 [SETUP.md](SETUP.md) has the same steps for humans plus troubleshooting; [PLAN.md](PLAN.md) explains how everything works.
 

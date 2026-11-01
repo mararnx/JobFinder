@@ -10,7 +10,7 @@ import { fetchArbeitsagentur } from "@/lib/sources/arbeitsagentur";
 import { detectAts, fetchAts } from "@/lib/sources/ats";
 import { FrictionError, readPage, runCareersPage, runPortal } from "@/lib/sources/chrome";
 import { jobPostingFromHtml, PORTALS, type Portal } from "@/lib/sources/extract";
-import { alertJobId, mailBody, mailLinks, portalOf, readMailbox, type AlertMail } from "@/lib/sources/alerts";
+import { alertJobId, mailBody, mailLinks, portalOf, readAlertLabel, type AlertMail } from "@/lib/sources/alerts";
 import { fetchAdzuna, fetchJooble } from "@/lib/sources/apis";
 import { FEED_FETCHERS, FEEDS, type Feed } from "@/lib/sources/feeds";
 import { fetchText } from "@/lib/sources/http";
@@ -100,15 +100,16 @@ export async function runApis(): Promise<string> {
   return `APIs: ${parts.join(" · ")}`;
 }
 
-/** Jobs from portal alert emails in the Apple Mail mailbox chosen in Settings. */
-export async function runAlerts(readFn: (box: string, days: number) => AlertMail[] = readMailbox): Promise<string> {
-  const box = getSettings().alertsMailbox.trim();
-  if (!box) return "Job alerts off";
+/** Jobs from portal alert emails under the Gmail label chosen in Sources. */
+export async function runAlerts(readFn: (label: string, days: number) => Promise<AlertMail[]> = readAlertLabel): Promise<string> {
+  const { alertsLabel, gmailAddress } = getSettings();
+  const box = alertsLabel.trim();
+  if (!box || !gmailAddress || (process.env.KOMPASS_DRY_SEND && readFn === readAlertLabel)) return "Job alerts off";
   const id = startRun("alerts");
   const seen = new Set<string>(JSON.parse(meta("alertsSeen") ?? "[]") as string[]);
   let found = 0, added = 0, mails = 0;
   try {
-    for (const m of readFn(box, seen.size ? 3 : 7)) {
+    for (const m of await readFn(box, seen.size ? 3 : 7)) {
       if (seen.has(m.id)) continue;
       mails++;
       const { html, text } = mailBody(m.source);

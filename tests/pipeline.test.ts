@@ -120,7 +120,7 @@ test("edit, rewrite with an instruction, approve, send", async () => {
   assert.equal(getJob(jobId)!.stage, "review", "can go back for more edits");
   await dispatch("move", { jobId, to: "ready" });
   assert.equal(getJob(jobId)!.stage, "ready", "dragging to Ready to send approves");
-  const mail = (await dispatch("openMail", { jobId })) as { ok: boolean; message: string };
+  const mail = (await dispatch("mailDraft", { jobId })) as { ok: boolean; message: string };
   assert.ok(mail.ok, mail.message);
   const form = (await dispatch("openForm", { jobId })) as { ok: boolean; message: string };
   assert.ok(!form.ok && /No application link/.test(form.message), "no form without a link");
@@ -177,15 +177,65 @@ test("blocking a company hides its open ads", async () => {
   assert.equal(getJob(j.id)!.stage, "excluded");
 });
 
-test("job alerts from Apple Mail become jobs, each email once", async () => {
+test("job alerts from a Gmail label become jobs, each email once", async () => {
   const { runAlerts } = await import("@/lib/pipeline/sources");
   const { ALERT } = await import("./fixtures/alert-email");
-  setSettings({ alertsMailbox: "Job alerts" });
+  setSettings({ alertsLabel: "Job alerts", gmailAddress: "alex.neumann@gmail.com" });
   const mails = [{ id: "<m1@linkedin.com>", sender: "LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>", subject: "Product Manager in Berlin", source: ALERT }];
-  assert.match(await runAlerts(() => mails), /2 new of 2 from 1 email/);
+  assert.match(await runAlerts(async () => mails), /2 new of 2 from 1 email/);
   const j = get<{ title: string; source: string }>("SELECT j.title, p.source FROM jobs j JOIN postings p ON p.job_id = j.id WHERE p.source_id = 'linkedin:4012345678'");
   assert.equal(j?.source, "alert-linkedin");
-  assert.match(await runAlerts(() => mails), /0 new of 0 from 0 emails/, "same email is not read twice");
+  assert.match(await runAlerts(async () => mails), /0 new of 0 from 0 emails/, "same email is not read twice");
+});
+
+test("Gmail: a sent application moves to Applied, replies move it on", async () => {
+  const { syncGmail } = await import("@/lib/pipeline/mailsync");
+  const me = "alex.neumann@gmail.com";
+  setSettings({ gmailAddress: me });
+  const nord = get<{ id: number }>("SELECT j.id FROM jobs j JOIN companies c ON c.id = j.company_id WHERE c.name LIKE 'Nordbank%'")!.id;
+  const app = get<{ id: number }>("SELECT id FROM applications WHERE job_id = ? ORDER BY version DESC", [nord])!;
+  await dispatch("approve", { appId: app.id, seconds: 30 });
+  assert.equal(getJob(nord)!.stage, "ready");
+  const at = () => new Date(Date.now() + 2000).toISOString();
+  const mail = (id: string, from: string, to: string, subject: string, body: string) => ({
+    id, from, fromAddress: from, to: [to], subject, date: at(), source: `Content-Type: text/plain; charset=utf-8\r\n\r\n${body}`,
+  });
+  const terms: string[][] = [];
+  const read = (mails: ReturnType<typeof mail>[]) => async (t: string[]) => (terms.push(t), mails);
+
+  assert.match(await syncGmail(read([mail("<s1>", me, "karriere@nordbank.example", "Bewerbung", "Anbei meine Bewerbung")])), /1 job moved/);
+  assert.equal(getJob(nord)!.stage, "applied", "sent from Gmail");
+  assert.ok(terms[0].includes("karriere@nordbank.example"), "searched for the application address");
+
+  await syncGmail(read([mail("<r1>", "noreply@nordbank.example", me, "Eingangsbestätigung", "Vielen Dank, Ihre Bewerbung ist bei uns eingegangen.")]));
+  assert.equal(getJob(nord)!.stage, "applied", "a receipt changes nothing");
+  assert.ok(get("SELECT 1 FROM events WHERE job_id = ? AND text LIKE '%confirmed your application arrived%'", [nord]));
+
+  await syncGmail(read([mail("<r2>", "personal@nordbank.example", me, "Einladung zum Vorstellungsgespräch", "Wir möchten Sie gern kennenlernen.")]));
+  assert.equal(getJob(nord)!.stage, "contact", "an invitation from anyone at the company moves it to In contact");
+  assert.match(getJob(nord)!.next_action ?? "", /interview slot/);
+
+  const before = all("SELECT id FROM events WHERE job_id = ?", [nord]).length;
+  await syncGmail(read([mail("<r2>", "personal@nordbank.example", me, "Einladung zum Vorstellungsgespräch", "Wir möchten Sie gern kennenlernen.")]));
+  assert.equal(all("SELECT id FROM events WHERE job_id = ?", [nord]).length, before, "the same email is handled once");
+
+  const email = getJob(jobId)!.apply_email!;
+  await syncGmail(read([mail("<r3>", `hr@${email.split("@")[1]}`, me, "Ihre Bewerbung", "Leider müssen wir Ihnen mitteilen, dass wir uns für andere Kandidaten entschieden haben.")]));
+  const j = getJob(jobId)!;
+  assert.equal(j.stage, "closed");
+  assert.equal(j.closed_reason, "rejected");
+});
+
+test("Gmail draft: encoded subject, the PDF attached", async () => {
+  const { buildMime } = await import("@/lib/gmail");
+  const pdf = get<{ bundle_path: string }>("SELECT bundle_path FROM applications WHERE bundle_path IS NOT NULL LIMIT 1")!.bundle_path;
+  const raw = buildMime({ from: { name: "Alex Neumann", address: "alex.neumann@gmail.com" }, to: "jobs@firma.example", subject: "Bewerbung als Produktmanager:in – Zahlungsverkehr", body: "Guten Tag,\nanbei meine Unterlagen.", attachments: [pdf], messageId: "<t1@jobfinder.local>" });
+  assert.match(raw, /^Subject: =\?UTF-8\?B\?/m);
+  assert.match(raw, /^To: jobs@firma\.example$/m);
+  assert.match(raw, /Content-Type: application\/pdf; name="Bewerbung_Neumann/);
+  const b64 = raw.split("Content-Transfer-Encoding: base64\r\n\r\n")[2].split("\r\n--")[0].replace(/\r\n/g, "");
+  assert.equal(Buffer.from(b64, "base64").subarray(0, 5).toString(), "%PDF-", "attachment is the PDF");
+  assert.ok(raw.split("\r\n").every((l) => l.length <= 998), "no over-long lines");
 });
 
 test("an ad captured from the browser is added with its full text", async () => {

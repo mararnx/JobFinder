@@ -80,3 +80,9 @@ export type FactCheck = z.infer<typeof FactCheck>;
 export const PrepPack = z.object({ markdown: str });
 
 export const FollowUp = z.object({ subject: str, body: str });
+
+export const MailReply = z.object({
+  kind: z.enum(["receipt", "rejection", "invitation", "other"]).catch("other"),
+  summary: str.catch(""),
+  next_action: str.nullable().catch(null),
+});

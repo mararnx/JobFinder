@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft, Check, Copy, Download, ExternalLink, FileText, Globe, LoaderCircle, Mail, Send, Star } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { act, toast } from "@/lib/client";
@@ -27,7 +28,7 @@ async function copy(text: string, what: string) {
   }
 }
 
-export function SendClient({ items, initialJob, me }: { items: SendItem[]; initialJob: number | null; me: Me }) {
+export function SendClient({ items, initialJob, me, gmail }: { items: SendItem[]; initialJob: number | null; me: Me; gmail: string }) {
   const router = useRouter();
   const [jobId, setJobId] = useState(initialJob && items.some((i) => i.jobId === initialJob) ? initialJob : items[0].jobId);
   const item = items.find((i) => i.jobId === jobId) ?? items[0];
@@ -65,7 +66,7 @@ export function SendClient({ items, initialJob, me }: { items: SendItem[]; initi
   const openMail = () => run("mail", async () => {
     if (!to.trim()) throw new Error("Add the email address first");
     if (to.trim() !== (item.applyEmail ?? "")) await act("setApplyEmail", { jobId: item.jobId, email: to.trim() });
-    const r = await act<{ ok: boolean; message: string }>("openMail", { jobId: item.jobId });
+    const r = await act<{ ok: boolean; message: string }>("mailDraft", { jobId: item.jobId });
     if (!r.ok) throw new Error(r.message);
     setOpened("email");
     toast(r.message);
@@ -163,11 +164,15 @@ export function SendClient({ items, initialJob, me }: { items: SendItem[]; initi
               {item.bundleName && <div className="attach"><FileText />{item.bundleName}</div>}
             </div>
             <div className="send-actions">
-              <button className="btn primary" onClick={openMail} disabled={busy === "mail"}>{busy === "mail" ? <LoaderCircle className="spin-icon" /> : <Mail />}Open in Apple Mail</button>
+              {gmail
+                ? <button className="btn primary" onClick={openMail} disabled={busy === "mail"}>{busy === "mail" ? <LoaderCircle className="spin-icon" /> : <Mail />}Create draft in Gmail</button>
+                : <Link className="btn primary" href="/sources#gmail"><Mail />Connect Gmail</Link>}
               <button className="btn ghost" onClick={() => copy(`${item.subject}\n\n${item.emailBody}`, "Email text")}><Copy />Copy text</button>
               {item.hasPdf && <a className="btn ghost" href={`/api/file?app=${item.appId}&download=1`}><Download />PDF</a>}
             </div>
-            <p className="faint send-hint">Apple Mail opens a finished draft with the PDF attached – you press Send. Using webmail? Copy the text and attach the PDF.</p>
+            <p className="faint send-hint">{gmail
+              ? <>The finished email with the PDF attached lands in your Gmail drafts and Gmail opens – you press Send there. Once it&apos;s sent, JobFinder notices and moves it to Applied.</>
+              : <>Connect Gmail once and every application lands in your drafts with the PDF attached. Until then: copy the text and attach the PDF yourself.</>}</p>
           </div>
         ) : (
           <div className="send-panel">

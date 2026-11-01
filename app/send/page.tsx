@@ -31,5 +31,5 @@ export default async function SendPage({ searchParams }: { searchParams: Promise
     );
   }
   const s = getSettings();
-  return <SendClient items={items} initialJob={want} me={{ name: s.name, email: s.email, phone: s.phone, salary: s.salaryExpectation, start: s.earliestStart, notice: s.noticePeriod }} />;
+  return <SendClient items={items} initialJob={want} me={{ name: s.name, email: s.email, phone: s.phone, salary: s.salaryExpectation, start: s.earliestStart, notice: s.noticePeriod }} gmail={s.gmailAddress} />;
 }

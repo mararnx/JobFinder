@@ -1,54 +1,17 @@
 /**
- * Job-alert emails from StepStone, Indeed, LinkedIn, XING (or any portal), read from a mailbox in Apple Mail.
- * The job seeker sets up alerts on the portals and a Mail rule that moves them into one mailbox.
- * Mail is asked through AppleScript, so no passwords are involved; macOS asks once for permission.
+ * Job-alert emails from StepStone, Indeed, LinkedIn, XING (or any portal), read from a Gmail label.
+ * The job seeker sets up alerts on the portals and a Gmail filter that labels them.
  */
-import { spawnSync } from "node:child_process";
 import { stripHtml } from "@/lib/text";
+import { readLabel } from "@/lib/gmail";
 import { PORTALS, type Portal } from "./extract";
 
 export type AlertMail = { id: string; sender: string; subject: string; source: string };
 export type AlertJob = { title: string; company: string; location: string | null; url: string; snippet: string };
 
-const SEP = { msg: "<<<KMSG>>>", field: "<<<KF>>>" };
-const as = (s: string) => `"${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
-
-/** Raw messages received in the last `days` days in every mailbox with this name (any account or On My Mac). */
-export function readMailbox(name: string, days: number): AlertMail[] {
-  const script = `
-set cutoff to (current date) - (${Math.max(1, Math.round(days))} * days)
-set out to ""
-set found to 0
-tell application "Mail"
-  set boxes to {}
-  try
-    set end of boxes to mailbox ${as(name)}
-  end try
-  repeat with a in accounts
-    try
-      set end of boxes to mailbox ${as(name)} of a
-    end try
-  end repeat
-  repeat with b in boxes
-    set found to found + 1
-    repeat with m in (messages of b whose date received > cutoff)
-      set out to out & ${as(SEP.msg)} & (message id of m) & ${as(SEP.field)} & (sender of m) & ${as(SEP.field)} & (subject of m) & ${as(SEP.field)} & (source of m)
-    end repeat
-  end repeat
-end tell
-return (found as string) & out`;
-  const r = spawnSync("osascript", ["-e", script], { encoding: "utf8", timeout: 180_000, maxBuffer: 200 * 1024 * 1024 });
-  if (r.status !== 0) {
-    const err = (r.stderr || "").trim();
-    if (/-1743|not authori[sz]ed|nicht berechtigt/i.test(err)) throw new Error("macOS hasn't allowed JobFinder to read Mail yet: System Settings → Privacy & Security → Automation → allow Mail");
-    throw new Error(`Apple Mail: ${err.slice(0, 200) || "failed"}`);
-  }
-  const [count, ...msgs] = r.stdout.split(SEP.msg);
-  if (Number(count) === 0) throw new Error(`No mailbox called "${name}" in Apple Mail`);
-  return msgs.map((m) => {
-    const [id, sender, subject, source] = m.split(SEP.field);
-    return { id: id.trim(), sender: sender.trim(), subject: subject.trim(), source: source ?? "" };
-  });
+/** Raw alert emails received in the last `days` days under this Gmail label. */
+export async function readAlertLabel(label: string, days: number): Promise<AlertMail[]> {
+  return (await readLabel(label, Math.max(1, Math.round(days)))).map((m) => ({ id: m.id, sender: m.from, subject: m.subject, source: m.source }));
 }
 
 /* ── MIME: just enough to get the HTML (or text) body of an alert email ── */

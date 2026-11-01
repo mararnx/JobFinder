@@ -15,7 +15,7 @@ Visual prototype of the UI: [`design/prototype.html`](design/prototype.html)
 | Sources (v1) | Arbeitsagentur API, company career-page watchlist, Chrome search on portals |
 | Interface | Local web app on `localhost`, SQLite, background worker |
 | Language | Applications: same as the job ad (DE or EN). App UI: English |
-| Email tracking | Later. v1: you move cards yourself |
+| Email tracking | Gmail (IMAP, app password): sent applications move to Applied, replies are classified and move the job on |
 | Materials | CV (PDF + Word), old cover letters, Zeugnisse/certificates |
 | Target roles | Learned from example ads + keywords you enter |
 
@@ -36,7 +36,7 @@ Sourced ─► Discover ─► Shortlist ─► Drafting ─► Review ─► Ap
 | **Shortlist** | Approved for applying. Queued for drafting, dream jobs first. | Worker |
 | **Drafting** | Claude researches the company, writes the letter, tailors the CV, builds the PDF bundle, fact-checks. | Worker |
 | **Review** | Side-by-side: ad ↔ letter. Edit, regenerate with an instruction, or approve. | You |
-| **Applied** | Email ads: a ready Apple Mail draft with attachments is opened; you hit send. Portal ads: Chrome opens the form pre-filled; you press submit. Then you confirm "sent". | You (1 click) |
+| **Applied** | Email ads: a ready Gmail draft with the PDF attached is created and Gmail opens; you hit send (JobFinder notices and moves the job). Portal ads: Chrome opens the form pre-filled; you press submit. Then you confirm "sent". | You (1 click) |
 | **In contact** | Any reply that isn't a rejection: phone screen, video call, task. | You |
 | **Round 1** | In-person interview scheduled. Triggers an interview prep pack. | You |
 | **Final** | Final round / offer, for tracking. | You |
@@ -143,7 +143,6 @@ Ads found by hand: **Add job ad** (top bar, ⌘K, or key **N**) takes a link, or
 
 ### 5.5 Later
 
-- Gmail: job alert emails as a source + automatic stage changes from replies.
 - Arbeitnow / other open APIs.
 
 ### 5.6 Deduplication
@@ -227,11 +226,11 @@ Every claim in the letter is checked against `cv_master.json`. In the Review scr
 
 | Channel | v1 behaviour |
 |---|---|
-| Email | AppleScript creates an Apple Mail draft: recipient, subject, short body text, bundle attached. Opens it; you press send. |
+| Email | A Gmail draft is appended over IMAP: recipient, subject, short body text, bundle attached. Gmail opens in the browser; you press send. |
 | ATS form (Personio, Greenhouse…) | Chrome opens the apply page; Playwright fills known fields and uploads the files; stops before submit. You check and submit. |
 | Portal with account (Workday, StepStone…) | The form opens; the answers panel lets you copy each field. Account creation and passwords stay with you. |
 
-After submitting you click **Mark as sent** (or it's detected when the Mail draft leaves Outbox — later).
+After submitting you click **Mark as sent** (or it's detected automatically: every 30 minutes JobFinder looks in Gmail for the sent email and for replies from the company's domain; Claude sorts replies into receipt, rejection, invitation or other).
 
 ---
 
@@ -325,10 +324,10 @@ kompass/
 | **0 · Setup** (½ day) | Install Claude Code CLI + log in; scaffold Next.js, Tailwind tokens, DB schema, worker skeleton, Claude runner with a smoke test | App starts; `claude -p` works from the worker |
 | **1 · Find** (2–3 days) | Arbeitsagentur source, watchlist + ATS feeds, dedupe, hard filters, Discover triage UI, job detail, Sources screen | Daily stream of real, de-duplicated ads you can triage by keyboard |
 | **2 · Rank & learn** (2 days) | Unterlagen screen (upload, categories, parsing), onboarding (CV parse, example ads, filters), profile, batched Sonnet scoring, signals, nightly reflection, profile history | Ads arrive sorted by fit with reasons; it improves as you triage |
-| **3 · Apply** (3–4 days) | Company brief, style guide, letter + CV tailoring, fact-check, PDF bundle, Review screen, Mail draft + ATS pre-fill | 30+/week applications at < 90 s review each |
+| **3 · Apply** (3–4 days) | Company brief, style guide, letter + CV tailoring, fact-check, PDF bundle, Review screen, Gmail draft + ATS pre-fill | 30+/week applications at < 90 s review each |
 | **4 · Chrome sources** (2 days) | Playwright profile, StepStone/Indeed/XING/LinkedIn runners, friction detection, notifications | Portal ads in the same stream |
 | **5 · Track** (2 days) | Pipeline kanban with drag + keys, timeline, follow-up drafts, ghosting, interview prep pack, Today digest, Insights | Full funnel to Final with analytics |
-| **Later** | Gmail: alert emails as a source, automatic stage changes, sending without Apple Mail; salary research; DSGVO requests | |
+| **Later** | Salary research; DSGVO requests | |
 
 ---
 
@@ -350,6 +349,6 @@ kompass/
 | Tailwind + shadcn/ui + Motion + cmdk + dnd-kit | The prototype's CSS design system ported 1:1 (`app/globals.css`), own command palette, native drag & drop | Matches the approved design exactly with far fewer dependencies |
 | Local embeddings (transformers.js) | TF-IDF cosine similarity (`lib/text.ts`) for dedupe and the like/dislike prior | No 100 MB model download; good enough at this volume. Embeddings can replace `similarity()` later |
 | Server-sent events for live updates | The UI refreshes every 6 s while visible | Simpler; no long-lived connections |
-| Separate review of "sent" | Approve opens Mail draft / pre-filled form; the job moves to Applied when you press "Mark as sent" | You stay in control of the actual send |
+| Separate review of "sent" | Approve leads to a Gmail draft / pre-filled form; the job moves to Applied when Gmail shows it sent, or when you press "Mark as sent" | You stay in control of the actual send |
 
-Not built yet (still "Later"): Gmail alerts as a source and automatic stage changes from replies, salary research, GDPR deletion requests.
+Not built yet (still "Later"): salary research, GDPR deletion requests.

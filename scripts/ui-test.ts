@@ -199,14 +199,22 @@ try {
   });
 
   console.log("[ui] ready to send");
-  await check("email: open in Apple Mail, then mark as sent", async () => {
+  await check("connect Gmail (dry run: nothing is checked or stored)", async () => {
+    await go(page, "/sources");
+    await page.getByRole("textbox", { name: "Gmail address" }).fill("alex.neumann@gmail.com");
+    await page.getByLabel("App password").fill("abcd efgh ijkl mnop");
+    await page.getByRole("button", { name: /^Connect$/ }).click();
+    await toast(page, /dry run/i);
+    await page.getByText("alex.neumann@gmail.com").first().waitFor({ timeout: 8000 });
+  });
+  await check("email: create the Gmail draft, then mark as sent", async () => {
     await go(page, "/send");
     const row = page.locator(".send-row").filter({ has: page.locator("svg.lucide-mail") }).first();
     await row.click();
     const company = (await row.locator(".c").textContent())!;
     await page.getByRole("tab", { name: /By email/ }).click();
-    await page.getByRole("button", { name: /Open in Apple Mail/ }).click();
-    await toast(page, /dry run|Apple Mail/i);
+    await page.getByRole("button", { name: /Create draft in Gmail/ }).click();
+    await toast(page, /dry run|Gmail/i);
     await page.getByRole("button", { name: /Mark as sent/ }).click();
     await toast(page, new RegExp(`Sent to ${company}`));
   });

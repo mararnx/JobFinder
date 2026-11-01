@@ -25,6 +25,14 @@ export async function mockResponse(name: string, input: unknown): Promise<unknow
   await delay();
   const i = (input ?? {}) as Any;
   switch (name) {
+    case "classify-reply": {
+      const t = `${i.subject ?? ""}\n${i.text ?? ""}`.toLowerCase();
+      const kind = /leider|absage|nicht berücksichtigen|anderen kandidat|unfortunately|other candidates|not to proceed/.test(t) ? "rejection"
+        : /einladung|vorstellungsgespräch|kennenlernen|termin|interview|invite|call with/.test(t) ? "invitation"
+        : /eingangsbestätigung|eingegangen|erhalten|received your application|thank you for applying|thanks for applying/.test(t) ? "receipt" : "other";
+      const summary = { receipt: "Confirms the application arrived", rejection: "The company declines", invitation: "Invites you to an interview", other: "Replied – read it" }[kind];
+      return { kind, summary, next_action: kind === "invitation" ? "Pick an interview slot" : kind === "other" ? "Read the reply and answer" : null };
+    }
     case "parse-alert":
       return { jobs: guessAlertJobs(i.html ?? "", i.sender ?? "") };
     case "parse-ad": {
