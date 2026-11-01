@@ -3,7 +3,7 @@ import { Shell } from "./_components/Shell";
 import { shellStatus } from "@/lib/status";
 import "./globals.css";
 
-export const metadata: Metadata = { title: "Kompass", description: "Your local job search funnel" };
+export const metadata: Metadata = { title: "JobFinder", description: "Your local job search funnel" };
 export const dynamic = "force-dynamic";
 
 // light by default; the toggle in the top bar remembers dark

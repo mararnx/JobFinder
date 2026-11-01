@@ -10,7 +10,7 @@ export type Doc = { id: number; kind: string; name: string; size: number; status
 
 const KINDS = [
   { key: "cv", name: "CV / Résumé", icon: FileUser, hint: "Word file preferred – a tailored version is made for each job from it." },
-  { key: "letter", name: "Past cover letters", icon: FilePenLine, hint: "3–5 letters you wrote. Kompass learns your writing style from them." },
+  { key: "letter", name: "Past cover letters", icon: FilePenLine, hint: "3–5 letters you wrote. JobFinder learns your writing style from them." },
   { key: "ref", name: "References (Arbeitszeugnisse)", icon: FileBadge, hint: "Attached to the application PDF and used as evidence." },
   { key: "cert", name: "Certificates & degrees", icon: Award, hint: "University, vocational training, further education." },
   { key: "other", name: "Other", icon: File, hint: "Photo, work samples, recommendations." },
@@ -59,7 +59,7 @@ export function DocumentsClient({ docs, facts, positions, style, letters, attach
       <section className="hero" style={{ paddingBottom: 22 }}>
         <div className="date"><Lock />{docs.length} files · stored only on this Mac</div>
         <h1 style={{ fontSize: 44 }}>Documents</h1>
-        <p>Everything that already exists: CV, old cover letters, references, certificates. Kompass reads each file once and uses it for applications. It only claims what these documents back up.</p>
+        <p>Everything that already exists: CV, old cover letters, references, certificates. JobFinder reads each file once and uses it for applications. It only claims what these documents back up.</p>
       </section>
       <div className="bento">
         <div className="col-8 docs-main">
@@ -102,7 +102,7 @@ export function DocumentsClient({ docs, facts, positions, style, letters, attach
                           <select className="kind-sel" value={d.kind} aria-label={`Category for ${d.name}`} onChange={(e) => run("docKind", { docId: d.id, kind: e.target.value }, `Moved to “${KINDS.find((x) => x.key === e.target.value)?.name}”`)}>
                             {KINDS.map((o) => <option key={o.key} value={o.key}>{o.name}</option>)}
                           </select>
-                          <button className="icon-btn" aria-label={`Remove ${d.name}`} onClick={() => confirm(`Delete ${d.name}? The file is removed from Kompass.`) && run("docDelete", { docId: d.id }, `${d.name} removed`)}><Trash2 /></button>
+                          <button className="icon-btn" aria-label={`Remove ${d.name}`} onClick={() => confirm(`Delete ${d.name}? The file is removed from JobFinder.`) && run("docDelete", { docId: d.id }, `${d.name} removed`)}><Trash2 /></button>
                         </li>
                       );
                     })}
@@ -114,7 +114,7 @@ export function DocumentsClient({ docs, facts, positions, style, letters, attach
         </div>
         <aside className="col-4 docs-side">
           <div className="card">
-            <div className="card-h"><Sparkles />What Kompass does with them</div>
+            <div className="card-h"><Sparkles />What JobFinder does with them</div>
             <ul className="derived">
               <li><span className="feed-dot"><ListChecks /></span><div><b>Fact base</b><span>{facts ? `${facts} verified facts from ${positions} positions in your CV. Every claim in a cover letter is checked against them.` : "Upload your CV – it becomes the only source for claims in your letters."}</span></div></li>
               <li><span className="feed-dot"><Feather /></span><div><b>Style guide</b><span>{style ? `From ${letters} cover letter${letters === 1 ? "" : "s"}.${letters < 3 ? " More accurate from 3 letters." : ""}` : "Upload a few of your own cover letters so drafts sound like you."}</span>{style && <button className="btn ghost sm" onClick={() => setShowStyle((v) => !v)}>{showStyle ? "Hide" : "View"}</button>}</div></li>
@@ -122,7 +122,7 @@ export function DocumentsClient({ docs, facts, positions, style, letters, attach
             </ul>
             {showStyle && style && <div style={{ padding: "0 18px 16px" }}><Markdown text={style} /></div>}
           </div>
-          <div className="card privacy"><Lock /><span>Files stay in Kompass&apos;s data folder on this Mac. Only their text is sent to Claude when reading.</span></div>
+          <div className="card privacy"><Lock /><span>Files stay in JobFinder&apos;s data folder on this Mac. Only their text is sent to Claude when reading.</span></div>
         </aside>
       </div>
     </div>

@@ -1,4 +1,4 @@
-// Installs a launchd agent so Kompass (web + worker) starts at login and restarts if it crashes.
+// Installs a launchd agent so JobFinder (web + worker) starts at login and restarts if it crashes.
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -12,7 +12,7 @@ const node = process.execPath;
 if (process.argv[2] === "uninstall") {
   try { execFileSync("launchctl", ["unload", plist]); } catch { /* not loaded */ }
   fs.rmSync(plist, { force: true });
-  console.log("Removed. Kompass no longer starts at login.");
+  console.log("Removed. JobFinder no longer starts at login.");
   process.exit(0);
 }
 
@@ -32,4 +32,4 @@ fs.writeFileSync(plist, `<?xml version="1.0" encoding="UTF-8"?>
 `);
 try { execFileSync("launchctl", ["unload", plist], { stdio: "ignore" }); } catch { /* first install */ }
 execFileSync("launchctl", ["load", plist]);
-console.log(`Installed. Kompass starts at login: http://localhost:4317 (logs in data/kompass.log)`);
+console.log(`Installed. JobFinder starts at login: http://localhost:4317 (logs in data/kompass.log)`);

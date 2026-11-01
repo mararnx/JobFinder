@@ -14,7 +14,7 @@ export default async function Discover({ searchParams }: { searchParams: Promise
   const cards: Card[] = rows.map((j) => {
     const sj = json<{ reasons_for: string[]; reasons_against: string[]; red_flags: string[]; dimensions: Record<string, number> } | null>(j.score_json, null);
     return {
-      id: j.id, title: j.title, company: j.company, location: j.location ?? "n/a", remote: j.remote ?? "remote n/a",
+      id: j.id, title: j.title, company: j.company, location: j.location, remote: j.remote,
       salary: fmtSalary(j.salary_min, j.salary_max, j.salary_text), language: (j.language ?? "de").toUpperCase(), score: j.score ?? 0,
       age: timeAgo(j.published_at ?? j.found_at), source: (j.sources ?? "").split(",").join(" · "), dream: !!j.dream, manual: !!j.manual, note: j.note,
       watchlist: !!j.watchlist, url: j.url, reasonsFor: sj?.reasons_for ?? [], reasonsAgainst: sj?.reasons_against ?? [],

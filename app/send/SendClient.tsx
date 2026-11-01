@@ -180,7 +180,7 @@ export function SendClient({ items, initialJob, me }: { items: SendItem[]; initi
                 <a className="btn ghost" href={`/api/file?app=${item.appId}&part=cv&download=1`}><Download />CV</a>
               </>}
             </div>
-            <p className="faint send-hint">Chrome opens the form, fills in your details and attaches the PDFs. Check everything and submit it yourself – Kompass never submits.</p>
+            <p className="faint send-hint">Chrome opens the form, fills in your details and attaches the PDFs. Check everything and submit it yourself – JobFinder never submits.</p>
             <h4>Answers for the form</h4>
             <ul className="answers">
               {answers.map(([k, v]) => (

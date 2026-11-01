@@ -29,7 +29,7 @@ export function ProfileClient({ profile, history, settings }: { profile: P; hist
   return (
     <div className="view-inner enter">
       <section className="hero" style={{ paddingBottom: 22 }}>
-        <div className="date"><UserRound />What Kompass knows about what you want</div>
+        <div className="date"><UserRound />What JobFinder knows about what you want</div>
         <h1 style={{ fontSize: 44 }}>Profile</h1>
       </section>
       <div className="bento">

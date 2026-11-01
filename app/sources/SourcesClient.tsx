@@ -36,7 +36,7 @@ export function SourcesClient(p: {
   return (
     <div className="view-inner enter">
       <section className="hero" style={{ paddingBottom: 22 }}>
-        <div className="date"><Search />Where Kompass looks</div>
+        <div className="date"><Search />Where JobFinder looks</div>
         <h1 style={{ fontSize: 44 }}>Sources</h1>
       </section>
       <div className="bento">
@@ -118,7 +118,7 @@ export function SourcesClient(p: {
                 <button className="icon-btn" aria-label={`Remove ${c.name}`} onClick={() => run("watchlistRemove", { companyId: c.id }, `${c.name} removed`)}><Trash2 /></button>
               </li>
             ))}
-            {!p.watchlist.length && <li className="faint">Add companies you&apos;d love to work for. Kompass reads their job feed directly – often before the portals.</li>}
+            {!p.watchlist.length && <li className="faint">Add companies you&apos;d love to work for. JobFinder reads their job feed directly – often before the portals.</li>}
           </ul>
           {p.blocked.length > 0 && (
             <>

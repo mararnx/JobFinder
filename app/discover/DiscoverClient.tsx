@@ -8,7 +8,7 @@ import { act, openJob, toast } from "@/lib/client";
 import { Ring, Tile } from "../_components/ui";
 
 export type Card = {
-  id: number; title: string; company: string; location: string; remote: string; salary: string; language: string; score: number; age: string; source: string;
+  id: number; title: string; company: string; location: string | null; remote: string | null; salary: string; language: string; score: number; age: string; source: string;
   dream: boolean; manual: boolean; note: string | null; watchlist: boolean; url: string | null; reasonsFor: string[]; reasonsAgainst: string[]; flags: string[];
   dims: Record<string, number> | null; excerpt: string;
 };
@@ -111,7 +111,7 @@ export function DiscoverClient({ cards, later }: { cards: Card[]; later: boolean
           {queue.map((q) => (
             <div key={q.id} className="q-item" role="option" aria-selected={q.id === sel?.id} tabIndex={-1} onClick={() => setSelId(q.id)}>
               <Tile name={q.company} small />
-              <div className="grow"><div className="t">{(dreams[q.id] ?? q.dream) ? "★ " : ""}{q.title}</div><div className="c">{q.company} · {q.location}</div></div>
+              <div className="grow"><div className="t">{(dreams[q.id] ?? q.dream) ? "★ " : ""}{q.title}</div><div className="c">{q.company}{q.location ? ` · ${q.location}` : ""}</div></div>
               <Ring score={q.score} size={30} stroke={3} />
             </div>
           ))}
@@ -138,8 +138,8 @@ export function DiscoverClient({ cards, later }: { cards: Card[]; later: boolean
               <div style={{ textAlign: "center" }}><Ring score={sel.score} size={76} stroke={5} /><div className="faint" style={{ fontSize: 11, marginTop: 4 }}>Match</div></div>
             </div>
             <div className="facts">
-              <span className="tag"><MapPin />{sel.location}</span><span className="tag"><House />{sel.remote}</span>
-              <span className="tag"><Banknote /><span className="mono">{sel.salary}</span></span><span className="tag"><Languages />{sel.language}</span>
+              {sel.location && <span className="tag"><MapPin />{sel.location}</span>}{sel.remote && <span className="tag"><House />{sel.remote}</span>}
+              {sel.salary !== "n/a" && <span className="tag"><Banknote /><span className="mono">{sel.salary}</span></span>}<span className="tag"><Languages />{sel.language}</span>
               {sel.note && <span className="tag info"><StickyNote />{sel.note}</span>}
               {sel.flags.map((f) => <span key={f} className="tag warn"><TriangleAlert />{f}</span>)}
             </div>
@@ -163,7 +163,7 @@ export function DiscoverClient({ cards, later }: { cards: Card[]; later: boolean
               {sel.url && <a className="btn ghost" style={{ marginLeft: "auto" }} href={sel.url} target="_blank" rel="noreferrer"><ExternalLink />View ad <kbd>O</kbd></a>}
             </div>
             <div className={`reasons${reasons ? " show" : ""}`}>
-              <p>Why not? Kompass learns from this for tomorrow.</p>
+              <p>Why not? JobFinder learns from this for tomorrow.</p>
               <div className="chips">
                 {REASONS.map((r, i) => <button key={r} className="chip" onClick={() => void decide("reject", r)}><kbd>{i + 1}</kbd>{r}</button>)}
                 <button className="chip" onClick={() => void decide("reject")}>Just no</button>
@@ -173,7 +173,7 @@ export function DiscoverClient({ cards, later }: { cards: Card[]; later: boolean
         ) : (
           <div className="all-done enter">
             <div className="serif">All caught up.</div>
-            <p className="muted">{later ? "Nothing saved for later." : "New ads are fetched every 3 hours. Kompass will let you know."}</p>
+            <p className="muted">{later ? "Nothing saved for later." : "New ads are fetched every 3 hours. JobFinder will let you know."}</p>
             <Link className="btn" href="/review"><PenLine />Go to drafts</Link>
           </div>
         )}

@@ -8,7 +8,7 @@ const dev = process.argv[2] === "dev";
 const port = process.env.PORT ?? "4317";
 const bin = (n) => `node_modules/.bin/${n}`;
 
-// another Kompass (or anything else) on the port: say so before building, so a running server is never rebuilt underneath
+// another JobFinder (or anything else) on the port: say so before building, so a running server is never rebuilt underneath
 const busy = await new Promise((r) => {
   const sock = net.connect(Number(port), "127.0.0.1", () => { sock.destroy(); r(true); });
   sock.on("error", () => r(false));

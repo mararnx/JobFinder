@@ -1,4 +1,4 @@
-const UA = "Kompass/0.1 (personal job search tool; local)";
+const UA = "JobFinder/0.1 (personal job search tool; local)";
 
 export async function fetchText(url: string, opts: { headers?: Record<string, string>; timeoutMs?: number } = {}): Promise<{ status: number; text: string; finalUrl: string }> {
   const ctl = new AbortController();

@@ -1,5 +1,5 @@
-// Opens Kompass's own Chrome profile so you can log in to job portals yourself.
-// Close the window when done; Kompass's Chrome search then reuses the session.
+// Opens JobFinder's own Chrome profile so you can log in to job portals yourself.
+// Close the window when done; JobFinder's Chrome search then reuses the session.
 import path from "node:path";
 import { chromium } from "playwright";
 

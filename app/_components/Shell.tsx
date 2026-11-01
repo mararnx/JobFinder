@@ -1,10 +1,11 @@
 "use client";
 
-import { ChartNoAxesCombined, Compass, Send, FolderOpen, Kanban, Keyboard, Link as LinkIcon, LoaderCircle, PenLine, Plus, Radar, RefreshCw, Search, Settings2, Sparkles, Sun, SunMoon, UserRound, Upload, Briefcase, Check, X, TriangleAlert } from "lucide-react";
+import { ChartNoAxesCombined, Send, FolderOpen, Kanban, Keyboard, Link as LinkIcon, LoaderCircle, PenLine, Plus, Radar, RefreshCw, Search, Settings2, Sparkles, Sun, SunMoon, UserRound, Upload, Briefcase, Check, X, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRestoreFocus } from "./useRestoreFocus";
+import { Logo } from "./ui";
 import { act, openAddAd, openJob, toast, type ToastMsg } from "@/lib/client";
 import { JobDrawer } from "./JobDrawer";
 
@@ -28,13 +29,14 @@ const SETUP = [
   { href: "/sources", label: "Sources", icon: Radar, key: "s" },
   { href: "/profile", label: "Profile", icon: UserRound, key: "o" },
 ];
-const TITLES: Record<string, string> = { "/": "Today", "/discover": "Discover", "/pipeline": "Pipeline", "/review": "Review", "/send": "Ready to send", "/insights": "Insights", "/documents": "Documents", "/sources": "Sources", "/profile": "Profile", "/onboarding": "Set up Kompass" };
+const TITLES: Record<string, string> = { "/": "Today", "/discover": "Discover", "/pipeline": "Pipeline", "/review": "Review", "/send": "Ready to send", "/insights": "Insights", "/documents": "Documents", "/sources": "Sources", "/profile": "Profile", "/onboarding": "Set up JobFinder" };
 
 export function Shell({ status, children }: { status: ShellStatus; children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const [palette, setPalette] = useState(false);
   const [addAd, setAddAd] = useState(false);
+  const [keys, setKeys] = useState(false);
   const [toasts, setToasts] = useState<(ToastMsg & { id: number })[]>([]);
   const [fetching, setFetching] = useState(false);
   const gPending = useRef(false);
@@ -103,6 +105,7 @@ export function Shell({ status, children }: { status: ShellStatus; children: Rea
       if (e.key === "Escape") {
         setPalette(false);
         setAddAd(false);
+        setKeys(false);
         return;
       }
       const t = e.target as HTMLElement;
@@ -121,13 +124,16 @@ export function Shell({ status, children }: { status: ShellStatus; children: Rea
       } else if (k === "n") {
         e.preventDefault();
         setAddAd(true);
+      } else if (e.key === "?") {
+        e.preventDefault();
+        setKeys(true);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [router]);
 
-  const title = TITLES[path] ?? "Kompass";
+  const title = TITLES[path] ?? "JobFinder";
   const sub = path === "/discover" ? `${status.counts.discover} to go through · by score` : path === "/review" ? `${status.counts.review} drafts` : path === "/send" ? `${status.counts.ready} approved` : "";
   const quotaPct = status.claude.mock ? 0 : Math.min(100, Math.round((status.claude.callsWindow / 120) * 100));
   const paused = status.claude.pausedUntil ? new Date(status.claude.pausedUntil) : null;
@@ -151,8 +157,8 @@ export function Shell({ status, children }: { status: ShellStatus; children: Rea
       <div className="app">
         <aside className="sidebar" aria-label="Main navigation">
           <div className="brand">
-            <div className="brand-mark"><Compass /></div>
-            <span className="brand-name">Kompass</span>
+            <Logo />
+            <span className="brand-name">JobFinder</span>
           </div>
           <nav className="nav">
             {NAV.map((n) => navLink(n))}
@@ -174,7 +180,7 @@ export function Shell({ status, children }: { status: ShellStatus; children: Rea
             <div className="foot-row">
               <button className="icon-btn" onClick={toggleTheme} aria-label="Toggle color scheme"><SunMoon /></button>
               <Link className="icon-btn" href="/profile#settings" aria-label="Settings"><Settings2 /></Link>
-              <button className="icon-btn" aria-label="Keyboard shortcuts" onClick={() => toast("J/K navigate · A apply · D dream · X reject · S later · N add ad · G then H/D/P/R/I go to · ⌘K commands")}><Keyboard /></button>
+              <button className="icon-btn" aria-label="Keyboard shortcuts" onClick={() => setKeys(true)}><Keyboard /></button>
             </div>
           </div>
         </aside>
@@ -191,7 +197,8 @@ export function Shell({ status, children }: { status: ShellStatus; children: Rea
         </div>
       </div>
 
-      <Palette open={palette} onClose={() => setPalette(false)} actions={{ fetchSources, toggleTheme }} />
+      <Palette open={palette} onClose={() => setPalette(false)} actions={{ fetchSources, toggleTheme, showKeys: () => setKeys(true) }} />
+      <ShortcutsDialog open={keys} onClose={() => setKeys(false)} />
       <AddAdDialog open={addAd} onClose={() => setAddAd(false)} />
       <JobDrawer />
       <div className="toasts" aria-live="polite" role="status">
@@ -211,7 +218,7 @@ export function Shell({ status, children }: { status: ShellStatus; children: Rea
 
 type Cmd = { group: string; icon: React.ComponentType; label: string; keys?: string; run: () => void };
 
-function Palette({ open, onClose, actions }: { open: boolean; onClose: () => void; actions: { fetchSources: () => void; toggleTheme: () => void } }) {
+function Palette({ open, onClose, actions }: { open: boolean; onClose: () => void; actions: { fetchSources: () => void; toggleTheme: () => void; showKeys: () => void } }) {
   useRestoreFocus(open);
   const router = useRouter();
   const [q, setQ] = useState("");
@@ -243,6 +250,7 @@ function Palette({ open, onClose, actions }: { open: boolean; onClose: () => voi
     { group: "Actions", icon: RefreshCw, label: "Fetch all sources now", run: actions.fetchSources },
     { group: "Actions", icon: Plus, label: "Add company to watchlist…", run: go("/sources#watchlist") },
     { group: "Actions", icon: SunMoon, label: "Toggle color scheme", run: actions.toggleTheme },
+    { group: "Actions", icon: Keyboard, label: "Keyboard shortcuts", keys: "?", run: actions.showKeys },
   ];
   const ql = q.toLowerCase();
   const items: Cmd[] = [
@@ -287,6 +295,47 @@ function Palette({ open, onClose, actions }: { open: boolean; onClose: () => voi
               </div>
             );
           })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── Keyboard shortcuts ────────────────────────────────── */
+
+const SHORTCUTS: [string, [string[], string][]][] = [
+  ["Everywhere", [[["⌘", "K"], "Search jobs and commands"], [["N"], "Add your own job ad"], [["?"], "Show this list"], [["Esc"], "Close a dialog or panel"]]],
+  ["Go to (press G, then…)", [[["G", "H"], "Today"], [["G", "D"], "Discover"], [["G", "P"], "Pipeline"], [["G", "R"], "Review"], [["G", "E"], "Send"], [["G", "I"], "Insights"], [["G", "U"], "Documents"], [["G", "S"], "Sources"], [["G", "O"], "Profile"]]],
+  ["Discover", [[["A"], "Apply"], [["D"], "Mark as dream job"], [["X"], "Reject, then 1–8 for the reason"], [["S"], "Save for later"], [["O"], "Open the original ad"], [["↵"], "Show the full ad"], [["J", "K"], "Next / previous job"]]],
+  ["Review and Send", [[["J", "K"], "Next / previous application"], [["E"], "Edit the letter"], [["R"], "Ask Claude to rewrite"], [["⌘", "↵"], "Approve / send"]]],
+  ["Pipeline", [[["↵"], "Open the job"], [["[", "]"], "Move the card one column left / right"]]],
+];
+
+function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  useRestoreFocus(open);
+  const close = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (open) setTimeout(() => close.current?.focus(), 0);
+  }, [open]);
+  return (
+    <>
+      <div className={`scrim${open ? " show" : ""}`} onClick={onClose} />
+      <div className={`palette keys-dlg${open ? " show" : ""}`} role="dialog" aria-modal="true" aria-labelledby="keys-t">
+        <div className="keys-h">
+          <h2 id="keys-t"><Keyboard />Keyboard shortcuts</h2>
+          <button ref={close} className="icon-btn" onClick={onClose} aria-label="Close"><X /></button>
+        </div>
+        <div className="keys-grid">
+          {SHORTCUTS.map(([group, rows]) => (
+            <section key={group}>
+              <h3>{group}</h3>
+              <dl>
+                {rows.map(([ks, what]) => (
+                  <div key={what}><dt>{ks.map((k) => <kbd key={k}>{k}</kbd>)}</dt><dd>{what}</dd></div>
+                ))}
+              </dl>
+            </section>
+          ))}
         </div>
       </div>
     </>
@@ -349,7 +398,7 @@ function AddAdDialog({ open, onClose }: { open: boolean; onClose: () => void }) 
       >
         <div className="addad-b">
           <h2 id="addad-t"><LinkIcon />Add your own job ad</h2>
-          <p className="faint">Found one yourself? Paste the link – Kompass reads the ad, scores it and adds it to the stack.</p>
+          <p className="faint">Found one yourself? Paste the link – JobFinder reads the ad, scores it and adds it to the stack.</p>
           <label className="fld"><span>Link to the ad</span>
             <input ref={urlRef} type="url" inputMode="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://careers.company.com/jobs/…" autoComplete="off" aria-invalid={!!err && !text} />
           </label>

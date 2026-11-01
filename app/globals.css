@@ -89,7 +89,7 @@ svg.lucide { width: 16px; height: 16px; stroke-width: 1.6; flex-shrink: 0; }
   width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;
   background: var(--accent); color: var(--accent-ink);
 }
-.brand-mark svg.lucide { width: 16px; height: 16px; stroke-width: 2.2; }
+.brand-mark svg { width: 18px; height: 18px; }
 .brand-name { font-weight: 600; letter-spacing: -.01em; font-size: 15px; }
 .nav-label { font-size: 11px; color: var(--text-3); padding: 14px 10px 6px; letter-spacing: .04em; text-transform: uppercase; }
 .nav a {
@@ -269,7 +269,10 @@ a.stat:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px var(--bo
 .week { display: flex; gap: 10px; height: 180px; padding: 18px; align-items: stretch; }
 .wk { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; font-size: 12px; }
 .wk i { width: 100%; max-width: 36px; border-radius: 6px; background: var(--surface-3); }
-.wk i.today { background: var(--accent); }
+.wk i.on { background: var(--accent); }
+.wk .d { color: var(--text-3); }
+.wk.today .d { color: var(--text); font-weight: 600; }
+.wk.today i:not(.on) { background: var(--border-strong); }
 .spin svg.lucide, svg.spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -669,7 +672,8 @@ code { font: 12px var(--mono); background: var(--surface-2); padding: 1px 5px; b
 .ob-card p { margin: 0; color: var(--text-2); line-height: 1.6; }
 .ob-card .form-grid { padding: 0; }
 .brand-mark.big { width: 52px; height: 52px; border-radius: 14px; }
-.brand-mark.big svg.lucide { width: 26px; height: 26px; }
+.brand-mark.big svg { width: 30px; height: 30px; }
+.brand-mark.big svg.lucide { width: 26px; height: 26px; stroke-width: 2.2; }
 .claude-status { display: flex; gap: 12px; padding: 14px; border-radius: 12px; font-size: 13px; line-height: 1.55; }
 .claude-status.ok { background: var(--ok-soft); } .claude-status.warn { background: var(--dream-soft); }
 .claude-status svg { flex-shrink: 0; margin-top: 2px; }
@@ -784,3 +788,16 @@ code { font: 12px var(--mono); background: var(--surface-2); padding: 1px 5px; b
 .save-state svg { width: 13px; height: 13px; }
 .save-state.saved { color: var(--ok); }
 .style-preview summary { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; cursor: pointer; color: var(--text-2); } .style-preview summary svg { width: 14px; height: 14px; }
+
+/* keyboard shortcuts dialog */
+.keys-dlg { width: min(720px, calc(100vw - 32px)); top: 10vh; max-height: 80vh; display: flex; flex-direction: column; }
+.keys-h { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 12px 22px; border-bottom: 1px solid var(--border); }
+.keys-h h2 { margin: 0; font-size: 17px; letter-spacing: -.01em; display: flex; gap: 10px; align-items: center; }
+.keys-h h2 svg { color: var(--accent-fg); }
+.keys-grid { overflow: auto; padding: 8px 22px 22px; columns: 2 280px; column-gap: 32px; }
+.keys-grid section { break-inside: avoid; padding-top: 14px; }
+.keys-grid h3 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); font-weight: 500; }
+.keys-grid dl { margin: 0; }
+.keys-grid dl > div { display: flex; align-items: center; gap: 12px; padding: 5px 0; font-size: 13px; }
+.keys-grid dt { display: flex; gap: 4px; min-width: 64px; }
+.keys-grid dd { margin: 0; color: var(--text-2); }

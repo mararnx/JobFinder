@@ -56,6 +56,7 @@ export default function Today() {
   const goalPct = Math.min(100, Math.round((sentWeek / Math.max(1, s.weeklyGoal)) * 100));
 
   const top = get<JobRow>(`${JOB_SELECT} WHERE j.stage = 'discover' ORDER BY j.dream DESC, j.score DESC LIMIT 1`);
+  const topSalary = top ? fmtSalary(top.salary_min, top.salary_max, top.salary_text) : "n/a";
   const topReasons = top?.score_json ? (JSON.parse(top.score_json) as { reasons_for: string[]; reasons_against: string[] }) : null;
   const feed = all<{ type: string; text: string; at: string; job_id: number | null }>("SELECT type, text, at, job_id FROM events WHERE type IN ('worker','draft','profile','quota','source','documents','approved','prep') ORDER BY id DESC LIMIT 6");
   const greeting = now.getHours() < 11 ? "Good morning" : now.getHours() < 18 ? "Hello" : "Good evening";
@@ -69,7 +70,7 @@ export default function Today() {
           <div className="date"><Calendar />{now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</div>
           <h1>{greeting}{first ? `, ${first}` : ""}.</h1>
           <p>
-            {found24 ? <>In the last 24 hours, <b>{found24} new ads</b> came in. Kompass filtered out {excluded24}, </> : <>No new ads in the last 24 hours. </>}
+            {found24 ? <>In the last 24 hours, <b>{found24} new ads</b> came in. JobFinder filtered out {excluded24}, </> : <>No new ads in the last 24 hours. </>}
             <b>{discover} {discover === 1 ? "is" : "are"} waiting</b> for you{dreams ? <>, {dreams} of them strong</> : null}.
           </p>
           <div className="cta-row">
@@ -113,7 +114,7 @@ export default function Today() {
               })}
             </ol>
           ) : (
-            <div className="empty"><Check /><div><b>Nothing to do right now.</b><span>Kompass keeps searching in the background and lets you know.</span></div></div>
+            <div className="empty"><Check /><div><b>Nothing to do right now.</b><span>JobFinder keeps searching in the background and lets you know.</span></div></div>
           )}
         </div>
 
@@ -123,7 +124,7 @@ export default function Today() {
             <div className="tm-body">
               <div className="tm-top">
                 <Tile name={top.company} />
-                <div className="grow"><div className="t">{top.title}</div><div className="faint" style={{ fontSize: 12 }}>{top.company} · {top.location ?? "n/a"} · <span className="mono">{fmtSalary(top.salary_min, top.salary_max, top.salary_text)}</span></div></div>
+                <div className="grow"><div className="t">{top.title}</div><div className="faint" style={{ fontSize: 12 }}>{[top.company, top.location].filter(Boolean).join(" · ")}{topSalary !== "n/a" && <> · <span className="mono">{topSalary}</span></>}</div></div>
                 <Ring score={top.score} size={56} stroke={4} />
               </div>
               {topReasons && (
@@ -154,7 +155,7 @@ export default function Today() {
           <div className="card-h">Applications this week<span className="right mono faint">{sentWeek}</span></div>
           <div className="week" role="img" aria-label={`Applications per day: ${week.map(([d, v]) => `${d} ${v}`).join(", ")}`}>
             {week.map(([d, v], i) => (
-              <div className="wk" key={d}><span className="mono">{v}</span><i className={i === todayIdx ? "today" : ""} style={{ height: `${Math.max(4, (v / maxDay) * 100)}%` }} /><span className="faint">{d}</span></div>
+              <div className={`wk${i === todayIdx ? " today" : ""}`} key={d}><span className="mono">{v || "\u00a0"}</span><i className={v ? "on" : ""} style={{ height: `${Math.max(4, (v / maxDay) * 100)}%` }} /><span className="d">{i === todayIdx ? "Today" : d}</span></div>
             ))}
           </div>
         </div>

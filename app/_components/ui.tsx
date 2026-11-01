@@ -54,3 +54,16 @@ export function Markdown({ text }: { text: string }) {
   flush();
   return <div className="md">{blocks}</div>;
 }
+
+/** The JobFinder mark: a search lens with a check – a match found. Drawn on the accent tile. */
+export function Logo({ big }: { big?: boolean }) {
+  return (
+    <div className={`brand-mark${big ? " big" : ""}`} aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="10.5" cy="10.5" r="6" strokeWidth="2.2" />
+        <path d="M15 15l4.5 4.5" strokeWidth="2.8" />
+        <path d="M8 10.7l1.8 1.8 3.4-3.6" strokeWidth="2" />
+      </svg>
+    </div>
+  );
+}

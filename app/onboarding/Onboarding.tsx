@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Bot, Check, CircleCheck, Compass, FileText, LoaderCircle, PenLine, Plus, Sparkles, ThumbsDown, ThumbsUp, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bot, Check, CircleCheck, FileText, LoaderCircle, PenLine, Plus, Sparkles, ThumbsDown, ThumbsUp, Trash2, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import type { Settings } from "@/lib/db";
 import { act, toast } from "@/lib/client";
 import { SettingsForm } from "../_components/SettingsForm";
+import { Logo } from "../_components/ui";
 
 type Ex = { text: string; reason: string };
 const STEPS = ["Welcome", "Documents", "Writing style", "About you", "Search", "Examples", "Done"];
@@ -90,9 +91,9 @@ export function Onboarding({ settings, docs, profiles, claude, style }: { style:
 
       {step === 0 && (
         <section className="ob-card card">
-          <div className="brand-mark big"><Compass /></div>
-          <h1 className="serif">Welcome to Kompass.</h1>
-          <p>Kompass searches German job sources for you, ranks every ad by how well it fits, and writes tailored applications you approve with one click. Everything stays on this Mac.</p>
+          <Logo big />
+          <h1 className="serif">Welcome to JobFinder.</h1>
+          <p>JobFinder searches German job sources for you, ranks every ad by how well it fits, and writes tailored applications you approve with one click. Everything stays on this Mac.</p>
           <div className={`claude-status ${claude.cli ? "ok" : "warn"}`}>
             <Bot />
             <div>{claude.cli ? <><b>Claude Code found ({claude.cli}).</b> AI runs on your Claude Max subscription.</> : <><b>Claude Code isn&apos;t installed yet.</b> You can set everything up now – AI answers are simulated until you install Claude Code and log in with the Max account (see SETUP.md).</>}</div>
@@ -115,7 +116,7 @@ export function Onboarding({ settings, docs, profiles, claude, style }: { style:
           <ul className="list compact">
             {docs.map((d) => <li key={d.id}>{d.status === "reading" ? <LoaderCircle className="spin-icon" /> : <CircleCheck style={{ color: "var(--ok)" }} />}<div className="grow"><b>{d.name}</b><span className="faint">{d.kind} · {d.status === "reading" ? "reading…" : d.note}</span></div></li>)}
           </ul>
-          {!cv && <p className="hint">Without a CV, Kompass can still find and rank jobs, but can&apos;t write applications.</p>}
+          {!cv && <p className="hint">Without a CV, JobFinder can still find and rank jobs, but can&apos;t write applications.</p>}
           <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(0)}><ArrowLeft />Back</button><button className="btn primary" onClick={() => setStep(2)}>{cv ? "Next" : "Skip for now"}<ArrowRight /></button></div>
         </section>
       )}
@@ -123,10 +124,10 @@ export function Onboarding({ settings, docs, profiles, claude, style }: { style:
       {step === 2 && (
         <section className="ob-card card wide">
           <h2>How you write</h2>
-          <p>Kompass writes every letter in your voice. Give it something to learn from – ideally both.</p>
+          <p>JobFinder writes every letter in your voice. Give it something to learn from – ideally both.</p>
 
           <h3><FileText />Cover letters you&apos;ve sent</h3>
-          <p className="faint">2–5 letters you were happy with – your own, or ones your Claude project wrote that you sent. Kompass learns tone, openings and phrasing from them.</p>
+          <p className="faint">2–5 letters you were happy with – your own, or ones your Claude project wrote that you sent. JobFinder learns tone, openings and phrasing from them.</p>
           <label className="drop" tabIndex={0} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); void upload(e.dataTransfer.files, "letter"); }} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && letterInput.current?.click()}>
             <input ref={letterInput} type="file" multiple className="sr-only" accept=".pdf,.doc,.docx,.odt,.txt,.md" onChange={(e) => e.target.files && void upload(e.target.files, "letter")} aria-label="Upload cover letters" />
             <span className="drop-ic">{busy ? <LoaderCircle className="spin-icon" /> : <Upload />}</span>
@@ -140,7 +141,7 @@ export function Onboarding({ settings, docs, profiles, claude, style }: { style:
           )}
 
           <h3><Bot />Already using a Claude project for cover letters?</h3>
-          <p className="faint">Paste its instructions here and Kompass follows them for every letter. In claude.ai, open the project, then <b>Project instructions → Edit</b>, select all and copy. Rules about facts and the ad&apos;s language still apply.</p>
+          <p className="faint">Paste its instructions here and JobFinder follows them for every letter. In claude.ai, open the project, then <b>Project instructions → Edit</b>, select all and copy. Rules about facts and the ad&apos;s language still apply.</p>
           <textarea className="input" rows={8} value={instructions} onChange={(e) => setInstructions(e.target.value)} aria-label="Instructions from your Claude project" placeholder={"e.g. Write max 250 words. Open with a concrete result from my last role. Never use 'leidenschaftlich' or 'hochmotiviert'. Mention that I can start in 3 months."} />
 
           {style && (
@@ -178,7 +179,7 @@ export function Onboarding({ settings, docs, profiles, claude, style }: { style:
       {step === 5 && (
         <section className="ob-card card wide">
           <h2>Teach it your taste</h2>
-          <p>Paste a few ads you&apos;d love and a few you&apos;d never take, with a short reason. This gives Kompass its first preference profile. It keeps learning from every decision after that. Optional, but it makes the first scores much better.</p>
+          <p>Paste a few ads you&apos;d love and a few you&apos;d never take, with a short reason. This gives JobFinder its first preference profile. It keeps learning from every decision after that. Optional, but it makes the first scores much better.</p>
           <h3><ThumbsUp style={{ color: "var(--ok)" }} />Ads you&apos;d love</h3>
           {exList(liked, setLiked, "like")}
           <h3><ThumbsDown style={{ color: "var(--danger)" }} />Ads you&apos;d never take</h3>
@@ -191,8 +192,8 @@ export function Onboarding({ settings, docs, profiles, claude, style }: { style:
         <section className="ob-card card">
           <div className="brand-mark big"><Check /></div>
           <h1 className="serif">You&apos;re set.</h1>
-          <p>Kompass is fetching the first ads now. They show up in Discover within a few minutes, sorted by fit. Your preference profile is under Profile – read it and fix anything that&apos;s off.</p>
-          <div className="ob-actions"><button className="btn primary lg" onClick={() => { router.push("/"); router.refresh(); }}>Open Kompass<ArrowRight /></button></div>
+          <p>JobFinder is fetching the first ads now. They show up in Discover within a few minutes, sorted by fit. Your preference profile is under Profile – read it and fix anything that&apos;s off.</p>
+          <div className="ob-actions"><button className="btn primary lg" onClick={() => { router.push("/"); router.refresh(); }}>Open JobFinder<ArrowRight /></button></div>
         </section>
       )}
     </div>

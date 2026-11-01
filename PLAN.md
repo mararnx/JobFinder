@@ -1,4 +1,4 @@
-# Kompass — local job-search funnel
+# JobFinder — local job-search funnel
 
 A local Mac app that finds German job ads, ranks them against what you actually want, drafts tailored applications for your approval, and tracks every job through to an offer. All AI runs through your Claude Max subscription via the Claude Code CLI.
 
@@ -71,7 +71,7 @@ Sourced ─► Discover ─► Shortlist ─► Drafting ─► Review ─► Ap
 - **Local embeddings:** `transformers.js` with a small multilingual model (e.g. `multilingual-e5-small`) for duplicate detection and similarity to liked and rejected ads. No quota used.
 - **Notifications:** macOS notifications via `osascript` for the morning digest and "action needed" (CAPTCHA, login wall, quota).
 
-**Target machine:** the app is built here but runs on the job seeker's own Mac, with their own Claude Max account. Setup there: install the Claude Code CLI, run `claude` once and log in with that Max account, then install and start Kompass. The app checks `claude --version` and the login state on startup, and onboarding guides through it if either is missing. Nothing in code or config may assume this development Mac (paths, user name, accounts).
+**Target machine:** the app is built here but runs on the job seeker's own Mac, with their own Claude Max account. Setup there: install the Claude Code CLI, run `claude` once and log in with that Max account, then install and start JobFinder. The app checks `claude --version` and the login state on startup, and onboarding guides through it if either is missing. Nothing in code or config may assume this development Mac (paths, user name, accounts).
 
 ---
 
@@ -139,7 +139,7 @@ Ads found by hand: **Add job ad** (top bar, ⌘K, or key **N**) takes a link, or
 - The link is fetched (plain HTTP first, Chrome runner if the page needs JavaScript), parsed by Haiku into the usual fields, deduplicated against existing jobs, and scored.
 - Choice per ad: **Score it** (lands in Discover with a "Manual" badge) or **Apply right away** (straight to the Shortlist; Claude starts the draft).
 - Adding an ad by hand is a strong positive signal for learning, like a dream-job mark at lower weight.
-- If the domain is a careers page with a known ATS, Kompass offers to add the company to the watchlist.
+- If the domain is a careers page with a known ATS, JobFinder offers to add the company to the watchlist.
 
 ### 5.5 Later
 
