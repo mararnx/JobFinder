@@ -1,0 +1,39 @@
+{
+  "name": "kompass",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "node scripts/start.mjs dev",
+    "start": "node scripts/start.mjs",
+    "build": "next build",
+    "web": "next start -p 4317",
+    "worker": "tsx worker/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "setup:launchd": "node scripts/launchd.mjs install",
+    "remove:launchd": "node scripts/launchd.mjs uninstall",
+    "browser": "node scripts/browser.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "1.66.0",
+    "mammoth": "1.13.0",
+    "next": "15.5.28",
+    "pdf-lib": "1.17.1",
+    "playwright": "1.64.1",
+    "react": "19.1.10",
+    "react-dom": "19.1.10",
+    "unpdf": "2.1.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  }
+}

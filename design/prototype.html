@@ -1,0 +1,1226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kompass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<style>
+:root {
+  --bg: #F6F5F1; --bg-glow: rgba(160, 200, 0, .10);
+  --surface: #FFFFFF; --surface-2: #EFEEE9; --surface-3: #E6E5DF;
+  --border: rgba(20,20,10,.08); --border-strong: rgba(20,20,10,.14);
+  --highlight: rgba(255,255,255,.9);
+  --text: #141416; --text-2: #55555D; --text-3: #6B6B73;
+  --accent: #D4FF3A; --accent-ink: #141416; --accent-fg: #4B6400; --accent-soft: rgba(150,190,0,.14);
+  --dream: #B86E00; --dream-soft: rgba(230,150,20,.14);
+  --danger: #C2362F; --danger-soft: rgba(210,60,50,.10);
+  --ok: #157A52; --ok-soft: rgba(30,150,100,.12);
+  --info: #3756C4; --info-soft: rgba(60,90,200,.10);
+  --shadow-lg: 0 24px 60px -20px rgba(20,20,10,.25), 0 2px 6px rgba(20,20,10,.06);
+  --scrim: rgba(20,20,16,.35);
+  --grain-opacity: .035;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B0B0C; --bg-glow: rgba(212,255,58,.07);
+    --surface: #141416; --surface-2: #1B1B1E; --surface-3: #232327;
+    --border: rgba(255,255,255,.07); --border-strong: rgba(255,255,255,.13);
+    --highlight: rgba(255,255,255,.04);
+    --text: #EDEDEF; --text-2: #A3A3AB; --text-3: #7C7C85;
+    --accent: #D4FF3A; --accent-ink: #0B0B0C; --accent-fg: #D4FF3A; --accent-soft: rgba(212,255,58,.10);
+    --dream: #FFB547; --dream-soft: rgba(255,181,71,.12);
+    --danger: #FF6B5E; --danger-soft: rgba(255,107,94,.12);
+    --ok: #45DFA0; --ok-soft: rgba(69,223,160,.11);
+    --info: #8AA8FF; --info-soft: rgba(138,168,255,.12);
+    --shadow-lg: 0 30px 80px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.06);
+    --scrim: rgba(0,0,0,.55);
+    --grain-opacity: .05;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B0B0C; --bg-glow: rgba(212,255,58,.07);
+  --surface: #141416; --surface-2: #1B1B1E; --surface-3: #232327;
+  --border: rgba(255,255,255,.07); --border-strong: rgba(255,255,255,.13);
+  --highlight: rgba(255,255,255,.04);
+  --text: #EDEDEF; --text-2: #A3A3AB; --text-3: #7C7C85;
+  --accent: #D4FF3A; --accent-ink: #0B0B0C; --accent-fg: #D4FF3A; --accent-soft: rgba(212,255,58,.10);
+  --dream: #FFB547; --dream-soft: rgba(255,181,71,.12);
+  --danger: #FF6B5E; --danger-soft: rgba(255,107,94,.12);
+  --ok: #45DFA0; --ok-soft: rgba(69,223,160,.11);
+  --info: #8AA8FF; --info-soft: rgba(138,168,255,.12);
+  --shadow-lg: 0 30px 80px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.06);
+  --scrim: rgba(0,0,0,.55);
+  --grain-opacity: .05;
+  color-scheme: dark;
+}
+
+:root {
+  --font: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
+  --r-card: 14px; --r-ctl: 10px;
+  --spring: cubic-bezier(.22, 1.2, .36, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --sidebar: 236px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font: 14px/1.5 var(--font); -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  overflow: hidden;
+}
+body::after { /* film grain */
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 1000;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent-fg); outline-offset: 2px; border-radius: 6px; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.serif { font-family: var(--serif); font-weight: 400; }
+svg.lucide { width: 16px; height: 16px; stroke-width: 1.6; flex-shrink: 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ── Shell ─────────────────────────────────────────── */
+.app { display: grid; grid-template-columns: var(--sidebar) 1fr; height: 100dvh; }
+.sidebar {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 18px 12px; border-right: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 18px; }
+.brand-mark {
+  width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;
+  background: var(--accent); color: var(--accent-ink);
+}
+.brand-mark svg.lucide { width: 16px; height: 16px; stroke-width: 2.2; }
+.brand-name { font-weight: 600; letter-spacing: -.01em; font-size: 15px; }
+.nav-label { font-size: 11px; color: var(--text-3); padding: 14px 10px 6px; letter-spacing: .04em; text-transform: uppercase; }
+.nav a {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px; min-height: 36px;
+  border-radius: var(--r-ctl); color: var(--text-2); text-decoration: none; font-weight: 500;
+  transition: background .15s, color .15s;
+}
+.nav a:hover { background: var(--surface-2); color: var(--text); }
+.nav a[aria-current="page"] { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--border), inset 0 1px 0 var(--highlight); }
+.nav a[aria-current="page"] svg { color: var(--accent-fg); }
+.nav .badge { margin-left: auto; }
+.badge {
+  font: 500 11px/1 var(--mono); padding: 4px 6px; border-radius: 6px;
+  background: var(--surface-2); color: var(--text-2);
+}
+.badge.hot { background: var(--accent); color: var(--accent-ink); }
+.sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
+.quota { padding: 12px; border-radius: var(--r-card); background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
+.quota-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-2); margin-bottom: 8px; }
+.meter { height: 4px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+.meter > i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.quota-sub { font-size: 11px; color: var(--text-3); margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+.pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 var(--ok); animation: pulse 2s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 60%, transparent); } 70% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.foot-row { display: flex; gap: 6px; }
+.icon-btn {
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--r-ctl);
+  color: var(--text-2); transition: background .15s, color .15s;
+}
+.icon-btn:hover { background: var(--surface-2); color: var(--text); }
+
+.main { display: flex; flex-direction: column; min-width: 0; height: 100dvh; }
+.topbar {
+  display: flex; align-items: center; gap: 12px; padding: 14px 28px;
+  border-bottom: 1px solid var(--border); min-height: 64px;
+}
+.crumb { font-weight: 600; font-size: 15px; letter-spacing: -.01em; }
+.crumb small { color: var(--text-3); font-weight: 400; margin-left: 8px; font-size: 13px; }
+.search {
+  margin-left: auto; display: flex; align-items: center; gap: 8px; width: min(320px, 40vw);
+  padding: 8px 10px; border-radius: var(--r-ctl); background: var(--surface); color: var(--text-3);
+  box-shadow: inset 0 0 0 1px var(--border); min-height: 36px; text-align: left;
+}
+.search span { flex: 1; }
+kbd {
+  font: 500 11px/1 var(--mono); padding: 3px 5px; border-radius: 5px; min-width: 18px; text-align: center;
+  background: var(--surface-2); color: var(--text-2); box-shadow: inset 0 -1px 0 var(--border-strong), inset 0 0 0 1px var(--border);
+  display: inline-block;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 0 14px; height: 36px;
+  border-radius: var(--r-ctl); font-weight: 500; white-space: nowrap; color: var(--text); text-decoration: none;
+  background: var(--surface); box-shadow: inset 0 0 0 1px var(--border-strong), inset 0 1px 0 var(--highlight);
+  transition: transform .12s var(--spring), background .15s;
+}
+.btn:hover { background: var(--surface-2); }
+.btn:active { transform: scale(.97); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); box-shadow: inset 0 -1px 0 rgba(0,0,0,.12); }
+.btn.primary:hover { filter: brightness(1.05); }
+.btn.primary kbd { background: rgba(0,0,0,.1); color: var(--accent-ink); box-shadow: none; }
+.btn.ghost { background: none; box-shadow: none; color: var(--text-2); }
+.btn.ghost:hover { background: var(--surface-2); color: var(--text); }
+
+.view { flex: 1; overflow: auto; position: relative; }
+.view:focus { outline: none; }
+.view-inner { padding: 28px; max-width: 1360px; margin: 0 auto; }
+.enter > * { animation: rise .45s var(--ease-out) both; }
+.enter > *:nth-child(2) { animation-delay: .04s; } .enter > *:nth-child(3) { animation-delay: .08s; }
+.enter > *:nth-child(4) { animation-delay: .12s; } .enter > *:nth-child(5) { animation-delay: .16s; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+
+/* ── Primitives ────────────────────────────────────── */
+.card {
+  background: var(--surface); border-radius: var(--r-card);
+  box-shadow: inset 0 0 0 1px var(--border), inset 0 1px 0 var(--highlight);
+}
+.card-h { display: flex; align-items: center; gap: 8px; padding: 16px 18px 0; font-weight: 600; }
+.card-h .muted { font-weight: 400; }
+.card-h .right { margin-left: auto; }
+.muted { color: var(--text-2); } .faint { color: var(--text-3); }
+.tag {
+  display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 9px; border-radius: 999px;
+  font-size: 12px; font-weight: 500; background: var(--surface-2); color: var(--text-2); white-space: nowrap;
+}
+.tag svg.lucide { width: 13px; height: 13px; }
+a.tag { text-decoration: none; }
+.tag.ok { background: var(--ok-soft); color: var(--ok); }
+.tag.warn { background: var(--dream-soft); color: var(--dream); }
+.tag.bad { background: var(--danger-soft); color: var(--danger); }
+.tag.info { background: var(--info-soft); color: var(--info); }
+.tag.accent { background: var(--accent-soft); color: var(--accent-fg); }
+.mono-tile {
+  width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0;
+  font: 600 13px/1 var(--font); color: #fff; letter-spacing: -.02em;
+}
+.ring { position: relative; display: grid; place-items: center; flex-shrink: 0; }
+.ring svg { transform: rotate(-90deg); }
+.ring .val { position: absolute; font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+.ring circle { fill: none; }
+.ring .track { stroke: var(--surface-3); }
+.ring .bar { stroke-linecap: round; transition: stroke-dashoffset .9s var(--ease-out); }
+
+/* ── Today ─────────────────────────────────────────── */
+.hero { position: relative; padding: 18px 0 28px; }
+.hero::before {
+  content: ""; position: absolute; inset: -120px -200px auto auto; width: 700px; height: 420px; pointer-events: none;
+  background: radial-gradient(closest-side, var(--bg-glow), transparent); z-index: -1;
+}
+.hero .date { color: var(--text-3); font-size: 13px; display: flex; gap: 8px; align-items: center; }
+.hero h1 { font: 400 clamp(40px, 5vw, 64px)/1 var(--serif); letter-spacing: -.02em; margin: 10px 0 12px; }
+.hero h1 em { color: var(--text-3); }
+.hero p { margin: 0; color: var(--text-2); font-size: 16px; max-width: 60ch; }
+.hero p b { color: var(--text); font-weight: 600; }
+.bento { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+.stat { padding: 18px; display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: inherit; transition: transform .2s var(--spring), box-shadow .2s; }
+a.stat:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px var(--border-strong), inset 0 1px 0 var(--highlight); }
+.stat .k { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 13px; }
+.stat .v { font: 500 40px/1.1 var(--mono); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.stat .s { font-size: 12px; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
+.stat .up { color: var(--ok); }
+.stat.feature { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
+.stat.feature .k, .stat.feature .s { color: rgba(0,0,0,.6); }
+.col-3 { grid-column: span 3; } .col-4 { grid-column: span 4; } .col-5 { grid-column: span 5; }
+.col-7 { grid-column: span 7; } .col-8 { grid-column: span 8; } .col-12 { grid-column: span 12; }
+.match-list { padding: 8px; }
+.match {
+  display: flex; align-items: center; gap: 14px; padding: 12px 10px; border-radius: 10px;
+  cursor: pointer; transition: background .15s;
+}
+.match:hover { background: var(--surface-2); }
+.match .t { font-weight: 500; }
+.match .meta { font-size: 12px; color: var(--text-3); display: flex; gap: 10px; flex-wrap: wrap; }
+.match .grow { flex: 1; min-width: 0; }
+.feed { padding: 6px 18px 16px; display: flex; flex-direction: column; }
+.feed-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.feed-item:last-child { border-bottom: 0; }
+.feed-dot { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-2); color: var(--text-2); flex-shrink: 0; }
+.feed-dot svg.lucide { width: 14px; height: 14px; }
+.feed-item time { color: var(--text-3); font-size: 12px; margin-left: auto; white-space: nowrap; }
+.spark { display: flex; align-items: flex-end; gap: 4px; height: 56px; padding: 0 18px 18px; margin-top: auto; }
+.spark i { flex: 1; border-radius: 3px; background: var(--surface-3); }
+.spark i.on { background: var(--accent); }
+
+.today-hero { display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: end; }
+.cta-row { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+.btn.lg { height: 44px; padding: 0 18px; }
+.goal { display: flex; align-items: center; gap: 18px; padding: 18px 22px 18px 18px; }
+.goal-txt { display: flex; flex-direction: column; gap: 2px; }
+.goal-txt .v { font-size: 34px; font-weight: 500; letter-spacing: -.03em; line-height: 1.1; }
+.goal-txt .k { font-weight: 500; }
+.goal-txt .s { font-size: 12px; color: var(--text-3); }
+.goal-txt .up, .up { color: var(--ok); }
+.steps { list-style: none; margin: 0; padding: 8px; counter-reset: s; }
+.step {
+  display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-radius: 10px; min-height: 56px;
+  text-decoration: none; color: inherit; transition: background .15s;
+}
+.step:hover { background: var(--surface-2); }
+.step-n { width: 18px; color: var(--text-3); font-size: 12px; text-align: right; }
+.step .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.step .t { font-weight: 500; }
+.step .m { font-size: 12px; color: var(--text-3); }
+.step .time { font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.step .keys { display: flex; gap: 3px; }
+.step .chev { color: var(--text-3); width: 34px; }
+.step.warn .feed-dot { background: var(--dream-soft); color: var(--dream); }
+.feed-dot.hot { background: var(--accent); color: var(--accent-ink); }
+.topmatch { display: flex; flex-direction: column; }
+.tm-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
+.tm-top { display: flex; gap: 12px; align-items: center; }
+.tm-top .grow { flex: 1; min-width: 0; }
+.tm-top .t { font-weight: 600; font-size: 16px; line-height: 1.3; letter-spacing: -.01em; }
+.tm-why { list-style: none; margin: 0; padding: 14px; border-radius: 12px; background: var(--surface-2); display: flex; flex-direction: column; gap: 8px; }
+.tm-why li { display: flex; gap: 8px; font-size: 13px; line-height: 1.45; }
+.tm-why li svg.lucide { margin-top: 2px; width: 14px; height: 14px; }
+.tm-actions { display: flex; gap: 8px; margin-top: auto; }
+.week { display: flex; gap: 10px; height: 180px; padding: 18px; align-items: stretch; }
+.wk { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; font-size: 12px; }
+.wk i { width: 100%; max-width: 36px; border-radius: 6px; background: var(--surface-3); }
+.wk i.today { background: var(--accent); }
+.spin svg.lucide, svg.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Discover ─────────────────────────────────────── */
+.discover { display: grid; grid-template-columns: 300px 1fr; height: 100%; }
+.queue { border-right: 1px solid var(--border); overflow: auto; padding: 16px 10px; }
+.queue-h { display: flex; align-items: center; justify-content: space-between; padding: 0 8px 12px; font-size: 13px; color: var(--text-2); }
+.q-item { display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 10px; cursor: pointer; transition: background .15s, opacity .2s; }
+.q-item:hover { background: var(--surface-2); }
+.q-item[aria-selected="true"] { background: var(--surface); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.q-item.done { opacity: .35; }
+.q-item .t { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-item .c { font-size: 12px; color: var(--text-3); }
+.q-item .grow { flex: 1; min-width: 0; }
+.stage { display: grid; place-items: start center; align-content: start; gap: 14px; padding: 20px 28px 28px; overflow: auto; position: relative; }
+.session { width: min(760px, 100%); display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; font-size: 13px; color: var(--text-2); }
+.session b { color: var(--text); font-weight: 500; }
+.session .meter > i { transition: width .4s var(--ease-out); }
+.tcard { width: min(760px, 100%); padding: 28px; position: relative; }
+.tcard.out-right { animation: outR .32s var(--ease-out) forwards; }
+.tcard.out-left { animation: outL .32s var(--ease-out) forwards; }
+.tcard.out-up { animation: outU .32s var(--ease-out) forwards; }
+.tcard.in { animation: cardIn .4s var(--spring) both; }
+@keyframes outR { to { transform: translateX(80px) rotate(4deg); opacity: 0; } }
+@keyframes outL { to { transform: translateX(-80px) rotate(-4deg); opacity: 0; } }
+@keyframes outU { to { transform: translateY(-50px) scale(.97); opacity: 0; } }
+@keyframes cardIn { from { transform: translateY(14px) scale(.98); opacity: 0; } }
+.tcard-top { display: flex; gap: 18px; align-items: flex-start; }
+.tcard h2 { font-size: 26px; line-height: 1.2; letter-spacing: -.02em; margin: 2px 0 6px; font-weight: 600; }
+.tcard .co { display: flex; align-items: center; gap: 8px; color: var(--text-2); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 22px; }
+.why { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.why-col { padding: 16px; border-radius: 12px; background: var(--surface-2); }
+.why-col h3 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); font-weight: 500; display: flex; gap: 6px; align-items: center; }
+.why-col ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.why-col li { display: flex; gap: 8px; font-size: 13px; line-height: 1.45; }
+.why-col li svg.lucide { margin-top: 2px; width: 14px; height: 14px; }
+.dims { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px; }
+.dim { font-size: 12px; color: var(--text-3); }
+.dim b { display: block; font: 500 13px var(--mono); color: var(--text); margin-bottom: 6px; }
+.dim .meter > i { background: var(--text-2); }
+.excerpt { margin-top: 20px; font-size: 13px; color: var(--text-2); line-height: 1.65; border-left: 2px solid var(--border-strong); padding-left: 14px; }
+.actions { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+.actions .btn { height: 44px; padding: 0 16px; }
+.btn.dream { color: var(--dream); }
+.btn.dream.on { background: var(--dream-soft); box-shadow: inset 0 0 0 1px var(--dream); }
+.btn.reject { color: var(--danger); }
+.reasons { display: none; margin-top: 14px; padding: 14px; border-radius: 12px; background: var(--danger-soft); }
+.reasons.show { display: block; animation: rise .25s var(--ease-out); }
+.reasons p { margin: 0 0 10px; font-size: 13px; color: var(--danger); font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { height: 32px; padding: 0 12px; border-radius: 999px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--border-strong); font-size: 13px; display: inline-flex; gap: 8px; align-items: center; }
+.chip:hover { background: var(--surface-2); }
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); opacity: 0;
+  padding: 10px 14px; border-radius: 12px; background: var(--text); color: var(--bg);
+  display: flex; gap: 10px; align-items: center; font-weight: 500; z-index: 60; pointer-events: none;
+  transition: opacity .2s, transform .3s var(--spring);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.toast button { color: var(--accent-fg); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+:root[data-theme="dark"] .toast button { color: #4B6400; }
+
+/* ── Pipeline ─────────────────────────────────────── */
+.board-wrap { height: 100%; overflow: auto; padding: 20px 28px 28px; }
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(208px, 1fr); gap: 14px; min-height: 100%; }
+.col { display: flex; flex-direction: column; gap: 10px; border-radius: var(--r-card); padding: 10px; background: color-mix(in srgb, var(--surface-2) 55%, transparent); min-height: 300px; transition: background .15s, box-shadow .15s; }
+.col.over { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent-fg); }
+.col-h { display: flex; align-items: center; gap: 8px; padding: 4px 6px 6px; font-weight: 600; font-size: 13px; }
+.col-h .dot { width: 8px; height: 8px; border-radius: 3px; }
+.col-h .badge { margin-left: auto; }
+.kcard { padding: 14px; cursor: grab; transition: transform .2s var(--spring), box-shadow .2s, opacity .2s; }
+.kcard:hover { box-shadow: inset 0 0 0 1px var(--border-strong), inset 0 1px 0 var(--highlight); }
+.kcard.dragging { opacity: .4; transform: scale(.98); }
+.kcard .row { display: flex; align-items: center; gap: 10px; }
+.kcard .t { font-weight: 500; font-size: 13px; line-height: 1.35; }
+.kcard .c { font-size: 12px; color: var(--text-3); }
+.kcard .foot { display: flex; align-items: center; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+.kcard .foot .age { margin-left: auto; font: 12px var(--mono); color: var(--text-3); }
+.mono-tile.sm { width: 30px; height: 30px; border-radius: 8px; font-size: 11px; }
+
+/* ── Review ───────────────────────────────────────── */
+.review { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); height: 100%; }
+.ad-pane { border-right: 1px solid var(--border); overflow: auto; padding: 24px 28px; }
+.ad-pane h2 { font-size: 20px; margin: 10px 0 4px; letter-spacing: -.01em; }
+.ad-pane h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); font-weight: 500; margin: 22px 0 10px; }
+.req { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.req li { display: flex; gap: 10px; font-size: 13px; padding: 10px 12px; border-radius: 10px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
+.req li.covered svg { color: var(--ok); } .req li.partial svg { color: var(--dream); } .req li.missing svg { color: var(--text-3); }
+.req li span.s { margin-left: auto; font-size: 11px; color: var(--text-3); white-space: nowrap; }
+.letter-pane { display: flex; flex-direction: column; overflow: hidden; }
+.letter-tools { display: flex; align-items: center; gap: 8px; padding: 14px 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--surface-2); }
+.seg button { height: 30px; padding: 0 12px; border-radius: 8px; font-size: 13px; color: var(--text-2); font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.1), inset 0 0 0 1px var(--border); }
+.letter-scroll { flex: 1; overflow: auto; padding: 28px; background: color-mix(in srgb, var(--surface-2) 40%, transparent); }
+.paper {
+  max-width: 640px; margin: 0 auto; background: var(--surface); padding: 48px 56px; border-radius: 6px;
+  box-shadow: var(--shadow-lg); font-size: 14.5px; line-height: 1.7;
+}
+.paper .addr { font-size: 12.5px; color: var(--text-2); line-height: 1.5; margin-bottom: 28px; }
+.paper .subj { font-weight: 600; margin-bottom: 18px; }
+.paper p { margin: 0 0 14px; }
+.paper [contenteditable]:focus { outline: none; }
+.claim { border-radius: 3px; padding: 0 1px; cursor: help; }
+.claim.ok { background: var(--ok-soft); box-shadow: inset 0 -1.5px 0 var(--ok); }
+.claim.warn { background: var(--dream-soft); box-shadow: inset 0 -1.5px 0 var(--dream); }
+.review-foot { display: flex; align-items: center; gap: 10px; padding: 14px 24px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.review-foot .grow { flex: 1; }
+.attach { display: flex; gap: 8px; flex-wrap: wrap; }
+.file { display: inline-flex; gap: 8px; align-items: center; height: 32px; padding: 0 10px; border-radius: 8px; background: var(--surface-2); font-size: 12px; }
+.file svg.lucide { color: var(--danger); }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field { padding: 10px 12px; border-radius: 10px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
+.field label { display: block; font-size: 11px; color: var(--text-3); margin-bottom: 2px; }
+.field div { font-weight: 500; font-size: 13px; }
+
+/* ── Insights ─────────────────────────────────────── */
+.funnel { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.f-row { display: grid; grid-template-columns: 110px 1fr 90px; gap: 14px; align-items: center; font-size: 13px; }
+.f-bar { height: 28px; border-radius: 7px; background: var(--surface-2); position: relative; overflow: hidden; }
+.f-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 7px; background: var(--text); opacity: .85; transform-origin: left; animation: grow .9s var(--ease-out) both; }
+.f-row:first-child .f-bar i { background: var(--accent); opacity: 1; }
+@keyframes grow { from { transform: scaleX(0); } }
+.f-row .n { font-family: var(--mono); text-align: right; }
+.f-row .n small { color: var(--text-3); margin-left: 6px; }
+.bars { display: flex; flex-direction: column; gap: 14px; padding: 18px; }
+.bar-row { display: grid; grid-template-columns: 130px 1fr 52px; gap: 12px; align-items: center; font-size: 13px; }
+.bar-row .meter { height: 8px; }
+.bar-row .n { font-family: var(--mono); text-align: right; }
+.insight { margin: 0 18px 18px; padding: 12px 14px; border-radius: 10px; background: var(--accent-soft); color: var(--text); font-size: 13px; display: flex; gap: 10px; }
+.insight svg { color: var(--accent-fg); margin-top: 2px; }
+.calib { padding: 18px; }
+.calib svg { width: 100%; height: 190px; display: block; }
+
+/* ── Documents ────────────────────────────────────── */
+.docs-main { display: flex; flex-direction: column; gap: 14px; }
+.drop {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 32px 20px; cursor: pointer; text-align: center;
+  border-radius: var(--r-card); border: 1.5px dashed var(--border-strong); background: color-mix(in srgb, var(--surface) 60%, transparent);
+  transition: border-color .15s, background .15s, transform .2s var(--spring);
+}
+.drop:hover, .drop:focus-visible { border-color: var(--accent-fg); background: var(--accent-soft); outline: none; }
+.drop.over { border-color: var(--accent-fg); background: var(--accent-soft); transform: scale(1.01); }
+.drop-ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); margin-bottom: 6px; }
+.drop-ic svg.lucide { width: 20px; height: 20px; }
+.drop-t { font-weight: 500; font-size: 15px; }
+.drop-t u { text-decoration-color: var(--accent-fg); text-underline-offset: 3px; }
+.drop-s { font-size: 12px; color: var(--text-3); }
+.doc-group .card-h .badge { margin-left: 2px; }
+.doc-hint { margin: 4px 18px 0; font-size: 12px; color: var(--text-3); }
+.doc-group { padding-bottom: 12px; }
+.doc-list { list-style: none; margin: 10px 8px 0; padding: 0; }
+.doc { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 10px; transition: background .15s; }
+.doc:hover { background: var(--surface-2); }
+.doc.reading { animation: rise .35s var(--ease-out); }
+.doc-ic { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: var(--surface-2); color: var(--text-2); flex-shrink: 0; }
+.doc .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.doc .t { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc .m { font-size: 12px; color: var(--text-3); }
+.doc .spin svg.lucide { width: 12px; height: 12px; }
+.kind-sel {
+  font: 12px var(--font); color: var(--text-2); background: var(--surface-2); border: 0; border-radius: 8px;
+  height: 32px; padding: 0 8px; box-shadow: inset 0 0 0 1px var(--border); cursor: pointer;
+}
+.docs-side { display: flex; flex-direction: column; gap: 14px; align-self: start; position: sticky; top: 0; }
+.derived { list-style: none; margin: 0; padding: 12px 18px 16px; display: flex; flex-direction: column; gap: 16px; }
+.derived li { display: flex; gap: 12px; font-size: 13px; }
+.derived li > div { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+.derived span { color: var(--text-2); line-height: 1.5; }
+.btn.sm { height: 30px; padding: 0 10px; font-size: 12px; margin-left: -10px; }
+.privacy { padding: 14px 16px; display: flex; gap: 10px; font-size: 12px; color: var(--text-2); line-height: 1.5; }
+.privacy svg { color: var(--ok); margin-top: 1px; }
+
+/* ── Overlays ─────────────────────────────────────── */
+.scrim { position: fixed; inset: 0; background: var(--scrim); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 50; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.scrim.show { opacity: 1; pointer-events: auto; }
+.palette {
+  position: fixed; left: 50%; top: 14vh; width: min(620px, calc(100vw - 32px)); z-index: 51;
+  transform: translate(-50%, -8px) scale(.98); opacity: 0; pointer-events: none;
+  transition: transform .25s var(--spring), opacity .15s;
+  background: var(--surface); border-radius: 16px; box-shadow: var(--shadow-lg); overflow: hidden;
+}
+.palette.show { transform: translate(-50%, 0) scale(1); opacity: 1; pointer-events: auto; }
+.addad { width: min(540px, calc(100vw - 32px)); top: 12vh; }
+.addad-b { padding: 22px 22px 6px; display: flex; flex-direction: column; gap: 12px; }
+.addad h2 { margin: 0; font-size: 17px; letter-spacing: -.01em; display: flex; gap: 10px; align-items: center; }
+.addad h2 svg { color: var(--accent-fg); }
+.addad p { margin: 0; font-size: 13px; }
+.fld { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text-2); font-weight: 500; }
+.fld input, .fld-more textarea {
+  font: 14px var(--font); color: var(--text); background: var(--surface-2); border: 0; border-radius: var(--r-ctl);
+  padding: 0 12px; height: 44px; box-shadow: inset 0 0 0 1px var(--border); width: 100%;
+}
+.fld-more textarea { height: auto; padding: 10px 12px; resize: vertical; margin-top: 8px; line-height: 1.5; }
+.fld input:focus, .fld-more textarea:focus { outline: none; box-shadow: inset 0 0 0 1.5px var(--accent-fg); }
+.fld input[aria-invalid="true"] { box-shadow: inset 0 0 0 1.5px var(--danger); }
+.fld-err { color: var(--danger); font-size: 12px; min-height: 0; margin: -6px 0 0 !important; }
+.fld-err:empty { display: none; }
+.fld-more summary { font-size: 12px; color: var(--text-2); cursor: pointer; }
+.fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: var(--r-ctl); cursor: pointer; box-shadow: inset 0 0 0 1px var(--border-strong); font-size: 13px; }
+.opt:has(input:checked) { box-shadow: inset 0 0 0 1.5px var(--accent-fg); background: var(--accent-soft); }
+.opt input { accent-color: var(--accent-fg); margin-top: 3px; }
+.opt span { display: flex; flex-direction: column; } .opt small { color: var(--text-3); font-size: 12px; }
+.addad-f { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 22px 20px; }
+.palette input { width: 100%; border: 0; background: none; padding: 18px 20px; font: 16px var(--font); color: var(--text); border-bottom: 1px solid var(--border); }
+.palette input:focus { outline: none; }
+.pal-list { max-height: 380px; overflow: auto; padding: 8px; }
+.pal-group { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); padding: 10px 12px 6px; }
+.pal-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; width: 100%; text-align: left; }
+.pal-item[aria-selected="true"] { background: var(--surface-2); }
+.pal-item kbd { margin-left: auto; }
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 100vw); z-index: 51;
+  background: var(--surface); box-shadow: var(--shadow-lg); transform: translateX(104%);
+  transition: transform .35s var(--ease-out); display: flex; flex-direction: column;
+}
+.drawer.show { transform: none; }
+.drawer-h { display: flex; gap: 14px; align-items: flex-start; padding: 22px 22px 18px; border-bottom: 1px solid var(--border); }
+.drawer-h h2 { margin: 0 0 4px; font-size: 18px; letter-spacing: -.01em; }
+.drawer-b { flex: 1; overflow: auto; padding: 20px 22px; }
+.timeline { list-style: none; margin: 0; padding: 0; position: relative; }
+.timeline::before { content: ""; position: absolute; left: 13px; top: 6px; bottom: 6px; width: 1px; background: var(--border-strong); }
+.timeline li { display: flex; gap: 14px; padding: 8px 0; position: relative; font-size: 13px; }
+.timeline .feed-dot { background: var(--surface); box-shadow: inset 0 0 0 1px var(--border-strong); z-index: 1; }
+.timeline time { display: block; color: var(--text-3); font-size: 12px; }
+.section-t { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); margin: 22px 0 12px; font-weight: 500; }
+.section-t:first-child { margin-top: 0; }
+
+/* ── Responsive ───────────────────────────────────── */
+@media (max-width: 1100px) {
+  .col-3 { grid-column: span 6; } .col-4, .col-5, .col-7, .col-8 { grid-column: span 12; }
+  .discover { grid-template-columns: minmax(0, 1fr); } .queue { display: none; }
+  .stage { place-items: start stretch; }
+  .review { grid-template-columns: 1fr; height: auto; } .ad-pane { border-right: 0; border-bottom: 1px solid var(--border); }
+  .letter-pane { overflow: visible; }
+}
+@media (max-width: 860px) {
+  body { overflow: auto; }
+  .app { grid-template-columns: 1fr; height: auto; min-height: 100dvh; }
+  .main { height: auto; padding-bottom: 76px; overflow-x: clip; }
+  .tcard .co .faint { display: none; }
+  .tcard-top { flex-wrap: wrap; } .tcard-top > div:nth-child(2) { flex-basis: calc(100% - 140px); }
+  .view { overflow: visible; }
+  .sidebar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; flex-direction: row; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    border-right: 0; border-top: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  .brand, .nav-label, .sidebar-foot, .nav .extra { display: none; }
+  .nav { display: flex; width: 100%; justify-content: space-around; }
+  .nav a { flex-direction: column; gap: 2px; font-size: 11px; padding: 6px 4px; min-width: 56px; position: relative; }
+  .nav a .badge { position: absolute; top: 2px; right: 6px; padding: 2px 4px; font-size: 10px; }
+  .topbar { padding: 12px 16px; }
+  .search span, .search kbd { display: none; } .search { width: auto; }
+  .topbar .btn .lbl { display: none; }
+  .view-inner, .board-wrap, .stage, .ad-pane { padding: 16px; }
+  .col-3 { grid-column: span 12; }
+  .docs-side { position: static; }
+  .kind-sel { max-width: 110px; }
+  .today-hero { grid-template-columns: 1fr; gap: 20px; }
+  .step .keys, .step .time { display: none; }
+  .board { grid-auto-flow: row; grid-auto-columns: auto; }
+  .why, .fields { grid-template-columns: 1fr; }
+  .dims { grid-template-columns: repeat(2, 1fr); }
+  .tcard { padding: 20px; } .tcard h2 { font-size: 21px; }
+  .paper { padding: 28px 22px; } .letter-scroll { padding: 16px; }
+  .f-row { grid-template-columns: 80px 1fr 64px; } .bar-row { grid-template-columns: 96px 1fr 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+<a class="sr-only" href="#view">Skip to content</a>
+<div class="app">
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="brand">
+      <div class="brand-mark"><i data-lucide="compass"></i></div>
+      <span class="brand-name">Kompass</span>
+    </div>
+    <nav class="nav" id="nav">
+      <a href="#today" data-view="today"><i data-lucide="sun"></i><span>Today</span></a>
+      <a href="#discover" data-view="discover"><i data-lucide="sparkles"></i><span>Discover</span><span class="badge hot" id="b-discover">12</span></a>
+      <a href="#pipeline" data-view="pipeline"><i data-lucide="kanban"></i><span>Pipeline</span></a>
+      <a href="#review" data-view="review"><i data-lucide="pen-line"></i><span>Review</span><span class="badge">4</span></a>
+      <a href="#insights" data-view="insights"><i data-lucide="chart-no-axes-combined"></i><span>Insights</span></a>
+      <div class="nav-label extra">Setup</div>
+      <a href="#documents" data-view="documents" class="extra"><i data-lucide="folder-open"></i><span>Documents</span><span class="badge">7</span></a>
+      <a href="#sources" data-view="sources" class="extra"><i data-lucide="radar"></i><span>Sources</span></a>
+      <a href="#profile" data-view="profile" class="extra"><i data-lucide="user-round"></i><span>Profile</span></a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="quota">
+        <div class="quota-top"><span>Claude Max</span><span class="mono">62%</span></div>
+        <div class="meter"><i style="width:62%"></i></div>
+        <div class="quota-sub"><span class="pulse"></span>Worker running · resets in 2:14 h</div>
+      </div>
+      <div class="foot-row">
+        <button class="icon-btn" id="theme-btn" aria-label="Toggle color scheme"><i data-lucide="sun-moon"></i></button>
+        <button class="icon-btn" aria-label="Settings"><i data-lucide="settings-2"></i></button>
+        <button class="icon-btn" aria-label="Keyboard shortcuts" onclick="toast('J/K navigate · D dream job · A apply · X reject · N add ad · ⌘K commands')"><i data-lucide="keyboard"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="crumb" id="crumb">Today</div>
+      <button class="search" id="open-palette" aria-label="Open command palette"><i data-lucide="search"></i><span>Jobs, companies, commands…</span><kbd>⌘K</kbd></button>
+      <button class="btn" id="add-ad-btn" aria-label="Add your own job ad"><i data-lucide="link"></i><span class="lbl">Add job ad</span><kbd class="lbl">N</kbd></button>
+      <button class="btn" id="run-btn"><i data-lucide="refresh-cw"></i><span class="lbl">Fetch sources</span></button>
+    </header>
+    <main class="view" id="view" tabindex="-1"></main>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="palette" id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+  <input id="pal-input" placeholder="Go to a job, company or command…" autocomplete="off" aria-label="Search">
+  <div class="pal-list" id="pal-list" role="listbox"></div>
+</div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Job details"></aside>
+<form class="palette addad" id="addad" role="dialog" aria-modal="true" aria-labelledby="addad-t" novalidate>
+  <div class="addad-b">
+    <h2 id="addad-t"><i data-lucide="link"></i>Add your own job ad</h2>
+    <p class="faint">Found one yourself? Paste the link – Kompass reads the ad, scores it and adds it to the stack.</p>
+    <label class="fld"><span>Link to the ad</span>
+      <input id="ad-url" type="url" inputmode="url" placeholder="https://careers.company.com/jobs/…" autocomplete="off" required>
+    </label>
+    <p class="fld-err" id="ad-err" role="alert"></p>
+    <details class="fld-more"><summary>Link won't work (login, PDF, printed notice)? Paste the text</summary>
+      <textarea id="ad-text" rows="4" placeholder="Paste the job ad text here"></textarea></details>
+    <label class="fld"><span>Note <span class="faint">(optional)</span></span><input id="ad-note" placeholder="e.g. referred by Jana, contact person Mr Kühn"></label>
+    <div class="fld-row" role="radiogroup" aria-label="What should happen?">
+      <label class="opt"><input type="radio" name="ad-dest" value="discover" checked><span><b>Score it</b><small>Goes to Discover with a score</small></span></label>
+      <label class="opt"><input type="radio" name="ad-dest" value="prep"><span><b>Apply right away</b><small>Claude starts the draft now</small></span></label>
+    </div>
+  </div>
+  <div class="addad-f"><button type="button" class="btn ghost" onclick="closeOverlays()">Cancel <kbd>esc</kbd></button>
+    <button type="submit" class="btn primary" id="ad-submit"><i data-lucide="plus"></i>Add <kbd>⌘↵</kbd></button></div>
+</form>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ── Mock data (fictional companies) ───────────────── */
+const C = {
+  nordlicht: { n: "Nordlicht Energie", c: "#1F6F5C" }, brueckenwerk: { n: "Brückenwerk Software", c: "#3A4FBF" },
+  helix: { n: "Helix Mobility", c: "#B4462B" }, kaskade: { n: "Kaskade Analytics", c: "#6B3FA0" },
+  fernweh: { n: "Fernweh Reisen", c: "#0E7490" }, tanne: { n: "Tannenhof Logistik", c: "#4D5B1F" },
+  oberdeck: { n: "Oberdeck Media", c: "#A1306B" }, quell: { n: "Quell Health", c: "#2C6E9E" },
+  sonar: { n: "Sonar Robotics", c: "#3F3F46" }, lindgrun: { n: "Lindgrün Bank", c: "#166534" },
+  falke: { n: "Falkenstein GmbH", c: "#7C4A1E" }, mosaik: { n: "Mosaik Studio", c: "#9D3D3D" },
+};
+const JOBS = [
+  { id: 1, co: "nordlicht", t: "Senior Product Manager – Energy Platform", loc: "Hamburg", remote: "3 days remote", sal: "€78–92k", src: "Arbeitsagentur", score: 91, age: "3 h ago", dream: true, lang: "DE",
+    dims: [92, 85, 96, 90, 80], for: ["Owns the B2B platform roadmap – matches 4 years of platform ownership", "Energy/climate domain: picked in 3 of 4 dream jobs", "Mid-size company (420 people), as preferred"], against: ["Expects 'very good' SQL – CV says 'good'"], flags: [] ,
+    text: "Du gestaltest gemeinsam mit Engineering und Vertrieb die Roadmap unserer Energiemanagement-Plattform für Stadtwerke und Industriekunden. Du verantwortest Discovery, Priorisierung und Erfolgsmessung …" },
+  { id: 2, co: "kaskade", t: "Product Owner Data Products", loc: "Berlin", remote: "Remote-first", sal: "€70–85k", src: "Watchlist · Personio", score: 87, age: "5 h ago", lang: "DE",
+    dims: [88, 80, 84, 100, 78], for: ["Data products + stakeholder work: core of your last role", "Remote-first – meets the ≥ 2 days filter"], against: ["Startup stage (Series A) – you rejected 'too early' twice"], flags: ["Salary may be below your range"],
+    text: "Als Product Owner entwickelst du unsere Self-Service-Analytics-Produkte weiter, arbeitest eng mit Data Engineering zusammen und …" },
+  { id: 3, co: "quell", t: "Product Lead Patient App", loc: "Munich", remote: "hybrid", sal: "n/a", src: "StepStone · Indeed", score: 84, age: "yesterday", lang: "EN",
+    dims: [86, 90, 72, 70, 82], for: ["High-traffic app – matches consumer experience", "Lead role: next career step"], against: ["Healthcare: regulatory experience wanted", "Munich is outside the commute radius – only if relocating"], flags: ["Salary not stated", "Reposted 3×"],
+    text: "We're looking for a Product Lead to own our patient-facing app used by 1.2 M people across Germany and Austria …" },
+  { id: 4, co: "brueckenwerk", t: "Product Manager Developer Experience", loc: "Hamburg", remote: "2 days remote", sal: "€72–88k", src: "Watchlist · Greenhouse", score: 82, age: "1 day ago", lang: "DE",
+    dims: [84, 82, 78, 90, 80], for: ["Technical product, close work with engineers", "Watchlist company"], against: ["API design experience explicitly required"], flags: [],
+    text: "Bei Brückenwerk sorgst du dafür, dass über 300 Entwickler:innen schneller und sicherer liefern …" },
+  { id: 5, co: "helix", t: "Senior Product Manager Fleet", loc: "Cologne", remote: "hybrid", sal: "€80–95k", src: "Arbeitsagentur", score: 78, age: "2 days ago", lang: "DE",
+    dims: [80, 88, 70, 60, 86], for: ["Seniority and salary fit"], against: ["Cologne: 2:10 h commute"], flags: [], text: "…" },
+  { id: 6, co: "fernweh", t: "Product Manager Booking", loc: "Hamburg", remote: "remote possible", sal: "€65–75k", src: "XING", score: 74, age: "2 days ago", lang: "DE",
+    dims: [76, 70, 72, 95, 60], for: ["Hamburg, remote possible"], against: ["Salary at the low end"], flags: [], text: "…" },
+  { id: 7, co: "oberdeck", t: "Digital Product Manager", loc: "Hamburg", remote: "1 day remote", sal: "€60–70k", src: "Indeed", score: 66, age: "3 days ago", lang: "DE",
+    dims: [70, 62, 60, 90, 55], for: ["Location"], against: ["Agency setting – rejected 3× as 'agency'"], flags: [], text: "…" },
+];
+const PIPE = [
+  { key: "prep", n: "Preparing", c: "var(--info)" }, { key: "applied", n: "Applied", c: "var(--text-2)" },
+  { key: "contact", n: "In contact", c: "var(--ok)" }, { key: "round1", n: "Round 1", c: "var(--accent-fg)" }, { key: "final", n: "Final", c: "var(--danger)" },
+];
+let CARDS = [
+  { id: 11, co: "tanne", t: "Product Manager Supply Chain", s: "prep", sub: "queued", score: 80, d: 0 },
+  { id: 12, co: "sonar", t: "Technical Product Manager", s: "prep", sub: "queued", score: 77, d: 1 },
+  { id: 13, co: "kaskade", t: "Product Owner Data Products", s: "prep", sub: "drafting", score: 87, d: 0 },
+  { id: 14, co: "nordlicht", t: "Senior Product Manager – Energy Platform", s: "prep", sub: "ready", score: 91, d: 0, dream: true },
+  { id: 15, co: "brueckenwerk", t: "PM Developer Experience", s: "prep", sub: "ready", score: 82, d: 1 },
+  { id: 16, co: "lindgrun", t: "Product Owner Mobile Banking", s: "applied", score: 79, d: 6 },
+  { id: 17, co: "mosaik", t: "Product Manager Creator Tools", s: "applied", score: 74, d: 16, ghost: true },
+  { id: 18, co: "falke", t: "Head of Product (interim)", s: "applied", score: 72, d: 3 },
+  { id: 19, co: "fernweh", t: "Product Manager Booking", s: "contact", score: 74, d: 2, note: "Phone screen Thu 2 pm" },
+  { id: 20, co: "quell", t: "Product Lead Patient App", s: "round1", score: 84, d: 4, dream: true, note: "On-site · Tue 10:30" },
+  { id: 21, co: "helix", t: "Senior PM Fleet", s: "final", score: 78, d: 1, note: "Offer expected" },
+];
+
+/* ── Helpers ───────────────────────────────────────── */
+const $ = (s, el = document) => el.querySelector(s);
+const initials = n => n.split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+const tile = (k, sm) => `<div class="mono-tile${sm ? " sm" : ""}" style="background:${C[k].c}" aria-hidden="true">${initials(C[k].n)}</div>`;
+const scoreColor = s => s >= 80 ? "var(--accent-fg)" : s >= 70 ? "var(--info)" : "var(--text-3)";
+function ring(s, size = 44, stroke = 3.5, label = true) {
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r, off = c * (1 - s / 100);
+  const fs = size > 60 ? 22 : size > 40 ? 13 : 11;
+  return `<div class="ring" style="width:${size}px;height:${size}px" role="img" aria-label="Match ${s} of 100">
+    <svg width="${size}" height="${size}"><circle class="track" cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${stroke}"/>
+    <circle class="bar" cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${stroke}" stroke="${scoreColor(s)}" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg>
+    ${label ? `<span class="val" style="font-size:${fs}px">${s}</span>` : ""}</div>`;
+}
+let toastT;
+function toast(msg, undo) {
+  const t = $("#toast");
+  t.innerHTML = `<i data-lucide="check"></i><span>${msg}</span>${undo ? `<button id="undo">Undo</button>` : ""}`;
+  lucide.createIcons(); t.classList.add("show");
+  if (undo) $("#undo").onclick = () => { undo(); t.classList.remove("show"); };
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 4000);
+}
+
+/* ── Views ─────────────────────────────────────────── */
+const views = {};
+const wire = {};
+
+views.today = () => {
+  const top = JOBS[0];
+  const week = [["Mon", 7], ["Tue", 5], ["Wed", 6], ["Thu", 4], ["Fri", 6], ["Sat", 1], ["Sun", 2]];
+  const steps = [
+    { i: "sparkles", t: "Go through new matches", m: "12 jobs · 1 dream job", time: "≈ 4 min", href: "#discover", k: ["G", "D"], hot: true },
+    { i: "pen-line", t: "Approve drafts", m: "4 applications · avg 71 s review", time: "≈ 5 min", href: "#review", k: ["G", "R"] },
+    { i: "mail-question", t: "Follow up with Mosaik Studio", m: "No reply for 16 days · draft ready", time: "≈ 1 min", job: 17 },
+    { i: "presentation", t: "Prepare: Quell Health, Tue 10:30", m: "Prep pack ready · 12 questions, 5 examples", time: "≈ 20 min", job: 20 },
+    { i: "shield-alert", t: "Unblock LinkedIn", m: "Login prompt · source paused since yesterday", time: "≈ 1 min", warn: true, href: "#sources" },
+  ];
+  return `<div class="view-inner enter">
+  <section class="hero today-hero">
+    <div>
+      <div class="date"><i data-lucide="calendar"></i>Sunday, November 1 · Week 44</div>
+      <h1>Good morning, Alex.</h1>
+      <p>Overnight, <b>48 new ads</b> came in. Kompass filtered out 36, <b>12 fit</b>, and one of them is a dream job.</p>
+      <div class="cta-row">
+        <a class="btn primary lg" href="#discover"><i data-lucide="play"></i>Start triage <kbd>G</kbd><kbd>D</kbd></a>
+        <a class="btn lg" href="#review"><i data-lucide="pen-line"></i>Review 4 drafts</a>
+      </div>
+    </div>
+    <div class="goal card" aria-label="Weekly goal: 31 of 30 applications">
+      ${ring(100, 112, 7, false)}
+      <div class="goal-txt"><span class="v mono">31<span class="faint">/30</span></span><span class="k">Weekly goal reached</span><span class="s"><span class="up">▲ 8</span> vs. last week</span></div>
+    </div>
+  </section>
+  <div class="bento">
+    <div class="card col-7">
+      <div class="card-h">Next steps <span class="muted faint">· ≈ 31 min total</span></div>
+      <ol class="steps">
+        ${steps.map((s, n) => `<li><a class="step${s.warn ? " warn" : ""}" ${s.href ? `href="${s.href}"` : `href="javascript:openDrawer(${s.job})"`}>
+          <span class="step-n mono">${n + 1}</span>
+          <span class="feed-dot${s.hot ? " hot" : ""}"><i data-lucide="${s.i}"></i></span>
+          <span class="grow"><span class="t">${s.t}</span><span class="m">${s.m}</span></span>
+          <span class="time mono">${s.time}</span>
+          ${s.k ? `<span class="keys">${s.k.map(k => `<kbd>${k}</kbd>`).join("")}</span>` : `<i data-lucide="chevron-right" class="chev"></i>`}
+        </a></li>`).join("")}
+      </ol>
+    </div>
+    <div class="card col-5 topmatch">
+      <div class="card-h"><i data-lucide="star" style="color:var(--dream)"></i>Today's dream job<span class="right tag">${top.src}</span></div>
+      <div class="tm-body">
+        <div class="tm-top">${tile(top.co)}<div class="grow"><div class="t">${top.t}</div><div class="faint" style="font-size:12px">${C[top.co].n} · ${top.loc} · <span class="mono">${top.sal}</span></div></div>${ring(top.score, 56, 4)}</div>
+        <ul class="tm-why">${top.for.slice(0, 2).map(x => `<li><i data-lucide="check" style="color:var(--ok)"></i>${x}</li>`).join("")}${top.against.slice(0, 1).map(x => `<li><i data-lucide="minus" style="color:var(--dream)"></i>${x}</li>`).join("")}</ul>
+        <div class="tm-actions"><a class="btn primary" href="#discover"><i data-lucide="send"></i>Apply</a><button class="btn ghost" onclick="openDrawer(${top.id + 100})">Details</button></div>
+      </div>
+    </div>
+    <div class="card col-7">
+      <div class="card-h"><i data-lucide="activity"></i>Agent activity<span class="right tag ok"><span class="pulse"></span>live</span></div>
+      <div class="feed">
+        <div class="feed-item"><span class="feed-dot"><i data-lucide="pen-tool"></i></span><span>Writing cover letter for <b>Kaskade Analytics</b> · company brief done</span><time>now</time></div>
+        <div class="feed-item"><span class="feed-dot"><i data-lucide="gauge"></i></span><span>Scored 12 ads (Sonnet, 2 batches)</span><time>06:42</time></div>
+        <div class="feed-item"><span class="feed-dot"><i data-lucide="copy-x"></i></span><span>Merged 9 duplicates, filtered out 27</span><time>06:40</time></div>
+        <div class="feed-item"><span class="feed-dot"><i data-lucide="brain"></i></span><span>Profile v14: “Rejects consultancies even at high scores”</span><time>03:00</time></div>
+      </div>
+    </div>
+    <div class="card col-5">
+      <div class="card-h">Applications this week<span class="right mono faint">31</span></div>
+      <div class="week" role="img" aria-label="Applications per day: ${week.map(([d, v]) => d + " " + v).join(", ")}">
+        ${week.map(([d, v], i) => `<div class="wk"><span class="mono">${v}</span><i class="${i === 6 ? "today" : ""}" style="height:${v / 7 * 100}%"></i><span class="faint">${d}</span></div>`).join("")}
+      </div>
+    </div>
+  </div></div>`;
+};
+
+let dIdx = 0; const done = new Set();
+views.discover = () => {
+  const j = JOBS[dIdx];
+  const names = ["Skills", "Seniority", "Domain", "Location", "Terms"];
+  return `<div class="discover">
+  <aside class="queue" aria-label="Queue">
+    <div class="queue-h"><span>Queue · <span class="mono">${JOBS.length - done.size}</span></span><span class="tag">Score ↓</span></div>
+    <div role="listbox" aria-label="Jobs">
+    ${JOBS.map((q, i) => `<div class="q-item${done.has(q.id) ? " done" : ""}" role="option" aria-selected="${i === dIdx}" data-i="${i}">
+      ${tile(q.co, true)}<div class="grow"><div class="t">${q.t}</div><div class="c">${C[q.co].n} · ${q.loc}</div></div>${ring(q.score, 30, 3)}</div>`).join("")}
+    </div>
+  </aside>
+  <section class="stage">
+    <div class="session" aria-label="Progress">
+      <span><b class="mono">${done.size}</b> of <span class="mono">${JOBS.length}</span> reviewed</span>
+      <div class="meter"><i style="width:${done.size / JOBS.length * 100}%"></i></div>
+      <span class="faint mono">${done.size === JOBS.length ? "done" : "≈ " + Math.max(1, Math.round((JOBS.length - done.size) * 20 / 60)) + " min"}</span>
+    </div>
+    ${j ? `<article class="card tcard in" id="tcard">
+      <div class="tcard-top">
+        ${tile(j.co)}
+        <div style="flex:1;min-width:0">
+          <div class="co">${j.manual ? `<span class="tag accent" style="height:20px"><i data-lucide="hand"></i>Manual</span>` : ""}<span>${C[j.co].n}</span><span class="faint">·</span><span class="faint">${j.age}</span><span class="faint">·</span><span class="faint">${j.src}</span></div>
+          <h2>${j.t}</h2>
+        </div>
+        <div style="text-align:center">${ring(j.score, 76, 5)}<div class="faint" style="font-size:11px;margin-top:4px">Match</div></div>
+      </div>
+      <div class="facts">
+        <span class="tag"><i data-lucide="map-pin"></i>${j.loc}</span><span class="tag"><i data-lucide="house"></i>${j.remote}</span>
+        <span class="tag"><i data-lucide="banknote"></i><span class="mono">${j.sal}</span></span><span class="tag"><i data-lucide="languages"></i>${j.lang}</span>
+        ${j.note ? `<span class="tag info"><i data-lucide="sticky-note"></i>${j.note}</span>` : ""}
+        ${j.flags.map(f => `<span class="tag warn"><i data-lucide="triangle-alert"></i>${f}</span>`).join("")}
+      </div>
+      <div class="why">
+        <div class="why-col"><h3><i data-lucide="thumbs-up"></i>In favor</h3><ul>${j.for.map(x => `<li><i data-lucide="check" style="color:var(--ok)"></i>${x}</li>`).join("")}</ul></div>
+        <div class="why-col"><h3><i data-lucide="thumbs-down"></i>Against</h3><ul>${j.against.map(x => `<li><i data-lucide="minus" style="color:var(--dream)"></i>${x}</li>`).join("")}</ul></div>
+      </div>
+      <div class="dims">${j.dims.map((d, i) => `<div class="dim"><b>${d}</b><div class="meter"><i style="width:${d}%"></i></div><div style="margin-top:6px">${names[i]}</div></div>`).join("")}</div>
+      <p class="excerpt">${j.text}</p>
+      <div class="actions">
+        <button class="btn primary" data-act="apply"><i data-lucide="send"></i>Apply <kbd>A</kbd></button>
+        <button class="btn dream${j.dream ? " on" : ""}" data-act="dream" aria-pressed="${!!j.dream}"><i data-lucide="star"></i>Dream job <kbd>D</kbd></button>
+        <button class="btn reject" data-act="reject"><i data-lucide="x"></i>Reject <kbd>X</kbd></button>
+        <button class="btn ghost" data-act="skip">Later <kbd>S</kbd></button>
+        <button class="btn ghost" style="margin-left:auto" onclick="openDrawer(${j.id + 100})"><i data-lucide="external-link"></i>View ad</button>
+      </div>
+      <div class="reasons" id="reasons"><p>Why not? Kompass learns from this for tomorrow.</p><div class="chips">
+        ${["Too junior", "Too senior", "Wrong industry", "Agency / consultancy", "Commute", "Salary", "Recruiter"].map((r, i) => `<button class="chip" data-reason="${r}"><kbd>${i + 1}</kbd>${r}</button>`).join("")}
+      </div></div>
+    </article>` : `<div style="text-align:center;padding:80px 20px" class="enter"><div class="serif" style="font-size:44px">All caught up.</div><p class="muted">New ads arrive at 12:00. Kompass will let you know.</p><a class="btn" href="#review"><i data-lucide="pen-line"></i>Go to drafts</a></div>`}
+  </section></div>`;
+};
+
+views.pipeline = () => `<div class="board-wrap"><div class="board" id="board">
+  ${PIPE.map(p => { const cs = CARDS.filter(c => c.s === p.key); return `<section class="col" data-col="${p.key}" aria-label="${p.n}">
+    <div class="col-h"><span class="dot" style="background:${p.c}"></span>${p.n}<span class="badge">${cs.length}</span></div>
+    ${cs.map(c => `<article class="card kcard" draggable="true" data-card="${c.id}" tabindex="0" aria-label="${c.t}, ${C[c.co].n}">
+      <div class="row">${tile(c.co, true)}<div style="min-width:0;flex:1"><div class="t">${c.t}</div><div class="c">${C[c.co].n}</div></div></div>
+      <div class="foot">
+        ${c.dream ? `<span class="tag warn"><i data-lucide="star"></i>Dream</span>` : ""}
+        ${c.s === "prep" ? { queued: `<span class="tag"><i data-lucide="clock"></i>Waiting for draft</span>`, drafting: `<span class="tag info spin"><i data-lucide="loader-circle"></i>Claude writing</span>`, ready: `<a class="tag warn" href="#review" onclick="event.stopPropagation()"><i data-lucide="pen-line"></i>Ready to review</a>` }[c.sub] : ""}
+        ${c.ghost ? `<span class="tag bad"><i data-lucide="ghost"></i>Follow up?</span>` : ""}
+        ${c.note ? `<span class="tag accent"><i data-lucide="calendar"></i>${c.note}</span>` : ""}
+        <span class="tag mono" style="color:${scoreColor(c.score)}">${c.score}</span>
+        <span class="age">${c.d === 0 ? "today" : c.d + " d"}</span>
+      </div></article>`).join("")}
+  </section>`; }).join("")}
+</div></div>`;
+
+let rTab = "letter";
+views.review = () => `<div class="review">
+  <section class="ad-pane enter">
+    <div style="display:flex;gap:10px;align-items:center">${tile("nordlicht")}<div><div style="font-weight:500">Nordlicht Energie</div><div class="faint" style="font-size:12px">Hamburg · 420 people · Kununu 4.2</div></div>
+      <span class="tag" style="margin-left:auto">1 of 4</span></div>
+    <h2>Senior Product Manager – Energy Platform</h2>
+    <div class="facts" style="margin:10px 0 0"><span class="tag accent"><i data-lucide="mail"></i>Apply by email</span><span class="tag">DE</span><span class="tag warn"><i data-lucide="star"></i>Dream job</span></div>
+    <h4>Requirements from the ad</h4>
+    <ul class="req">
+      <li class="covered"><i data-lucide="circle-check"></i>Several years of B2B product management<span class="s">Paragraph 2</span></li>
+      <li class="covered"><i data-lucide="circle-check"></i>Roadmap ownership and prioritization<span class="s">Paragraph 2</span></li>
+      <li class="covered"><i data-lucide="circle-check"></i>Interest in energy & climate<span class="s">Paragraph 1</span></li>
+      <li class="partial"><i data-lucide="circle-dot"></i>Data-driven work, very good SQL<span class="s">only “good”</span></li>
+      <li class="missing"><i data-lucide="circle"></i>Experience with municipal utilities (nice to have)<span class="s">missing</span></li>
+    </ul>
+    <h4>Required details</h4>
+    <div class="fields">
+      <div class="field"><label>Salary expectation</label><div class="mono">€85,000 gross</div></div>
+      <div class="field"><label>Earliest start</label><div>Feb 1, 2027</div></div>
+      <div class="field"><label>Notice period</label><div>3 months, end of month</div></div>
+      <div class="field"><label>Contact person</label><div>Ms Jansen, HR</div></div>
+    </div>
+  </section>
+  <section class="letter-pane">
+    <div class="letter-tools">
+      <div class="seg" role="group" aria-label="Document">
+        <button aria-pressed="${rTab === "letter"}" data-tab="letter">Cover letter</button><button aria-pressed="${rTab === "cv"}" data-tab="cv">CV</button><button aria-pressed="${rTab === "mail"}" data-tab="mail">Email</button>
+      </div>
+      <span class="tag ok" style="margin-left:auto"><i data-lucide="shield-check"></i>9 claims backed</span>
+      <span class="tag warn"><i data-lucide="info"></i>1 reworded</span>
+    </div>
+    <div class="letter-scroll"><div class="paper">
+      <div class="addr">Nordlicht Energie GmbH · Frau Jansen · Am Sandtorkai 12 · 20457 Hamburg</div>
+      <div class="subj">Bewerbung als Senior Product Manager – Energy Platform</div>
+      <div contenteditable="true" spellcheck="true" aria-label="Edit cover letter">
+      <p>Sehr geehrte Frau Jansen,</p>
+      <p>als Stadtwerke im Frühjahr Ihre Lastprognose-Funktion vorgestellt haben, habe ich mir die Demo zweimal angesehen – weil sie genau das Problem löst, an dem ich <span class="claim ok" title="Source: CV · Contoro GmbH, 2022–present">seit drei Jahren auf der Industrieseite arbeite</span>.</p>
+      <p>Bei der Contoro GmbH verantworte ich <span class="claim ok" title="Source: CV · Contoro, roadmap ownership">die Roadmap unserer B2B-Plattform für 140 Industriekunden</span>. Ich habe Discovery-Interviews eingeführt und <span class="claim ok" title="Source: CV · achievement #2">die Zeit bis zum ersten Mehrwert für neue Kunden von elf auf vier Wochen gesenkt</span>. Mit Daten arbeite ich täglich; <span class="claim warn" title="Reworded: CV says 'SQL good'">eigene SQL-Abfragen für Auswertungen schreibe ich selbst</span>.</p>
+      <p>Was mich an Nordlicht reizt, ist die Verbindung von Plattformdenken und Energiewende – ein Produkt, dessen Erfolg man im Netz messen kann.</p>
+      <p>Ich freue mich auf ein Gespräch.</p>
+      <p>Mit freundlichen Grüßen<br>Alex Neumann</p>
+      </div>
+    </div></div>
+    <div class="review-foot">
+      <div class="attach"><span class="file"><i data-lucide="file-text"></i>Bewerbung_Nordlicht_SPM.pdf <span class="faint mono">2,1 MB</span></span></div>
+      <div class="grow"></div>
+      <button class="btn ghost" onclick="toast('Writing a new draft…')"><i data-lucide="wand-sparkles"></i>Rewrite <kbd>R</kbd></button>
+      <button class="btn primary" id="approve" title="Approve and open an Apple Mail draft"><i data-lucide="check"></i>Approve <kbd>⌘↵</kbd></button>
+    </div>
+  </section>
+</div>`;
+
+views.insights = () => {
+  const f = [["Found", 1240], ["Reviewed", 412], ["Applied", 92], ["In contact", 14], ["Round 1", 6], ["Final", 1]];
+  const src = [["Watchlist", 21], ["Arbeitsagentur", 12], ["StepStone", 9], ["XING", 7], ["Indeed", 4], ["LinkedIn", 3]];
+  const pts = [[92, 1], [88, 1], [86, 1], [84, 0], [83, 1], [81, 1], [80, 0], [79, 1], [77, 0], [76, 1], [74, 0], [72, 0], [70, 1], [68, 0], [66, 0], [64, 0], [61, 0], [58, 0], [55, 0], [83, 0], [87, 1], [71, 0], [75, 1], [62, 1]];
+  return `<div class="view-inner enter">
+  <section class="hero" style="padding-bottom:20px"><div class="date"><i data-lucide="calendar-range"></i>Last 6 weeks</div><h1 style="font-size:44px">What <em>works.</em></h1></section>
+  <div class="bento">
+    <div class="card col-7"><div class="card-h">Funnel</div><div class="funnel">
+      ${f.map(([k, v], i) => `<div class="f-row"><span>${k}</span><div class="f-bar"><i style="width:${Math.max(2, Math.sqrt(v / f[0][1]) * 100)}%;animation-delay:${i * 60}ms"></i></div><span class="n">${v.toLocaleString("en-US")}${i ? `<small>${(v / f[i - 1][1] * 100).toFixed(0)}%</small>` : ""}</span></div>`).join("")}
+      <div class="faint" style="font-size:11px">Bar length uses a square-root scale so small stages stay visible.</div>
+    </div></div>
+    <div class="card col-5"><div class="card-h">Reply rate by source</div><div class="bars">
+      ${src.map(([k, v]) => `<div class="bar-row"><span>${k}</span><div class="meter"><i style="width:${v / 21 * 100}%"></i></div><span class="n">${v}%</span></div>`).join("")}
+    </div><div class="insight"><i data-lucide="lightbulb"></i><span>Watchlist companies reply 5× more often than Indeed ads. Add more companies to the watchlist?</span></div></div>
+    <div class="card col-8"><div class="card-h">Calibration <span class="muted faint">· score vs. your decision</span></div><div class="calib">
+      <svg viewBox="0 0 600 190" role="img" aria-label="Scatter plot: high scores are mostly applied to, below 70 mostly rejected">
+        ${[50, 60, 70, 80, 90, 100].map(x => { const px = (x - 50) / 50 * 560 + 20; return `<line x1="${px}" x2="${px}" y1="10" y2="160" stroke="var(--border)"/><text x="${px}" y="182" font-size="11" fill="var(--text-3)" text-anchor="middle" font-family="Geist Mono">${x}</text>`; }).join("")}
+        <text x="20" y="38" font-size="11" fill="var(--text-3)">applied</text><text x="20" y="128" font-size="11" fill="var(--text-3)">rejected</text>
+        ${pts.map(([s, a], i) => { const x = (s - 50) / 50 * 560 + 20, y = a ? 60 + (i % 5) * 6 : 100 + (i % 5) * 6; return a ? `<circle cx="${x}" cy="${y}" r="6" fill="var(--accent)" stroke="var(--accent-ink)" stroke-opacity=".25"/>` : `<rect x="${x - 5}" y="${y - 5}" width="10" height="10" rx="2" fill="none" stroke="var(--text-2)" stroke-width="1.5"/>`; }).join("")}
+      </svg>
+    </div><div class="insight"><i data-lucide="target"></i><span>Accuracy 84%. Two rejections above 80 – both consultancies. Profile v14 already accounts for this.</span></div></div>
+    <div class="card stat col-4"><span class="k"><i data-lucide="timer"></i>Avg time to reply</span><span class="v">9.4 <span style="font-size:18px" class="faint">days</span></span><span class="s">Fastest: Fernweh Reisen (2 days)</span>
+      <div style="margin-top:auto;padding-top:18px;border-top:1px solid var(--border)"><span class="k"><i data-lucide="file-pen-line"></i>Avg review time per draft</span><span class="v" style="font-size:28px">71 s</span><span class="s">Target under 90 s</span></div>
+    </div>
+  </div></div>`;
+};
+
+const stub = (title, icon, text) => () => `<div class="view-inner enter"><section class="hero"><h1 style="font-size:44px">${title}</h1><p>${text}</p></section>
+  <div class="card" style="padding:40px;text-align:center"><i data-lucide="${icon}" style="width:28px;height:28px;color:var(--text-3)"></i><p class="muted">Not designed in the prototype – see PLAN.md.</p></div></div>`;
+views.sources = stub("Sources", "radar", "Arbeitsagentur, watchlist companies and Chrome search: status, last runs, daily limits, warnings.");
+views.profile = stub("Profile", "user-round", "Preference profile (editable, versioned), CV facts, hard filters, style guide from your cover letters.");
+
+/* ── Router ────────────────────────────────────────── */
+
+/* ── Documents ─────────────────────────────────────── */
+const DOC_KINDS = [
+  { key: "cv", n: "CV / Résumé", i: "file-user", hint: "Word file preferred – a tailored version is made for each job from it." },
+  { key: "letter", n: "Past cover letters", i: "file-pen-line", hint: "3–5 letters you wrote. Kompass learns your writing style from them." },
+  { key: "ref", n: "References (Arbeitszeugnisse)", i: "file-badge", hint: "Attached to the application PDF and used as evidence." },
+  { key: "cert", n: "Certificates & degrees", i: "award", hint: "University, vocational training, further education." },
+  { key: "other", n: "Other", i: "file", hint: "Photo, work samples, recommendations." },
+];
+let DOCS = [
+  { id: 1, kind: "cv", name: "Lebenslauf_Alex_Neumann_2026.docx", size: "84 KB", status: "done", note: "Main version · 6 positions, 41 facts" },
+  { id: 2, kind: "cv", name: "Lebenslauf_Alex_Neumann_2026.pdf", size: "212 KB", status: "done", note: "PDF used as layout template" },
+  { id: 3, kind: "letter", name: "Anschreiben_Contoro_2023.docx", size: "31 KB", status: "done", note: "Used for style guide" },
+  { id: 4, kind: "letter", name: "Anschreiben_Brandt_2021.pdf", size: "98 KB", status: "done", note: "Used for style guide" },
+  { id: 5, kind: "ref", name: "Zeugnis_Contoro_GmbH.pdf", size: "1,1 MB", status: "done", note: "Overall rating: very good" },
+  { id: 6, kind: "ref", name: "Zeugnis_Brandt_AG.pdf", size: "860 KB", status: "done", note: "Overall rating: good to very good" },
+  { id: 7, kind: "cert", name: "Master_Zeugnis_Uni_Hamburg.pdf", size: "640 KB", status: "done", note: "M.Sc. Business Informatics" },
+];
+let docId = 100;
+const guessKind = n => /lebenslauf|cv|resume|vita/i.test(n) ? "cv" : /anschreiben|cover|motivation/i.test(n) ? "letter"
+  : /zeugnis|reference|referenz/i.test(n) && !/master|bachelor|abitur|uni/i.test(n) ? "ref" : /zertifikat|certificate|master|bachelor|diplom|abitur|uni/i.test(n) ? "cert" : "other";
+const fmtSize = b => b > 1e6 ? (b / 1e6).toFixed(1).replace(".", ",") + " MB" : Math.max(1, Math.round(b / 1e3)) + " KB";
+const fileIcon = n => /\.pdf$/i.test(n) ? "file-text" : /\.(png|jpe?g|heic)$/i.test(n) ? "image" : "file-type";
+
+views.documents = () => `<div class="view-inner enter">
+  <section class="hero" style="padding-bottom:22px"><div class="date"><i data-lucide="folder-open"></i>${DOCS.length} files · stored only on this Mac</div>
+    <h1 style="font-size:44px">Documents</h1>
+    <p>Everything that already exists: CV, old cover letters, references, certificates. Kompass reads each file once and uses it for applications. It only claims what these documents back up.</p></section>
+  <div class="bento">
+    <div class="col-8 docs-main">
+      <label class="drop" id="drop" tabindex="0">
+        <input type="file" id="file-in" multiple accept=".pdf,.doc,.docx,.odt,.txt,.md,.png,.jpg,.jpeg" class="sr-only">
+        <span class="drop-ic"><i data-lucide="upload"></i></span>
+        <span class="drop-t">Drop files here or <u>browse</u></span>
+        <span class="drop-s">PDF, Word, images · several at once · category detected from the file name</span>
+      </label>
+      ${DOC_KINDS.map(k => { const ds = DOCS.filter(d => d.kind === k.key); return `<section class="card doc-group" data-kind="${k.key}">
+        <div class="card-h"><i data-lucide="${k.i}"></i>${k.n}<span class="badge">${ds.length}</span>
+          ${!ds.length && k.key !== "other" ? `<span class="right tag warn"><i data-lucide="circle-alert"></i>missing</span>` : ""}</div>
+        <p class="doc-hint">${k.hint}</p>
+        ${ds.length ? `<ul class="doc-list">${ds.map(d => `<li class="doc${d.status === "reading" ? " reading" : ""}" data-doc="${d.id}">
+          <span class="doc-ic"><i data-lucide="${fileIcon(d.name)}"></i></span>
+          <span class="grow"><span class="t">${d.name}</span><span class="m"><span class="mono">${d.size}</span> · ${d.status === "reading"
+            ? `<span class="spin" style="display:inline-flex;gap:4px;align-items:center;color:var(--info)"><i data-lucide="loader-circle"></i>Claude reading…</span>`
+            : `<span style="color:var(--ok)">✓</span> ${d.note}`}</span></span>
+          <select class="kind-sel" aria-label="Category for ${d.name}">${DOC_KINDS.map(o => `<option value="${o.key}"${o.key === d.kind ? " selected" : ""}>${o.n}</option>`).join("")}</select>
+          <button class="icon-btn" data-del="${d.id}" aria-label="Remove ${d.name}"><i data-lucide="trash-2"></i></button>
+        </li>`).join("")}</ul>` : ""}
+      </section>`; }).join("")}
+    </div>
+    <aside class="col-4 docs-side">
+      <div class="card">
+        <div class="card-h"><i data-lucide="sparkles"></i>What Kompass does with them</div>
+        <ul class="derived">
+          <li><span class="feed-dot"><i data-lucide="list-checks"></i></span><div><b>Fact base</b><span>41 verified facts from the CV: positions, numbers, skills. Every claim in a cover letter is checked against them.</span><button class="btn ghost sm">Check &amp; correct</button></div></li>
+          <li><span class="feed-dot"><i data-lucide="feather"></i></span><div><b>Style guide</b><span>From 2 cover letters: short sentences, direct opening, no clichés. More accurate from 3 letters.</span><button class="btn ghost sm">View</button></div></li>
+          <li><span class="feed-dot"><i data-lucide="paperclip"></i></span><div><b>Attachments</b><span>2 references + master's certificate are appended to the application PDF (≈ 2.6 MB, under 5 MB).</span><button class="btn ghost sm">Order</button></div></li>
+        </ul>
+      </div>
+      <div class="card privacy"><i data-lucide="lock"></i><span>Files stay in <span class="mono">~/Kompass/files</span>. Only their text is sent to Claude when reading.</span></div>
+    </aside>
+  </div></div>`;
+
+function addFiles(files) {
+  const added = [...files].map(f => ({ id: ++docId, kind: guessKind(f.name), name: f.name, size: fmtSize(f.size), status: "reading" }));
+  if (!added.length) return;
+  DOCS.push(...added); render();
+  toast(`${added.length} ${added.length === 1 ? "file" : "files"} added · reading`);
+  setTimeout(() => {
+    added.forEach(d => { d.status = "done"; d.note = { cv: "Facts updated", letter: "Used for style guide", ref: "Summary created", cert: "Degree recognized", other: "Saved" }[d.kind]; });
+    if (location.hash === "#documents") render();
+  }, 1800);
+}
+wire.documents = () => {
+  const drop = $("#drop"), inp = $("#file-in");
+  inp.onchange = () => { addFiles(inp.files); inp.value = ""; };
+  drop.onkeydown = e => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), inp.click());
+  ["dragenter", "dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(t => drop.addEventListener(t, () => drop.classList.remove("over")));
+  drop.addEventListener("drop", e => { e.preventDefault(); addFiles(e.dataTransfer.files); });
+  document.querySelectorAll(".kind-sel").forEach(s => s.onchange = () => {
+    const d = DOCS.find(x => x.id === +s.closest("[data-doc]").dataset.doc); d.kind = s.value; render();
+    toast(`Moved to “${DOC_KINDS.find(k => k.key === d.kind).n}”`);
+  });
+  document.querySelectorAll("[data-del]").forEach(b => b.onclick = () => {
+    const i = DOCS.findIndex(x => x.id === +b.dataset.del), [d] = DOCS.splice(i, 1); render();
+    toast(`${d.name} removed`, () => { DOCS.splice(i, 0, d); render(); });
+  });
+};
+
+const TITLES = { documents: "Documents", today: "Today", discover: "Discover", pipeline: "Pipeline", review: "Review", insights: "Insights", sources: "Sources", profile: "Profile" };
+const SUB = { documents: "CV, cover letters, references", discover: "12 new · by score", pipeline: "11 active · 5 preparing", review: "4 drafts" };
+function render() {
+  const v = (location.hash.slice(1) || "today");
+  const key = views[v] ? v : "today";
+  $("#view").innerHTML = views[key]();
+  $("#crumb").innerHTML = TITLES[key] + (SUB[key] ? `<small>${SUB[key]}</small>` : "");
+  document.querySelectorAll("#nav a").forEach(a => a.dataset.view === key ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+  lucide.createIcons();
+  wire[key]?.();
+}
+window.addEventListener("hashchange", () => { render(); $("#view").focus({ preventScroll: true }); });
+
+/* ── Interactions per view ─────────────────────────── */
+wire.discover = () => {
+  document.querySelectorAll(".q-item").forEach(q => q.onclick = () => { dIdx = +q.dataset.i; render(); });
+  document.querySelectorAll("[data-act]").forEach(b => b.onclick = () => decide(b.dataset.act));
+  document.querySelectorAll("[data-reason]").forEach(b => b.onclick = () => rejectWith(b.dataset.reason));
+};
+function nextJob(dir, msg, undoable = true) {
+  const card = $("#tcard"); if (!card) return;
+  const j = JOBS[dIdx], prev = dIdx;
+  done.add(j.id);
+  card.classList.remove("in"); card.classList.add(dir);
+  setTimeout(() => {
+    const nxt = JOBS.findIndex((x, i) => i > dIdx && !done.has(x.id));
+    dIdx = nxt === -1 ? JOBS.length : nxt;
+    $("#b-discover").textContent = JOBS.length - done.size;
+    render();
+  }, matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 260);
+  toast(msg, undoable ? () => { done.delete(j.id); dIdx = prev; $("#b-discover").textContent = JOBS.length - done.size; render(); } : null);
+}
+function decide(act) {
+  const j = JOBS[dIdx]; if (!j) return;
+  if (act === "apply") nextJob("out-right", `Shortlisted: ${C[j.co].n}. Claude is writing the draft.`);
+  if (act === "skip") nextJob("out-up", "Saved for later");
+  if (act === "dream") { j.dream = !j.dream; const b = $('[data-act="dream"]'); b.classList.toggle("on", j.dream); b.setAttribute("aria-pressed", j.dream); toast(j.dream ? "Marked as dream job – counts 3× for learning" : "Dream job removed"); }
+  if (act === "reject") { const r = $("#reasons"); r.classList.add("show"); r.querySelector("button").focus(); }
+}
+function rejectWith(reason) { nextJob("out-left", `Rejected: ${reason} – noted`); }
+
+wire.pipeline = () => {
+  let dragId = null;
+  document.querySelectorAll(".kcard").forEach(k => {
+    k.ondragstart = e => { dragId = +k.dataset.card; k.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; };
+    k.ondragend = () => k.classList.remove("dragging");
+    k.onclick = () => openDrawer(+k.dataset.card);
+    k.onkeydown = e => {
+      const c = CARDS.find(x => x.id === +k.dataset.card), i = PIPE.findIndex(p => p.key === c.s);
+      if (e.key === "Enter") k.click();
+      if ((e.key === "]" && i < PIPE.length - 1) || (e.key === "[" && i > 0)) { move(c.id, PIPE[i + (e.key === "]" ? 1 : -1)].key); $(`[data-card="${c.id}"]`)?.focus(); }
+    };
+  });
+  document.querySelectorAll(".col").forEach(col => {
+    col.ondragover = e => { e.preventDefault(); col.classList.add("over"); };
+    col.ondragleave = () => col.classList.remove("over");
+    col.ondrop = e => { e.preventDefault(); col.classList.remove("over"); if (dragId) move(dragId, col.dataset.col); };
+  });
+};
+function move(id, to) {
+  const c = CARDS.find(x => x.id === id); if (!c || c.s === to) return;
+  const from = c.s, fromSub = c.sub; c.s = to; c.d = 0; if (to === "prep") c.sub = "queued"; render();
+  const n = PIPE.find(p => p.key === to).n;
+  toast(`${C[c.co].n} → ${n}${to === "round1" ? " · creating prep pack" : ""}`, () => { c.s = from; c.sub = fromSub; render(); });
+}
+wire.review = () => {
+  document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { rTab = b.dataset.tab; render(); });
+  $("#approve").onclick = () => toast("Approved · Apple Mail draft opened");
+};
+
+/* ── Drawer ────────────────────────────────────────── */
+function openDrawer(id) {
+  const c = CARDS.find(x => x.id === id) || (() => { const j = JOBS.find(x => x.id === id - 100); return j && { id, co: j.co, t: j.t, s: "discover", score: j.score, dream: j.dream }; })();
+  if (!c) return;
+  const d = $("#drawer");
+  d.innerHTML = `<div class="drawer-h">${tile(c.co)}<div style="flex:1;min-width:0"><h2>${c.t}</h2><div class="muted">${C[c.co].n}</div></div>${ring(c.score, 48)}
+    <button class="icon-btn" onclick="closeOverlays()" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="drawer-b">
+      <div class="section-t">Next step</div>
+      <div class="card" style="padding:14px;display:flex;gap:12px;align-items:center"><i data-lucide="calendar-clock" style="color:var(--accent-fg)"></i><div style="flex:1">${c.note || "Review and approve the draft"}</div><button class="btn">Open</button></div>
+      <div class="section-t">Timeline</div>
+      <ul class="timeline">
+        ${c.note ? `<li><span class="feed-dot"><i data-lucide="calendar"></i></span><div>Appointment added<time>today, 09:12</time></div></li>` : ""}
+        <li><span class="feed-dot"><i data-lucide="send"></i></span><div>Application sent by email<time>6 days ago</time></div></li>
+        <li><span class="feed-dot"><i data-lucide="check"></i></span><div>Draft approved · 64 s review<time>6 days ago</time></div></li>
+        <li><span class="feed-dot"><i data-lucide="pen-tool"></i></span><div>Claude: cover letter v2 (“shorter”)<time>7 days ago</time></div></li>
+        <li><span class="feed-dot"><i data-lucide="sparkles"></i></span><div>Found · Arbeitsagentur + StepStone (merged)<time>8 days ago</time></div></li>
+      </ul>
+      <div class="section-t">Company brief</div>
+      <p class="muted" style="margin:0;font-size:13px;line-height:1.6">Mid-size, about 420 employees, Kununu 4.2 (pros: colleagues, remote; cons: processes). Recent Series B round, growing the product team in Hamburg.</p>
+    </div>`;
+  lucide.createIcons();
+  d.classList.add("show"); $("#scrim").classList.add("show");
+  d.querySelector(".icon-btn").focus();
+}
+
+/* ── Command palette ───────────────────────────────── */
+const CMDS = [
+  { g: "Navigation", i: "sun", t: "Today", k: "G H", run: () => location.hash = "today" },
+  { g: "Navigation", i: "sparkles", t: "Discover", k: "G D", run: () => location.hash = "discover" },
+  { g: "Navigation", i: "kanban", t: "Pipeline", k: "G P", run: () => location.hash = "pipeline" },
+  { g: "Navigation", i: "pen-line", t: "Review drafts", k: "G R", run: () => location.hash = "review" },
+  { g: "Navigation", i: "chart-no-axes-combined", t: "Insights", k: "G I", run: () => location.hash = "insights" },
+  { g: "Actions", i: "link", t: "Add your own job ad…", k: "N", run: () => openAddAd() },
+  { g: "Actions", i: "upload", t: "Upload documents…", run: () => { location.hash = "documents"; setTimeout(() => $("#file-in")?.click(), 50); } },
+  { g: "Actions", i: "refresh-cw", t: "Fetch all sources now", run: () => runSources() },
+  { g: "Actions", i: "building-2", t: "Add company to watchlist…", run: () => toast("Paste the careers URL – the ATS is detected") },
+  { g: "Actions", i: "sun-moon", t: "Toggle color scheme", run: () => toggleTheme() },
+  ...JOBS.map(j => ({ g: "Jobs", i: "briefcase", t: `${j.t} · ${C[j.co].n}`, run: () => openDrawer(j.id + 100) })),
+];
+let palSel = 0, palItems = [];
+function renderPalette(q = "") {
+  palItems = CMDS.filter(c => c.t.toLowerCase().includes(q.toLowerCase()));
+  palSel = Math.min(palSel, Math.max(0, palItems.length - 1));
+  let g = "";
+  $("#pal-list").innerHTML = palItems.map((c, i) => `${c.g !== g ? `<div class="pal-group">${g = c.g}</div>` : ""}<button class="pal-item" role="option" aria-selected="${i === palSel}" data-i="${i}"><i data-lucide="${c.i}"></i>${c.t}${c.k ? `<kbd>${c.k}</kbd>` : ""}</button>`).join("") || `<div class="pal-group">No results</div>`;
+  lucide.createIcons();
+  document.querySelectorAll(".pal-item").forEach(b => b.onclick = () => runCmd(+b.dataset.i));
+}
+function runCmd(i) { const c = palItems[i]; closeOverlays(); c?.run(); }
+function openPalette() { closeOverlays(); $("#palette").classList.add("show"); $("#scrim").classList.add("show"); const inp = $("#pal-input"); inp.value = ""; palSel = 0; renderPalette(); inp.focus(); }
+/* ── Add own ad ────────────────────────────────────── */
+const COLORS = ["#1F6F5C", "#3A4FBF", "#B4462B", "#6B3FA0", "#0E7490", "#A1306B", "#7C4A1E"];
+function openAddAd() {
+  closeOverlays();
+  const f = $("#addad"); f.reset(); $("#ad-err").textContent = ""; $("#ad-url").removeAttribute("aria-invalid");
+  f.classList.add("show"); $("#scrim").classList.add("show"); $("#ad-url").focus();
+}
+function parseAdUrl(raw) {
+  let u; try { u = new URL(raw.trim()); } catch { return null; }
+  if (!/^https?:$/.test(u.protocol)) return null;
+  const host = u.hostname.replace(/^(www|karriere|jobs|careers|career)\./, "");
+  const co = host.split(".").slice(-2, -1)[0] || host;
+  const slug = decodeURIComponent(u.pathname.split("/").filter(Boolean).pop() || "").replace(/[-_]?\d{3,}.*$/, "").replace(/[-_]+/g, " ").trim();
+  return { co: co.charAt(0).toUpperCase() + co.slice(1), title: slug ? slug.replace(/\b\w/g, c => c.toUpperCase()) : "Job (reading…)" };
+}
+$("#addad").onsubmit = e => {
+  e.preventDefault();
+  const url = $("#ad-url").value, text = $("#ad-text").value.trim(), p = parseAdUrl(url);
+  if (!p && !text) { $("#ad-url").setAttribute("aria-invalid", "true"); $("#ad-err").textContent = url ? "That isn't a valid link. It must start with https:// – or paste the text below." : "Paste a link, or paste the ad text below."; $("#ad-url").focus(); return; }
+  const dest = new FormData(e.target).get("ad-dest"), note = $("#ad-note").value.trim();
+  const btn = $("#ad-submit"); btn.disabled = true; btn.innerHTML = `<span class="spin" style="display:inline-flex"><i data-lucide="loader-circle"></i></span>Reading…`; lucide.createIcons();
+  setTimeout(() => {
+    const key = "m" + Date.now(), name = p ? p.co : "Unknown company";
+    C[key] = { n: name, c: COLORS[Object.keys(C).length % COLORS.length] };
+    const id = Math.max(...JOBS.map(j => j.id), ...CARDS.map(c => c.id - 100)) + 1;
+    const job = { id, co: key, t: p ? p.title : "Job from pasted text", loc: "–", remote: "n/a", sal: "n/a", src: "Manual", score: 76, age: "just now", lang: "DE", manual: true, note,
+      dims: [78, 74, 76, 80, 70], for: ["Found by you – counts as a strong interest signal"], against: ["Details are filled in once the ad is fully read"], flags: [], text: text || "Loading ad text from the link…" };
+    btn.disabled = false; btn.innerHTML = `<i data-lucide="plus"></i>Add <kbd>⌘↵</kbd>`;
+    closeOverlays();
+    if (dest === "prep") {
+      CARDS.unshift({ id: id + 100, co: key, t: job.t, s: "prep", sub: "queued", score: job.score, d: 0, manual: true });
+      location.hash === "#pipeline" ? render() : (location.hash = "pipeline");
+      toast(`${name} shortlisted · Claude is writing the draft`);
+    } else {
+      JOBS.unshift(job); dIdx = 0; $("#b-discover").textContent = JOBS.length - done.size;
+      location.hash === "#discover" ? render() : (location.hash = "discover");
+      toast(`${name} added · scored ${job.score}`);
+    }
+  }, 1300);
+};
+$("#add-ad-btn").onclick = openAddAd;
+
+function closeOverlays() { ["#palette", "#drawer", "#scrim", "#addad"].forEach(s => $(s).classList.remove("show")); }
+$("#open-palette").onclick = openPalette;
+$("#scrim").onclick = closeOverlays;
+$("#pal-input").oninput = e => { palSel = 0; renderPalette(e.target.value); };
+$("#pal-input").onkeydown = e => {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); palSel = (palSel + (e.key === "ArrowDown" ? 1 : -1) + palItems.length) % palItems.length; renderPalette(e.target.value); document.querySelector('.pal-item[aria-selected="true"]')?.scrollIntoView({ block: "nearest" }); }
+  if (e.key === "Enter") runCmd(palSel);
+};
+
+/* ── Theme + sources ───────────────────────────────── */
+function toggleTheme() {
+  const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("kompass-theme", next); } catch {}
+}
+try { const t = localStorage.getItem("kompass-theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
+$("#theme-btn").onclick = toggleTheme;
+function runSources() {
+  const b = $("#run-btn"); b.disabled = true; b.innerHTML = `<i data-lucide="loader-circle"></i><span class="lbl">Running…</span>`; lucide.createIcons();
+  b.querySelector("svg").animate([{ transform: "rotate(0)" }, { transform: "rotate(360deg)" }], { duration: 900, iterations: Infinity });
+  setTimeout(() => { b.disabled = false; b.innerHTML = `<i data-lucide="refresh-cw"></i><span class="lbl">Fetch sources</span>`; lucide.createIcons(); toast("Fetched 3 sources · 7 new ads"); }, 1800);
+}
+$("#run-btn").onclick = runSources;
+
+/* ── Global keys ───────────────────────────────────── */
+let gPending = false;
+document.addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); openPalette(); return; }
+  if (e.key === "Escape") { closeOverlays(); return; }
+  const typing = e.target.closest("input, textarea, [contenteditable]");
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && location.hash === "#review" && !$("#addad.show")) { e.preventDefault(); $("#approve").click(); return; }
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && $("#addad.show")) { e.preventDefault(); $("#addad").requestSubmit(); return; }
+  if (typing || e.metaKey || e.ctrlKey || $("#palette.show, #drawer.show, #addad.show")) return;
+  const k = e.key.toLowerCase();
+  if (gPending) { gPending = false; const m = { h: "today", d: "discover", p: "pipeline", r: "review", i: "insights" }[k]; if (m) location.hash = m; return; }
+  if (k === "n") { e.preventDefault(); openAddAd(); return; }
+  if (k === "g") { gPending = true; setTimeout(() => gPending = false, 900); return; }
+  if (location.hash === "#discover") {
+    const r = $("#reasons.show");
+    if (r && /^[1-7]$/.test(k)) { r.querySelectorAll("[data-reason]")[+k - 1].click(); return; }
+    if (k === "a") decide("apply"); if (k === "d") decide("dream"); if (k === "x") decide("reject"); if (k === "s") decide("skip");
+    if (k === "j" || k === "k") { dIdx = Math.max(0, Math.min(JOBS.length - 1, dIdx + (k === "j" ? 1 : -1))); render(); }
+  }
+  if (location.hash === "#review" && k === "r") toast("Writing a new draft…");
+});
+
+render();
+</script>
+</body>
+</html>

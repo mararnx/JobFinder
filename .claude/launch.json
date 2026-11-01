@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "prototype",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4318", "--directory", "design"],
+      "port": 4318
+    },
+    {
+      "name": "kompass-dev",
+      "runtimeExecutable": "env",
+      "runtimeArgs": ["KOMPASS_DATA=./data-dev", "KOMPASS_DRY_SEND=1", "KOMPASS_NO_NOTIFY=1", "KOMPASS_MOCK_DELAY=600", "node", "scripts/start.mjs", "dev"],
+      "port": 4317
+    }
+  ]
+}
