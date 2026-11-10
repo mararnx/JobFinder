@@ -7,6 +7,7 @@ import { searchKeywords, searchProfiles } from "@/lib/profile";
 import { enqueue, meta, PRIORITY, setMeta } from "@/lib/queue";
 import { normCompany, stripHtml, truncate } from "@/lib/text";
 import { fetchJobroom } from "@/lib/sources/jobroom";
+import { fetchJobsch } from "@/lib/sources/jobsch";
 import { detectAts, fetchAts } from "@/lib/sources/ats";
 import { FrictionError, readPage, runCareersPage, runPortal } from "@/lib/sources/chrome";
 import { jobPostingFromHtml, PORTALS, type Portal } from "@/lib/sources/extract";
@@ -63,6 +64,30 @@ export async function runJobroom(): Promise<string> {
     }
     endRun(id, "ok", found, added);
     return `Job-Room: ${added} new of ${found}`;
+  } catch (e) {
+    endRun(id, "error", found, added, String(e instanceof Error ? e.message : e));
+    throw e;
+  }
+}
+
+/** jobs.ch through its website's search API. Ads keep the "jobsch" source, so they merge with Chrome and alert-email finds; runs are logged as "jobsch-api". */
+export async function runJobschApi(): Promise<string> {
+  if (!getSettings().jobschApi) return "jobs.ch search is off";
+  const profiles = searchProfiles().filter((p) => p.enabled);
+  if (!profiles.length) return "No search profile yet";
+  const id = startRun("jobsch-api");
+  const firstRun = !get("SELECT 1 FROM source_runs WHERE source = 'jobsch-api' AND status = 'ok'");
+  let found = 0, added = 0;
+  try {
+    for (const p of profiles) {
+      for (const kw of p.keywords) {
+        const raws = await fetchJobsch({ keyword: kw, location: p.location, days: firstRun ? 28 : 7, isKnown: known("jobsch") }, firstRun ? 6 : 2);
+        found += raws.length;
+        added += ingestAll(raws);
+      }
+    }
+    endRun(id, "ok", found, added);
+    return `jobs.ch: ${added} new of ${found}`;
   } catch (e) {
     endRun(id, "error", found, added, String(e instanceof Error ? e.message : e));
     throw e;

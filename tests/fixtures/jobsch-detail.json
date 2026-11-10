@@ -1,0 +1,55 @@
+{
+ "job_id": "aa7895a5-54fa-4295-a24e-77694194b667",
+ "title": "Product Owner Frontend Unternehmenskunden",
+ "company_name": "Centris AG",
+ "place": "Solothurn",
+ "zipcode": "4500",
+ "locations": [
+  {
+   "street": "Grabackerstrasse 3",
+   "postalCode": "4500",
+   "city": "Solothurn",
+   "cantonCode": "SO",
+   "countryCode": "CH",
+   "latitude": 47.20156,
+   "longitude": 7.52518
+  }
+ ],
+ "publication_date": "2026-11-09T12:12:53+01:00",
+ "initial_publication_date": "2026-11-09T11:12:53+00:00",
+ "employment_grades": [
+  100
+ ],
+ "employment_type_ids": [
+  "5"
+ ],
+ "application_method": "application_url",
+ "application_url": "https://recruitingapp-2824.umantis.com/Vacancies/1118/Application/CheckLogin/1?lang=ger",
+ "external_url": "",
+ "template_text": "<p>Was dich erwartet<br />Als Product Owner übernimmst du eine zentrale Rolle beim Ausbau unserer Portallösung für das Unternehmensgeschäft von Versicherern und verbindest Kundenbedürfnisse mit einer klaren Produktpriorisierung. Dabei erwarten dich insbesondere folgende Aufgaben:</p> <ul> <li>Die operative Produktverantwortung für das Frontend Unternehmenskunden liegt bei dir, und du gestaltest dessen Weiterentwicklung</li> <li>Gemeinsam mit Kunden und internen Anspruchsgruppen konkretisierst du Anforderungen und entwickelst die Produktroadmap weiter</li> <li>Im Product Backlog formulierst du verständliche User Stories und priorisierst nach Kundennutzen, Produktzielen und verfügbaren Kapazitäten</li> <li>Die Umsetzung steuerst du in enger Zusammenarbeit mit dem Entwicklungsteam, der Architektur und unseren Partnern</li> <li>Die Einführung bei weiteren Kunden begleitest du und führst ihre Bedürfnisse zu einer gemeinsam nutzbaren Standardlösung zusammen</li> <li>Zudem sorgst du für ein ausgewogenes Verhältnis zwischen Weiterentwicklung, Wartung und Qualität des bestehenden Produkts</li> </ul> <br />Was du fachlich mitbringst<ul> <li>Abgeschlossene Aus- oder Weiterbildung in Wirtschaftsinformatik, Informatik oder Betriebswirtschaft oder vergleichbare Berufserfahrung</li> <li>Erfahrung als Product Owner, Business Analyst oder in einer vergleichbaren Funktion bei der Entwicklung digitaler Produkte</li> <li>Praxis in Anforderungsanalyse, Backlog-Priorisierung und der Zusammenarbeit mit agilen Entwicklungsteams</li> <li>Verständnis für digitale Kundenprozesse und die Integration von Portallösungen in bestehende Systemlandschaften</li> <li>Kenntnisse des Versicherungsumfelds, idealerweise im Unternehmensgeschäft, sind von Vorteil</li> </ul>Was dich persönlich ausmacht<ul> <li>Unternehmerisches Denken mit klarem Fokus auf den Nutzen für Kunden und Produkt</li> <li>Fähigkeit, klare Prioritäten zu setzen und unterschiedliche Interessen zu tragfähigen Lösungen zusammenzuführen</li> <li>Selbstständige Arbeitsweise, Verantwortungsbewusstsein und Freude daran, Themen gemeinsam voranzubringen</li> <li>Klare und adressatengerechte Kommunikation mit Kunden, Fachspezialisten und Entwicklungspartnern</li> </ul>Dein Kontakt<br />Olivier Angehrn<br />HR Business Partner<br /> <br />",
+ "template_lead_text": "",
+ "is_paid": true,
+ "_links": {
+  "detail_de": {
+   "href": "https://www.jobs.ch/de/stellenangebote/detail/aa7895a5-54fa-4295-a24e-77694194b667/",
+   "templated": false,
+   "methods": [
+    "GET"
+   ]
+  },
+  "detail_fr": {
+   "href": "https://www.jobs.ch/fr/offres-emplois/detail/aa7895a5-54fa-4295-a24e-77694194b667/",
+   "templated": false,
+   "methods": [
+    "GET"
+   ]
+  },
+  "detail_en": {
+   "href": "https://www.jobs.ch/en/vacancies/detail/aa7895a5-54fa-4295-a24e-77694194b667/",
+   "templated": false,
+   "methods": [
+    "GET"
+   ]
+  }
+ }
+}

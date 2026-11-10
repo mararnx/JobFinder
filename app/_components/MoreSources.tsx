@@ -8,7 +8,7 @@ import "./more-sources.css";
 
 export type MoreSourcesProps = {
   keyword: string; city: string;
-  settings: { gmailAddress: string; alertsLabel: string; adzunaAppId: string; adzunaAppKey: string; joobleKey: string; chromeEnabled: boolean; chromePortals: string[] };
+  settings: { jobschApi: boolean; gmailAddress: string; alertsLabel: string; adzunaAppId: string; adzunaAppKey: string; joobleKey: string; chromeEnabled: boolean; chromePortals: string[] };
 };
 
 const PORTALS = [
@@ -39,6 +39,7 @@ export function MoreSources({ keyword, city, settings }: MoreSourcesProps) {
   const [box, setBox] = useState(settings.alertsLabel || "Job alerts");
   const [keys, setKeys] = useState({ adzunaAppId: settings.adzunaAppId, adzunaAppKey: settings.adzunaAppKey, joobleKey: settings.joobleKey });
   const [busy, setBusy] = useState<string | null>(null);
+  const [jobsch, setJobsch] = useState(settings.jobschApi);
   const [chrome, setChrome] = useState({ on: settings.chromeEnabled, portals: settings.chromePortals });
   const [alertMsg, setAlertMsg] = useState<string | null>(settings.alertsLabel && settings.gmailAddress ? `Reading the label "${settings.alertsLabel}" every 2 hours` : null);
   const mark = useRef<HTMLAnchorElement>(null);
@@ -72,6 +73,21 @@ export function MoreSources({ keyword, city, settings }: MoreSourcesProps) {
     toast((keys.adzunaAppId && keys.adzunaAppKey) || keys.joobleKey ? "Saved · searching now" : "Saved");
     router.refresh();
   });
+
+  const toggleJobsch = (on: boolean) => {
+    setJobsch(on);
+    void go("jobsch", async () => {
+      try {
+        await act("saveSettings", { patch: { jobschApi: on } });
+        if (on) await act("fetchSource", { source: "jobsch-api" });
+        toast(on ? "jobs.ch on · searching now" : "jobs.ch off");
+        router.refresh();
+      } catch (e) {
+        setJobsch(!on);
+        throw e;
+      }
+    });
+  };
 
   const togglePortal = (p: string, on: boolean) => {
     const prev = chrome;
@@ -118,12 +134,13 @@ export function MoreSources({ keyword, city, settings }: MoreSourcesProps) {
 
       <section className="ms-card">
         <h3><KeyRound />Job search APIs <span className="faint">– free keys, 2 minutes each</span></h3>
-        <p className="faint">Adzuna and Jooble collect ads from many Swiss portals and company sites – a big share of what jobs.ch and Indeed list. For Jooble, choose Switzerland when you ask for the key.</p>
+        <p className="faint">jobs.ch runs without a key. Adzuna and Jooble collect ads from many Swiss portals and company sites – a big share of what jobs.ch and Indeed list. For Jooble, choose Switzerland when you ask for the key.</p>
         <div className="ms-keys">
           <label className="fld"><span>Adzuna app ID <a href="https://developer.adzuna.com/signup" target="_blank" rel="noreferrer">get a free key</a></span><input className="input" value={keys.adzunaAppId} onChange={(e) => setKeys((k) => ({ ...k, adzunaAppId: e.target.value.trim() }))} aria-label="Adzuna app ID" autoComplete="off" /></label>
           <label className="fld"><span>Adzuna app key</span><input className="input" value={keys.adzunaAppKey} onChange={(e) => setKeys((k) => ({ ...k, adzunaAppKey: e.target.value.trim() }))} aria-label="Adzuna app key" autoComplete="off" /></label>
           <label className="fld"><span>Jooble API key <a href="https://jooble.org/api/about" target="_blank" rel="noreferrer">get a free key</a></span><input className="input" value={keys.joobleKey} onChange={(e) => setKeys((k) => ({ ...k, joobleKey: e.target.value.trim() }))} aria-label="Jooble API key" autoComplete="off" /></label>
         </div>
+        <label className="switch ms-jobsch"><input type="checkbox" checked={jobsch} onChange={(e) => toggleJobsch(e.target.checked)} aria-label="jobs.ch search" /><span>jobs.ch <span className="faint">– no key; uses the search behind jobs.ch&apos;s website (unofficial, read slowly)</span></span></label>
         <div className="ms-row"><button className="btn" onClick={saveKeys} disabled={busy === "keys"}>{busy === "keys" ? <LoaderCircle className="spin-icon" /> : <Check />}Save keys</button></div>
       </section>
 

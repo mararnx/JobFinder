@@ -1,6 +1,6 @@
 # JobFinder
 
-A local job-search funnel for the Swiss market (German-speaking Switzerland, German and English ads): finds ads (Job-Room, the RAV job portal that also carries jobs.ch ads; company career feeds; optional Chrome search on portals, links you add yourself), ranks them against what you actually want, drafts tailored applications you approve with one keystroke, and tracks every job to an offer. AI runs on a Claude Max subscription through the Claude Code CLI.
+A local job-search funnel for the Swiss market (German-speaking Switzerland, German and English ads): finds ads (Job-Room, the RAV job portal; jobs.ch; company career feeds; optional Chrome search on portals, links you add yourself), ranks them against what you actually want, drafts tailored applications you approve with one keystroke, and tracks every job to an offer. AI runs on a Claude Max subscription through the Claude Code CLI.
 
 - **Set up:** [SETUP.md](SETUP.md) – easiest is to open this repo in Claude Code and say *"Set up JobFinder for me and start it"*
 - **How it works and why:** [PLAN.md](PLAN.md)

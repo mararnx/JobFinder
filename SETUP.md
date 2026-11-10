@@ -85,6 +85,7 @@ npm run browser
 Indeed and LinkedIn limit programs that browse them, so JobFinder gets their jobs the ways they allow:
 
 - **Job alerts by email** – save a search with alerts on jobs.ch, Indeed, LinkedIn and XING, label the alert emails in Gmail with a filter (e.g. label "Job alerts"), and enter that label name. JobFinder reads it every 2 hours through the Gmail connection.
+- **jobs.ch** – on by default, no key needed; it reads the search behind jobs.ch's website, slowly. Switch it off under More sources if you prefer.
 - **Adzuna and Jooble** – free API keys (developer.adzuna.com, jooble.org/api/about); they aggregate many Swiss portals. For Jooble, choose Switzerland when asking for the key.
 - **"Add to JobFinder" button** – drag it from the wizard into the browser's bookmarks bar; on any job ad, click it to add the ad with its full text.
 - **Chrome search** – jobs.ch and XING work; LinkedIn runs once a day; Indeed is off by default.

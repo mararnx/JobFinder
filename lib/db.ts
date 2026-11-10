@@ -175,6 +175,7 @@ export type Settings = {
   adzunaAppId: string; // free keys from developer.adzuna.com
   adzunaAppKey: string;
   joobleKey: string; // free key from jooble.org/api/about
+  jobschApi: boolean; // read jobs.ch through the search API its website uses (unofficial)
   gmailAddress: string; // Gmail account connected with an app password (kept in the Keychain); "" = not connected
   alertsLabel: string; // Gmail label that collects portal job-alert emails ("" = off)
   onboarded: boolean;
@@ -207,6 +208,7 @@ export const DEFAULT_SETTINGS: Settings = {
   adzunaAppId: "",
   adzunaAppKey: "",
   joobleKey: "",
+  jobschApi: true,
   gmailAddress: "",
   alertsLabel: "",
   onboarded: false,

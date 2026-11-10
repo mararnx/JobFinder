@@ -33,3 +33,4 @@
 .gmail-form .input { width: 240px; max-width: 100%; }
 .gmail-on { display: flex; align-items: center; gap: 10px; padding: 12px 18px 16px; flex-wrap: wrap; }
 .gmail-on .grow { flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; line-height: 1.5; }
+.ms-jobsch { margin: 12px 0 4px; display: flex; }

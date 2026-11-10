@@ -109,6 +109,14 @@ Job-Room (job-room.ch) is the public job portal of the Swiss employment service 
 - No agency flag in the API: recruiters are detected by name and wording ("Personalberatung", "für unseren Kunden") and hidden when the setting says so.
 - Workload ("80 – 100 %") goes into the employment type, so scoring can compare it with the Pensum the job seeker wants.
 
+### 5.1b jobs.ch search API (v1)
+
+jobs.ch (JobCloud) is the largest Swiss portal (about 39,000 live ads in Nov 2026). Its website searches through `GET https://www.jobs.ch/api/v1/public/search?query=…&location=…&sort=date&rows=20&page=N`; the full ad is at `…/search/job/{id}`. Not an official API: no key, max 20 results per page, can change without notice, and the portal's terms likely don't foresee automated use, so it can be switched off under Sources → More sources.
+
+- Runs every 3 hours, newest first; stops at ads older than 7 days (28 on the first run) or at a run of known ads. Details only for new ads, 1–2 s apart.
+- Ads keep the `jobsch:<uuid>` id the Chrome search and alert emails use, so the same ad from any of them is one job.
+- Measured overlap for "Product Owner" (Nov 2026): about half of jobs.ch's ads also reach Job-Room (mostly paid ones); Job-Room has about as many again that jobs.ch doesn't. Together they cover roughly 90 % of public ads for a role.
+
 ### 5.2 Company watchlist (v1)
 
 You add companies. The app detects the applicant tracking system from the careers URL and uses its public feed:

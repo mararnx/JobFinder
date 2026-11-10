@@ -4,6 +4,8 @@ import { test } from "node:test";
 import { careerPageLinks, frictionReason, jobPostingFromHtml, listingLinks } from "@/lib/sources/extract";
 import { detectAts, parsePersonioXml } from "@/lib/sources/ats";
 import { cleanDescription, jobroomToRaw, searchBody, workload } from "@/lib/sources/jobroom";
+import { jobschToRaw, searchUrl as jobschSearchUrl } from "@/lib/sources/jobsch";
+import { alertJobId } from "@/lib/sources/alerts";
 
 const LD = `<html><head><script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage"},{"@type":"JobPosting","title":"Product Owner (m/w/d)","identifier":{"@type":"PropertyValue","value":"12345"},
 "hiringOrganization":{"@type":"Organization","name":"Contoro AG"},"jobLocation":{"@type":"Place","address":{"addressLocality":"Zürich"}},
@@ -104,4 +106,21 @@ test("Job-Room detail maps to a raw job (real API sample)", () => {
   const body = searchBody({ keyword: "Product Owner", location: "Zürich", radiusKm: 25, days: 7 }, { lat: 47.36, lon: 8.49 });
   assert.deepEqual(body.keywords, ["Product Owner"]);
   assert.deepEqual(body.radiusSearchRequest, { geoPoint: { lat: 47.36, lon: 8.49 }, distance: 25 });
+});
+
+test("jobs.ch API detail maps to a raw job (real API sample) and shares ids with Chrome and alerts", () => {
+  const d = JSON.parse(fs.readFileSync("tests/fixtures/jobsch-detail.json", "utf8"));
+  const raw = jobschToRaw(d);
+  assert.equal(raw.source, "jobsch");
+  assert.equal(raw.sourceId, `jobsch:${d.job_id}`);
+  assert.equal(raw.sourceId, alertJobId(raw.url!, "jobsch"), "same id as an alert-email link to the ad");
+  assert.equal(raw.title, "Product Owner Frontend Unternehmenskunden");
+  assert.equal(raw.company, "Centris AG");
+  assert.equal(raw.location, "Solothurn SO");
+  assert.equal(raw.employmentType, "full-time, 100 %");
+  assert.match(raw.description, /Als Product Owner/);
+  assert.match(raw.description, /Online-Bewerbung: https:\/\/recruitingapp/);
+  assert.doesNotMatch(raw.description, /<p>|<br/);
+  const u = new URL(jobschSearchUrl({ keyword: "Product Owner", location: "8004 Zürich" }, 2));
+  assert.deepEqual([u.searchParams.get("query"), u.searchParams.get("location"), u.searchParams.get("sort"), u.searchParams.get("rows"), u.searchParams.get("page")], ["Product Owner", "Zürich", "date", "20", "2"]);
 });

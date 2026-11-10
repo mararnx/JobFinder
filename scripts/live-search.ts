@@ -1,7 +1,7 @@
 /**
  * Live search test against the real sources, in a throwaway data folder (data-live/).
  *   npx tsx scripts/live-search.ts "Product Owner" Zürich 25 [source,source]
- * Runs Job-Room (RAV), the public feeds and every Chrome portal once, the way the worker would, and prints what each returned.
+ * Runs Job-Room (RAV), the jobs.ch API, the public feeds and every Chrome portal once, the way the worker would, and prints what each returned.
  * Chrome runs at human pace and stops at the first captcha / login wall (screenshot saved), like in normal use.
  */
 import fs from "node:fs";
@@ -13,7 +13,7 @@ fs.rmSync(DIR, { recursive: true, force: true });
 Object.assign(process.env, { KOMPASS_DATA: DIR, KOMPASS_CLAUDE: process.env.KOMPASS_CLAUDE ?? "mock", KOMPASS_MOCK_DELAY: "0", KOMPASS_NO_NOTIFY: "1" });
 
 const { all, run, setSettings } = await import("@/lib/db");
-const { runJobroom, runChromePortal, runFeeds, chromePortals } = await import("@/lib/pipeline/sources");
+const { runJobroom, runJobschApi, runChromePortal, runFeeds, chromePortals } = await import("@/lib/pipeline/sources");
 const { closeBrowser } = await import("@/lib/sources/chrome");
 
 setSettings({ home: city, chromeEnabled: true, chromePortals: ["jobsch", "indeed", "xing", "linkedin"], chromeDailyPages: 15, onboarded: true });
@@ -21,7 +21,7 @@ run("INSERT INTO search_profiles(name, keywords, location, radius_km, enabled) V
 
 console.log(`[live] "${keyword}" in ${city} (+${radius} km)\n`);
 const report: { source: string; result: string; seconds: number }[] = [];
-const all_ = [["jobroom", () => runJobroom()] as const, ["feeds", () => runFeeds()] as const, ...chromePortals().map((p) => [p, () => runChromePortal(p)] as const)];
+const all_ = [["jobroom", () => runJobroom()] as const, ["jobsch-api", () => runJobschApi()] as const, ["feeds", () => runFeeds()] as const, ...chromePortals().map((p) => [p, () => runChromePortal(p)] as const)];
 for (const [source, fn] of all_.filter(([src]) => !only || only.split(",").includes(src))) {
   const t = Date.now();
   let result: string;
