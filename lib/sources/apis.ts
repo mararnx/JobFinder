@@ -1,8 +1,8 @@
 /**
- * Job-search APIs with a free personal key. Both aggregate ads from many German portals and company sites,
- * so they cover much of what Indeed and StepStone list without scraping them.
+ * Job-search APIs with a free personal key. Both aggregate ads from many Swiss portals and company sites,
+ * so they cover much of what Indeed and jobs.ch list without scraping them.
  * - Adzuna: developer.adzuna.com (app id + app key)
- * - Jooble: jooble.org/api/about (one key)
+ * - Jooble: jooble.org/api/about (one key, choose Switzerland)
  * Their texts are snippets; the full ad is linked.
  */
 import type { RawJob } from "@/lib/jobs";
@@ -22,7 +22,7 @@ export function adzunaToRaw(j: AdzunaJob): RawJob {
   return {
     source: "adzuna", sourceId: String(j.id), url: j.redirect_url, title: stripHtml(j.title), company: j.company?.display_name?.trim() || "Unknown company",
     location: j.location?.display_name ?? null, description: stripHtml(j.description),
-    salaryText: !predicted && j.salary_min ? `${Math.round(j.salary_min)} – ${Math.round(j.salary_max ?? j.salary_min)} € pro Jahr` : null,
+    salaryText: !predicted && j.salary_min ? `${Math.round(j.salary_min)} – ${Math.round(j.salary_max ?? j.salary_min)} CHF pro Jahr` : null,
     publishedAt: j.created?.slice(0, 10) ?? null, employmentType: j.contract_time === "part_time" ? "part-time" : j.contract_time === "full_time" ? "full-time" : null,
   };
 }
@@ -35,7 +35,7 @@ export async function fetchAdzuna(appId: string, appKey: string, q: ApiQuery, pa
       p.set("where", q.location);
       p.set("distance", String(q.radiusKm));
     }
-    const r = await fetchJson<{ results: AdzunaJob[]; count: number }>(`https://api.adzuna.com/v1/api/jobs/de/search/${page}?${p}`);
+    const r = await fetchJson<{ results: AdzunaJob[]; count: number }>(`https://api.adzuna.com/v1/api/jobs/ch/search/${page}?${p}`);
     for (const j of r.results) if (!q.isKnown(String(j.id))) out.push(adzunaToRaw(j));
     if (r.results.length < 50) break;
     await sleep(800);
@@ -57,8 +57,8 @@ export async function fetchJooble(key: string, q: ApiQuery, pages = 2): Promise<
   const out: RawJob[] = [];
   for (let page = 1; page <= pages; page++) {
     const body = JSON.stringify({ keywords: q.keyword, location: q.location, radius: String(q.radiusKm), page: String(page) });
-    const r = await fetchText(`https://jooble.org/api/${encodeURIComponent(key)}`, { headers: { "Content-Type": "application/json" }, method: "POST", body });
-    if (r.status !== 200) throw new Error(`jooble.org answered ${r.status}${r.status === 403 ? " – check the API key" : ""}`);
+    const r = await fetchText(`https://ch.jooble.org/api/${encodeURIComponent(key)}`, { headers: { "Content-Type": "application/json" }, method: "POST", body });
+    if (r.status !== 200) throw new Error(`ch.jooble.org answered ${r.status}${r.status === 403 ? " – check the API key" : ""}`);
     const jobs = (JSON.parse(r.text) as { jobs?: JoobleJob[] }).jobs ?? [];
     for (const j of jobs) if (!q.isKnown(String(j.id))) out.push(joobleToRaw(j));
     if (jobs.length < 20) break;

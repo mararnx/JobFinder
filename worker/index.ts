@@ -12,7 +12,7 @@ import { draftApplication } from "@/lib/pipeline/drafting";
 import { syncGmail } from "@/lib/pipeline/mailsync";
 import { followUpDraft, prepPack } from "@/lib/pipeline/prep";
 import { reflectProfile, scoreBatch } from "@/lib/pipeline/scoring";
-import { addManualAd, chromePortals, runAlerts, runApis, runArbeitsagentur, runChromePortal, runFeeds, runWatchlist } from "@/lib/pipeline/sources";
+import { addManualAd, chromePortals, runAlerts, runApis, runJobroom, runChromePortal, runFeeds, runWatchlist } from "@/lib/pipeline/sources";
 import { closeBrowser } from "@/lib/sources/chrome";
 import { closePdfBrowser } from "@/lib/pipeline/pdf";
 import { claim, claudePausedUntil, CLAUDE_TASKS, enqueue, fail, finish, meta, PRIORITY, recoverStale, requeue, setMeta, type Task } from "@/lib/queue";
@@ -23,13 +23,13 @@ type Handler = (p: Record<string, unknown>) => Promise<unknown>;
 export const handlers: Record<string, Handler> = {
   fetch_source: async (p) => {
     const src = String(p.source);
-    if (src === "arbeitsagentur") return runArbeitsagentur();
+    if (src === "jobroom") return runJobroom();
     if (src === "watchlist") return runWatchlist();
     if (src === "feeds") return runFeeds();
     if (src === "apis") return runApis();
     if (src === "alerts") return runAlerts();
     if (src === "all") {
-      enqueue("fetch_source", { source: "arbeitsagentur" }, { priority: PRIORITY.userAction, dedupeKey: "fetch:arbeitsagentur" });
+      enqueue("fetch_source", { source: "jobroom" }, { priority: PRIORITY.userAction, dedupeKey: "fetch:jobroom" });
       enqueue("fetch_source", { source: "watchlist" }, { priority: PRIORITY.userAction, dedupeKey: "fetch:watchlist" });
       enqueue("fetch_source", { source: "feeds" }, { priority: PRIORITY.userAction, dedupeKey: "fetch:feeds" });
       enqueue("fetch_source", { source: "apis" }, { priority: PRIORITY.userAction, dedupeKey: "fetch:apis" });
@@ -64,7 +64,7 @@ function due(name: string, everyMinutes: number, notBeforeHour = 0): boolean {
 export function schedule() {
   const s = getSettings();
   if (!s.onboarded) return;
-  if (due("arbeitsagentur", 180, 6)) enqueue("fetch_source", { source: "arbeitsagentur" }, { priority: PRIORITY.source, dedupeKey: "fetch:arbeitsagentur" });
+  if (due("jobroom", 180, 6)) enqueue("fetch_source", { source: "jobroom" }, { priority: PRIORITY.source, dedupeKey: "fetch:jobroom" });
   if (due("apis", 180, 6)) enqueue("fetch_source", { source: "apis" }, { priority: PRIORITY.source, dedupeKey: "fetch:apis" });
   if (s.gmailAddress && due("gmail", 30, 7)) enqueue("gmail_sync", {}, { priority: PRIORITY.source, dedupeKey: "gmail_sync" });
   if (due("alerts", 120, 6)) enqueue("fetch_source", { source: "alerts" }, { priority: PRIORITY.source, dedupeKey: "fetch:alerts" });

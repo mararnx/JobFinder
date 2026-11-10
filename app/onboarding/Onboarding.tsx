@@ -94,7 +94,7 @@ export function Onboarding({ settings, docs, profiles, claude, style }: { style:
         <section className="ob-card card">
           <Logo big />
           <h1 className="serif">Welcome to JobFinder.</h1>
-          <p>JobFinder searches German job sources for you, ranks every ad by how well it fits, and writes tailored applications you approve with one click. Everything stays on this Mac.</p>
+          <p>JobFinder searches Swiss job sources for you, ranks every ad by how well it fits, and writes tailored applications you approve with one click. Everything stays on this Mac.</p>
           <div className={`claude-status ${claude.cli ? "ok" : "warn"}`}>
             <Bot />
             <div>{claude.cli ? <><b>Claude Code found ({claude.cli}).</b> AI runs on your Claude Max subscription.</> : <><b>Claude Code isn&apos;t installed yet.</b> You can set everything up now – AI answers are simulated until you install Claude Code and log in with the Max account (see SETUP.md).</>}</div>
@@ -170,7 +170,7 @@ export function Onboarding({ settings, docs, profiles, claude, style }: { style:
           <p>Keywords are searched one by one, like typing them into a job portal. Use the titles you&apos;d apply for, in German and English.</p>
           <div className="form-grid" style={{ padding: 0 }}>
             <label className="fld wide"><span>Job titles / keywords (comma-separated)</span><input className="input" value={kw} onChange={(e) => setKw(e.target.value)} placeholder="Product Owner, Produktmanager, Product Manager" /></label>
-            <label className="fld"><span>City</span><input className="input" value={loc} onChange={(e) => setLoc(e.target.value)} placeholder="Hamburg (empty = all of Germany)" /></label>
+            <label className="fld"><span>City</span><input className="input" value={loc} onChange={(e) => setLoc(e.target.value)} placeholder="Zürich (empty = all of Switzerland)" /></label>
             <label className="fld"><span>Radius (km)</span><input className="input" type="number" min={0} max={200} value={radius} onChange={(e) => setRadius(Number(e.target.value))} /></label>
           </div>
           <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(3)}><ArrowLeft />Back</button><button className="btn primary" onClick={saveSearch} disabled={!kw.trim()}>Next<ArrowRight /></button></div>
@@ -180,7 +180,7 @@ export function Onboarding({ settings, docs, profiles, claude, style }: { style:
       {step === 5 && (
         <section className="ob-card card wide">
           <h2>More places to find jobs</h2>
-          <p>JobFinder already searches the Arbeitsagentur and public job feeds. StepStone and Indeed don&apos;t let programs browse them, so here are the ways that do work. Each one is optional – the alerts give you the most.</p>
+          <p>JobFinder already searches Job-Room (the RAV job portal, which also carries most jobs.ch ads) and public job feeds. Indeed and LinkedIn don&apos;t like programs browsing them, so here are the ways that do work. Each one is optional – the alerts give you the most.</p>
           <MoreSources keyword={kw.split(",")[0]?.trim() ?? ""} city={loc} settings={settings} />
           <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(4)}><ArrowLeft />Back</button><button className="btn primary" onClick={() => setStep(6)}>Next<ArrowRight /></button></div>
         </section>

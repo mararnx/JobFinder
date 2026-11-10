@@ -107,7 +107,7 @@ export async function buildBundle(appId: number): Promise<string> {
   const de = a.language !== "en";
   const contact = [s.address, s.phone, s.email].filter(Boolean);
   const answers = json<{ recipient?: string | null }>(a.answers_json, {});
-  const date = new Date().toLocaleDateString(de ? "de-DE" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const date = new Date().toLocaleDateString(de ? "de-CH" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
   const place = s.home.split(",")[0]?.trim() ?? "";
   const letterPdf = await htmlToPdf(letterHtml({ name: s.name, contact, recipient: [job.company, answers.recipient ?? "", job.location ?? ""].filter(Boolean), place, date, subject: a.subject, body: a.letter }));
   const cvPdf = cv ? await htmlToPdf(cvHtml(cv, json(a.cv_json, { summary: "", skill_order: [], highlight_fact_ids: [] }), { name: s.name, contact }, de)) : null;

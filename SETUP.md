@@ -64,7 +64,7 @@ Undo with `npm run remove:launchd`. Logs go to `data/kompass.log`.
 
 ## 4. Optional: job portals in Chrome
 
-Under **Sources** you can turn on Chrome search for StepStone, Indeed, XING and LinkedIn. It runs slowly (max 40 pages per portal per day by default) in JobFinder's own browser profile and stops for the day on any CAPTCHA, bot check or login wall. Portal terms forbid automated access and accounts can be restricted – keep it off if that matters to you.
+Under **Sources** you can turn on Chrome search for jobs.ch, Indeed, XING and LinkedIn. It runs slowly (max 40 pages per portal per day by default) in JobFinder's own browser profile and stops for the day on any CAPTCHA, bot check or login wall. Portal terms forbid automated access and accounts can be restricted – keep it off if that matters to you.
 
 To search while logged in, open JobFinder's browser once and log in yourself:
 
@@ -82,12 +82,12 @@ npm run browser
 
 ## More job sources (setup wizard step "More sources", or Sources page)
 
-StepStone and Indeed block programs that browse them, so JobFinder gets their jobs the ways they allow:
+Indeed and LinkedIn limit programs that browse them, so JobFinder gets their jobs the ways they allow:
 
-- **Job alerts by email** – save a search with alerts on StepStone, Indeed, LinkedIn and XING, label the alert emails in Gmail with a filter (e.g. label "Job alerts"), and enter that label name. JobFinder reads it every 2 hours through the Gmail connection.
-- **Adzuna and Jooble** – free API keys (developer.adzuna.com, jooble.org/api/about); they aggregate many German portals.
+- **Job alerts by email** – save a search with alerts on jobs.ch, Indeed, LinkedIn and XING, label the alert emails in Gmail with a filter (e.g. label "Job alerts"), and enter that label name. JobFinder reads it every 2 hours through the Gmail connection.
+- **Adzuna and Jooble** – free API keys (developer.adzuna.com, jooble.org/api/about); they aggregate many Swiss portals. For Jooble, choose Switzerland when asking for the key.
 - **"Add to JobFinder" button** – drag it from the wizard into the browser's bookmarks bar; on any job ad, click it to add the ad with its full text.
-- **Chrome search** – XING works; LinkedIn runs once a day; StepStone and Indeed are off by default.
+- **Chrome search** – jobs.ch and XING work; LinkedIn runs once a day; Indeed is off by default.
 
 ## Troubleshooting
 

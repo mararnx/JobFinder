@@ -2,7 +2,7 @@ import { all, get, getSettings, logEvent, run, tx, type Settings } from "@/lib/d
 import { cleanTitle, detectLanguage, extractEmail, looksLikeAgency, normCompany, normTitle, parseSalary, similarity } from "@/lib/text";
 
 export type RawJob = {
-  source: string; // "arbeitsagentur" | "greenhouse" | "manual" | "stepstone" …
+  source: string; // "jobroom" | "greenhouse" | "manual" | "jobsch" …
   sourceId: string;
   url?: string | null;
   title: string;
@@ -67,7 +67,7 @@ export function hardFilter(job: { title: string; description: string; company: s
   const blob = `${job.title}\n${job.description}`.toLowerCase();
   const kw = s.blockKeywords.find((k) => k.trim() && blob.includes(k.toLowerCase().trim()));
   if (kw) return `Blocked keyword “${kw}”`;
-  if (s.salaryFloor && job.salary_max && job.salary_max < s.salaryFloor) return `Salary below your floor (${job.salary_max.toLocaleString("en-US")} €)`;
+  if (s.salaryFloor && job.salary_max && job.salary_max < s.salaryFloor) return `Salary below your floor (${job.salary_max.toLocaleString("de-CH")} CHF)`;
   if (job.language && s.languages.length && !s.languages.includes(job.language)) return `Ad language ${job.language.toUpperCase()} not in your languages`;
   return null;
 }

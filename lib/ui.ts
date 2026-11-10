@@ -36,7 +36,7 @@ export function daysSince(d: string | null | undefined): number {
 }
 
 export function fmtSalary(min: number | null, max: number | null, text: string | null): string {
-  if (min && max) return min === max ? `€${Math.round(min / 1000)}k` : `€${Math.round(min / 1000)}–${Math.round(max / 1000)}k`;
+  if (min && max) return min === max ? `CHF ${Math.round(min / 1000)}k` : `CHF ${Math.round(min / 1000)}–${Math.round(max / 1000)}k`;
   return text ? text.slice(0, 24) : "n/a";
 }
 

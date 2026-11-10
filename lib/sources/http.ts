@@ -19,11 +19,11 @@ export async function fetchJson<T>(url: string, headers?: Record<string, string>
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const DE_PLACES = /germany|deutschland|\bde\b|remote|berlin|hamburg|münchen|munich|köln|cologne|frankfurt|stuttgart|düsseldorf|dusseldorf|leipzig|hannover|bremen|dresden|nürnberg|nuremberg|essen|dortmund|bonn|mannheim|karlsruhe|münster|aachen|kiel|freiburg|potsdam|mainz|wiesbaden|heidelberg|augsburg|regensburg|bochum|ulm|erlangen|darmstadt|braunschweig|lübeck|rostock|jena|ingolstadt|wolfsburg|walldorf|dach|emea|europe/i;
+const CH_PLACES = /switzerland|schweiz|suisse|svizzera|\bch\b|remote|zürich|zurich|bern|basel|luzern|lucerne|zug|winterthur|st\. ?gallen|aarau|baden|olten|solothurn|biel|bienne|thun|schaffhausen|frauenfeld|chur|rapperswil|wil\b|uster|dübendorf|kloten|wallisellen|opfikon|glattbrugg|schlieren|dietikon|pfäffikon|freienbach|baar|cham|rotkreuz|risch|allschwil|liestal|muttenz|pratteln|burgdorf|langenthal|köniz|lausanne|genève|geneva|genf|fribourg|freiburg i\. ?üe|neuchâtel|sion|lugano|bellinzona|locarno|vaduz|dach|emea|europe/i;
 
-/** Rough check that a location string is in Germany or remote. Empty counts as yes. */
-export function inGermanyOrRemote(location: string | null | undefined): boolean {
-  return !location || DE_PLACES.test(location);
+/** Rough check that a location string is in Switzerland (or Liechtenstein) or remote. Empty counts as yes. */
+export function inSwitzerlandOrRemote(location: string | null | undefined): boolean {
+  return !location || CH_PLACES.test(location);
 }
 
 /** True if any search keyword's significant words all appear in the title. */

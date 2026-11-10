@@ -7,9 +7,18 @@ import { fetchText } from "@/lib/sources/http";
 import { stripHtml, truncate } from "@/lib/text";
 import { buildBundle } from "./pdf";
 
-const JOB_BOARDS = /arbeitsagentur|stepstone|indeed|xing|linkedin|greenhouse|lever\.co|personio|smartrecruiters|recruitee|workday|softgarden|join\.com|germantechjobs|glassdoor|monster/i;
+const JOB_BOARDS = /job-room|jobs\.ch|jobup|jobscout24|jobwinner|swissdevjobs|indeed|xing|linkedin|greenhouse|lever\.co|personio|smartrecruiters|recruitee|workday|softgarden|join\.com|germantechjobs|glassdoor|monster/i;
 
-const DEFAULT_BANNED = ["Hiermit bewerbe ich mich", "mit großem Interesse", "I am excited to apply", "passionate", "dynamic team"];
+/** Swiss Standard German has no ß. Claude mostly gets it right; this makes sure. */
+export function swissSpelling<T extends { subject: string; letter: string; email_body: string }>(d: T): T {
+  const fix = (t: string) => t.replace(/ß/g, "ss");
+  d.subject = fix(d.subject);
+  d.letter = fix(d.letter);
+  d.email_body = fix(d.email_body);
+  return d;
+}
+
+const DEFAULT_BANNED = ["Hiermit bewerbe ich mich", "mit grossem Interesse", "I am excited to apply", "passionate", "dynamic team"];
 
 function companySite(companyId: number, jobUrl: string | null): string | null {
   const c = get<{ domain: string | null }>("SELECT domain FROM companies WHERE id = ?", [companyId]);
@@ -85,6 +94,8 @@ export async function draftApplication(jobId: number, instruction?: string) {
       salary: s.salaryExpectation || "not stated",
       notice: s.noticePeriod || "not stated",
       start: s.earliestStart || "by arrangement",
+      workload: s.workload || "not stated",
+      permit: s.workPermit || "not stated",
       facts,
       style: style?.markdown ?? "(no style guide yet – write plainly and concretely)",
       own_instructions: s.letterInstructions.trim() || "(none)",
@@ -98,6 +109,7 @@ export async function draftApplication(jobId: number, instruction?: string) {
       facts: cvFacts()?.facts ?? [],
     },
   });
+  if (draft.language === "de") swissSpelling(draft);
   const check = await claude({
     name: "factcheck",
     model: "sonnet",

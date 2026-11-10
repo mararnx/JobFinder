@@ -1,9 +1,8 @@
 /**
  * Public job feeds that are free to use without scraping:
- * - Arbeitnow: JSON API (Germany, many English-speaking and startup jobs, ATS-sourced)
- * - Berlin Startup Jobs: RSS (Berlin only)
- * - service.bund.de: RSS of public-sector jobs (federal, state and municipal)
+ * - SwissDevJobs: JSON list of Swiss tech jobs with salary ranges (IT and product roles only)
  * Each feed is filtered by the search keywords and the search city (or remote).
+ * (Job-Room covers the RAV and jobs.ch; public-sector jobs from jobs.admin.ch and the cantons also land there.)
  */
 import type { RawJob } from "@/lib/jobs";
 import { stripHtml } from "@/lib/text";
@@ -11,9 +10,7 @@ import { jobPostingFromHtml } from "./extract";
 import { fetchJson, fetchText, sleep, titleMatches } from "./http";
 
 export const FEEDS = {
-  arbeitnow: "Arbeitnow",
-  berlinstartupjobs: "Berlin Startup Jobs",
-  bund: "service.bund.de",
+  swissdevjobs: "SwissDevJobs",
 } as const;
 export type Feed = keyof typeof FEEDS;
 
@@ -42,69 +39,38 @@ async function detail(url: string, source: string): Promise<RawJob | null> {
   }
 }
 
-export async function fetchArbeitnow(q: FeedQuery, pages = 3): Promise<RawJob[]> {
-  type Item = { slug: string; company_name: string; title: string; description: string; remote: boolean; url: string; tags: string[]; job_types: string[]; location: string; created_at: number };
-  const out: RawJob[] = [];
-  for (let page = 1; page <= pages; page++) {
-    const r = await fetchJson<{ data: Item[]; links: { next: string | null } }>(`https://www.arbeitnow.com/api/job-board-api?page=${page}`);
-    for (const j of r.data) {
-      if (!titleMatches(j.title, q.keywords) || !near(j.location, q.location, j.remote) || q.isKnown("arbeitnow", j.slug)) continue;
-      out.push({
-        source: "arbeitnow", sourceId: j.slug, url: j.url, title: j.title, company: j.company_name, location: j.location,
-        remote: j.remote ? "remote possible" : null, description: stripHtml(j.description), publishedAt: new Date(j.created_at * 1000).toISOString().slice(0, 10),
-        employmentType: j.job_types.join(", ") || null,
-      });
-    }
-    if (!r.links.next) break;
-    await sleep(1000);
-  }
-  return out;
-}
+export type SwissDevJob = {
+  _id: string; jobUrl: string; name: string; company: string; actualCity?: string; cityCategory?: string; activeFrom?: string;
+  annualSalaryFrom?: number | string; annualSalaryTo?: number | string; workplace?: string; jobType?: string; language?: string;
+  technologies?: string[]; expLevel?: string; redirectJobUrl?: string;
+};
 
-export async function fetchBerlinStartupJobs(q: FeedQuery): Promise<RawJob[]> {
-  if (q.location && !/berlin/i.test(q.location)) return [];
-  const r = await fetchText("https://berlinstartupjobs.com/feed/");
-  if (r.status !== 200) throw new Error(`berlinstartupjobs.com answered ${r.status}`);
-  const out: RawJob[] = [];
-  for (const it of parseRss(r.text)) {
-    // "Senior Product Manager // Company"
-    const [title, company = "Berlin startup"] = it.title.split(/\s+\/\/\s+/);
-    if (!titleMatches(title, q.keywords) || q.isKnown("berlinstartupjobs", it.link)) continue;
-    if (out.length >= (q.maxDetails ?? 15)) break;
-    const d = await detail(it.link, "berlinstartupjobs");
-    out.push({
-      ...(d ?? {}), source: "berlinstartupjobs", sourceId: it.link, url: it.link, title, company: d?.company || company, location: d?.location || "Berlin",
-      description: d?.description || stripHtml(it.description), publishedAt: it.pubDate ? new Date(it.pubDate).toISOString().slice(0, 10) : null,
-    });
-    await sleep(800);
-  }
-  return out;
-}
-
-/** "Arbeitgeber: <strong>…</strong> Ort: <strong>10117 Berlin</strong>" from a service.bund.de item. */
-export function bundMeta(description: string) {
+export function swissDevJobToRaw(j: SwissDevJob, description = ""): RawJob {
+  const from = Number(j.annualSalaryFrom ?? 0), to = Number(j.annualSalaryTo ?? 0);
+  const url = `https://swissdevjobs.ch/jobs/${j.jobUrl}`;
+  const facts = [j.expLevel && `Level: ${j.expLevel}`, j.technologies?.length && `Technologies: ${j.technologies.join(", ")}`, j.workplace && `Workplace: ${j.workplace}`].filter(Boolean).join("\n");
   return {
-    employer: decode(description.match(/Arbeitgeber:\s*<strong>([^<]+)<\/strong>/)?.[1] ?? ""),
-    place: decode(description.match(/Ort:\s*<strong>([^<]+)<\/strong>/)?.[1] ?? "").replace(/^\d{5}\s*/, ""),
+    source: "swissdevjobs", sourceId: j._id, url, title: j.name, company: j.company, location: j.actualCity || j.cityCategory || null,
+    remote: j.workplace === "remote" ? "fully remote" : j.workplace === "hybrid" ? "hybrid" : null,
+    salaryText: from ? `CHF ${from} – ${to || from} pro Jahr` : null,
+    description: [description, facts].filter(Boolean).join("\n\n"),
+    publishedAt: j.activeFrom?.slice(0, 10) ?? null, employmentType: j.jobType?.toLowerCase() || null,
+    language: j.language === "English" ? "en" : j.language === "German" ? "de" : null,
   };
 }
 
-export async function fetchBund(q: FeedQuery): Promise<RawJob[]> {
-  const r = await fetchText("https://www.service.bund.de/Content/Globals/Functions/RSSFeed/RSSGenerator_Stellen.xml");
-  if (r.status !== 200) throw new Error(`service.bund.de answered ${r.status}`);
+export async function fetchSwissDevJobs(q: FeedQuery): Promise<RawJob[]> {
+  const list = await fetchJson<SwissDevJob[]>("https://swissdevjobs.ch/api/jobsLight");
   const out: RawJob[] = [];
-  for (const it of parseRss(r.text)) {
-    const { employer, place } = bundMeta(it.description);
-    if (!titleMatches(it.title, q.keywords) || !near(place, q.location) || q.isKnown("bund", it.guid || it.link)) continue;
+  for (const j of list) {
+    const place = j.actualCity || j.cityCategory || "";
+    if (!titleMatches(j.name, q.keywords) || !near(place, q.location, j.workplace === "remote") || q.isKnown("swissdevjobs", j._id)) continue;
     if (out.length >= (q.maxDetails ?? 15)) break;
-    const d = await detail(it.link, "bund");
-    out.push({
-      source: "bund", sourceId: it.guid || it.link, url: it.link, title: it.title, company: employer || "Öffentlicher Dienst", location: place || null,
-      description: d?.description || stripHtml(it.description), publishedAt: it.pubDate ? new Date(it.pubDate).toISOString().slice(0, 10) : null, language: "de",
-    });
+    const d = await detail(`https://swissdevjobs.ch/jobs/${j.jobUrl}`, "swissdevjobs");
+    out.push(swissDevJobToRaw(j, d && d.description.length > 300 ? d.description : ""));
     await sleep(800);
   }
   return out;
 }
 
-export const FEED_FETCHERS: Record<Feed, (q: FeedQuery) => Promise<RawJob[]>> = { arbeitnow: fetchArbeitnow, berlinstartupjobs: fetchBerlinStartupJobs, bund: fetchBund };
+export const FEED_FETCHERS: Record<Feed, (q: FeedQuery) => Promise<RawJob[]>> = { swissdevjobs: fetchSwissDevJobs };

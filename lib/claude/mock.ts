@@ -45,12 +45,12 @@ export async function mockResponse(name: string, input: unknown): Promise<unknow
         company = host.split(".").slice(-2, -1)[0] ?? company;
         company = company.charAt(0).toUpperCase() + company.slice(1);
       } catch {
-        // pasted text: a short line with a legal form ("Marlin Mobility GmbH, Hamburg") names the company
+        // pasted text: a short line with a legal form ("Marlin Mobility AG, Zürich") names the company
         const legal = ls.slice(0, 5).find((l) => l.length < 80 && /\b(GmbH|AG|SE|KG|UG|Inc|Ltd|LLC)\b/.test(l));
         if (legal) company = legal.split(/[,·|–]/)[0].trim();
       }
-      const loc = text.match(/\b(Berlin|Hamburg|München|Munich|Köln|Cologne|Frankfurt|Stuttgart|Düsseldorf|Leipzig|Hannover|Bremen|Dresden|Nürnberg|Remote)\b/);
-      const sal = text.match(/\d{2,3}[.,]?\d{0,3}\s*(?:k|€|EUR)[^\n]{0,30}/);
+      const loc = text.match(/\b(Zürich|Zurich|Bern|Basel|Luzern|Zug|Winterthur|St\. Gallen|Aarau|Baden|Lausanne|Genf|Geneva|Lugano|Remote)\b/);
+      const sal = text.match(/(?:CHF|Fr\.)\s*\d{2,3}['’.,]?\d{3}[^\n]{0,30}|\d{2,3}['’.,]?\d{0,3}\s*(?:k|CHF|€|EUR)[^\n]{0,30}/);
       return {
         title, company, location: loc?.[1] ?? null,
         remote: /remote|home ?office|mobiles arbeiten/i.test(text) ? (text.match(/(\d)\s*(?:tage|days)[^\n]{0,20}(?:remote|home)/i)?.[0] ?? "remote possible") : null,
@@ -132,12 +132,12 @@ export async function mockResponse(name: string, input: unknown): Promise<unknow
         ...positions.flatMap((p) => p.bullets.map((b: string) => `${b} (${p.company})`)),
         ...education.map((e) => `${e.degree}, ${e.institution}`),
       ];
-      const headline = (ls[1] ?? "").split("·").map((x) => x.trim()).filter((x) => x && !isContact(x) && !/^(hamburg|berlin|münchen)$/i.test(x)).join(" · ");
+      const headline = (ls[1] ?? "").split("·").map((x) => x.trim()).filter((x) => x && !isContact(x) && !/^(zürich|bern|basel|luzern|hamburg|berlin|münchen)$/i.test(x)).join(" · ");
       return {
         name: ls[0]?.slice(0, 60) ?? "", email: extractEmail(text), phone: text.match(/\+\d{2}[\d\s/-]{7,}\d/)?.[0] ?? null, address: null,
         headline, positions, education,
         skills: skillLine ? skillLine.split(/,\s*/).filter(Boolean) : [...new Set(tokens(text).filter((t) => t.length > 3))].slice(0, 15),
-        languages: ls.filter((l) => /\((muttersprache|native|fließend|verhandlungssicher|fluent)/i.test(l)).flatMap((l) => l.split(/,\s*/)),
+        languages: ls.filter((l) => /\((muttersprache|native|fließend|fliessend|verhandlungssicher|fluent)/i.test(l)).flatMap((l) => l.split(/,\s*/)),
         certifications: [],
         facts: (facts.length ? facts : ls.filter((l) => !isContact(l) && !isHeader(l) && l.length > 30).slice(0, 30)).map((t, n) => ({ id: `f${n + 1}`, text: t })),
       };
@@ -145,7 +145,7 @@ export async function mockResponse(name: string, input: unknown): Promise<unknow
     case "style-guide":
       return {
         markdown: "- Direct opening that names something specific about the company\n- Short sentences, active voice\n- Achievements with numbers, no adjectives stacked\n- Closes with a plain request for a conversation",
-        banned_phrases: ["Hiermit bewerbe ich mich", "mit großem Interesse", "hochmotiviert", "teamfähig", "belastbar", "Ihre Stellenanzeige hat mich sofort angesprochen", "I am excited to apply", "passionate", "dynamic team", "fast-paced environment", "I believe I would be a great fit", "synergy", "go-getter", "think outside the box", "Sehr geehrte Damen und Herren"],
+        banned_phrases: ["Hiermit bewerbe ich mich", "mit grossem Interesse", "hochmotiviert", "teamfähig", "belastbar", "Ihre Stellenanzeige hat mich sofort angesprochen", "I am excited to apply", "passionate", "dynamic team", "fast-paced environment", "I believe I would be a great fit", "synergy", "go-getter", "think outside the box", "Sehr geehrte Damen und Herren"],
       };
     case "reference": {
       const t: string = i.text ?? "";
@@ -159,10 +159,10 @@ export async function mockResponse(name: string, input: unknown): Promise<unknow
       const facts: Any[] = i.facts ?? [];
       const picked = facts.slice(0, 3);
       const contact = job.contact ?? null;
-      const salutation = de ? (contact ? `Sehr geehrte/r ${contact},` : "Guten Tag,") : contact ? `Dear ${contact},` : "Dear hiring team,";
+      const salutation = de ? (contact ? `Sehr geehrte/r ${contact}` : "Sehr geehrte Damen und Herren") : contact ? `Dear ${contact},` : "Dear hiring team,";
       const body = de
         ? [
-            `die Rolle als ${job.title} bei ${job.company} passt genau zu dem, woran ich in den letzten Jahren gearbeitet habe.`,
+            `Die Rolle als ${job.title} bei ${job.company} passt genau zu dem, woran ich in den letzten Jahren gearbeitet habe.`,
             picked.length ? `Konkret: ${picked.map((f) => f.text).join(". ")}.` : "In meinen bisherigen Stationen habe ich Verantwortung für ähnliche Aufgaben übernommen.",
             `Was mich an ${job.company} reizt, ist die Möglichkeit, diese Erfahrung in einem Umfeld einzubringen, das Sie in Ihrer Anzeige sehr klar beschreiben.`,
             "Über ein Gespräch freue ich mich.",
@@ -173,14 +173,14 @@ export async function mockResponse(name: string, input: unknown): Promise<unknow
             `What draws me to ${job.company} is the chance to bring that experience to the setting your ad describes.`,
             "I would welcome a conversation.",
           ];
-      const closing = de ? "Mit freundlichen Grüßen" : "Kind regards";
+      const closing = de ? "Freundliche Grüsse" : "Kind regards";
       const reqs = requirementLines(job.description ?? "");
       return {
         language: de ? "de" : "en",
         subject: de ? `Bewerbung als ${job.title}` : `Application: ${job.title}`,
         recipient_name: contact,
         letter: [salutation, ...body, `${closing}\n${i.name || "—"}`].join("\n\n"),
-        email_body: de ? `Guten Tag,\n\nanbei sende ich Ihnen meine Bewerbung als ${job.title}. Für Rückfragen bin ich gern erreichbar.\n\nMit freundlichen Grüßen\n${i.name}` : `Hello,\n\nplease find attached my application for the ${job.title} role. I am happy to answer any questions.\n\nKind regards\n${i.name}`,
+        email_body: de ? `Guten Tag,\n\nanbei sende ich Ihnen meine Bewerbung als ${job.title}. Für Rückfragen bin ich gern erreichbar.\n\nFreundliche Grüsse\n${i.name}` : `Hello,\n\nplease find attached my application for the ${job.title} role. I am happy to answer any questions.\n\nKind regards\n${i.name}`,
         cv_tailoring: { summary: picked[0]?.text ?? "", skill_order: [], highlight_fact_ids: picked.map((f) => f.id) },
         answers: { salary: i.salary || "", start_date: i.start || "", notice_period: i.notice || "", why_us: `${job.company}'s focus matches my experience.` },
         coverage: reqs.map((r, n) => ({ requirement: r, status: n % 3 === 2 ? "partial" : "covered", where: n % 3 === 2 ? "Adjacent experience only" : "Paragraph 2" })),
@@ -205,7 +205,7 @@ export async function mockResponse(name: string, input: unknown): Promise<unknow
     case "follow-up": {
       const job = i.job as Any, de = i.language === "de";
       return de
-        ? { subject: `Nachfrage: Bewerbung als ${job.title}`, body: `Guten Tag,\n\nvor ${i.days} Tagen habe ich mich als ${job.title} beworben und wollte kurz nach dem Stand fragen. Die Rolle interessiert mich weiterhin sehr. Können Sie mir sagen, wie der weitere Zeitplan aussieht?\n\nMit freundlichen Grüßen\n${i.name}` }
+        ? { subject: `Nachfrage: Bewerbung als ${job.title}`, body: `Guten Tag,\n\nvor ${i.days} Tagen habe ich mich als ${job.title} beworben und wollte kurz nach dem Stand fragen. Die Rolle interessiert mich weiterhin sehr. Können Sie mir sagen, wie der weitere Zeitplan aussieht?\n\nFreundliche Grüsse\n${i.name}` }
         : { subject: `Follow-up: ${job.title} application`, body: `Hello,\n\nI applied for the ${job.title} role ${i.days} days ago and wanted to check in on the status. I am still very interested. Could you share the expected timeline?\n\nKind regards\n${i.name}` };
     }
     default:

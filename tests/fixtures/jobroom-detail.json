@@ -1,0 +1,65 @@
+{
+ "id": "c4cb47e0-8b65-4429-917c-5334a08ec9b8",
+ "createdTime": "2026-11-09T21:02:22.71436",
+ "stellennummerEgov": "242894106",
+ "jobContent": {
+  "externalUrl": "www.jobs.ch/de/stellenangebote/detail/edae77a3-6053-4067-8873-cb80a6ecb9d8/?utm_source=job-room.ch&inv=ppd-p&utm_medium=affiliate&utm_campaign=wb:jobs|tg:b2c|cn:ch|lg:de|ct:targeting,nonbrand,job|cd:feedonomics-jobroom|mg:job-application|pd:n|tt:organic",
+  "jobDescriptions": [
+   {
+    "languageIsoCode": "de",
+    "title": "Projektleiter Brandschutz",
+    "description": "---\nbase:\nmeta-keywords:\nmeta-viewport: width=device-width, initial-scale=1.0\ntitle: Projektleiter Brandschutz (m/w/d)\n---\n\n\n \n\nProjektleiter Brandschutz (m/w/d)\n=================================\n\nIm Bereich Construction \\& Property vermitteln wir Fach\\- und Führungskräfte in der Bau\\- und Immobilienbranche. Wir unterstützen Sie und unsere Kundenunternehmen in allen Bereichen des \\- \\& Tiefbaus sowie im Facility Management, im Großanlagenbau, in der TGA oder im Real Estate Management. Als überregionales, weltweit agierendes Personaldienstleistungsunternehmen können wir Ihnen sowohl Positionen und Projekte in Ihrer Nähe als auch bundes\\- und weltweit anbieten \\- und das völlig kostenfrei für Sie. Registrieren Sie sich und profitieren Sie von interessanten und passenden Angeboten.  \n\n\n**Stellenbeschreibung**\n\n* Selbständige Erarbeitung, Beurteilung und Umsetzung von Brandschutzkonzepten für Neu\\- und Umbauten\n* Verantwortlich für die brandschutztechnischen Qualitätssicherung, Kontrollen, Dokumentation und Begleitung der Ausführung\n* Sie steuern das gesamte Projektmanagement hinsichtlich Qualität, Terminen, Kosten und Ressourcen\n* Tägliche Zusammenarbeit mit Bauherrschaften, Architekten, Fachplanern, Behörden und ausführenden Unternehmen\n\n\n**Profil**\n\n* Abgeschlossene Weiterbildung als Brandschutzfachmann VKF oder Brandschutzexperte VKF, beziehungsweise eine fachlich gleichwertige Qualifikation mit geklärter Anerkennung in der Schweiz\n* Fundierte Erfahrung in der Brandschutzplanung, idealerweise bereits in der Projektleitung\n* Fundierte Kenntnisse der VKF\\-Brandschutzvorschriften sowie der relevanten Schweizer Normen und Richtlinien\n\n\n**Das Angebot**\n\n* Möglichkeit bei einem stark wachsenden Unternehmen mit einem guten dabei zu sein\n* Viel Gestaltungsfreiraum\n* Unkomplizierte Zusammenarbeit mit weiteren Fachspezialisten\n\nKontakt bei Hays  \n\n\nReferenznummer  \n900881/1\n\n![Hays (Schweiz) AG]()\n\n* Hays (Schweiz) AG  \nSihlstrasse 37  \n8001 Zürich\n\n\n*\n\njid6ecb9d8jm jit1146jm jiy26jm"
+   }
+  ],
+  "company": {
+   "name": "Hays (Schweiz) AG",
+   "street": null,
+   "houseNumber": null,
+   "postalCode": "8005",
+   "city": "Zürich",
+   "countryIsoCode": "CH",
+   "postOfficeBoxNumber": null,
+   "postOfficeBoxPostalCode": null,
+   "postOfficeBoxCity": null,
+   "phone": null,
+   "email": null,
+   "website": null,
+   "surrogate": true
+  },
+  "employment": {
+   "startDate": null,
+   "endDate": null,
+   "shortEmployment": false,
+   "immediately": false,
+   "permanent": true,
+   "workloadPercentageMin": "100",
+   "workloadPercentageMax": "100",
+   "workForms": []
+  },
+  "location": {
+   "id": null,
+   "remarks": null,
+   "city": "Zürich",
+   "postalCode": "8005",
+   "communalCode": "261",
+   "regionCode": "ZH12",
+   "cantonCode": "ZH",
+   "countryIsoCode": "CH",
+   "coordinates": {
+    "lon": "8.521",
+    "lat": "47.387"
+   }
+  },
+  "applyChannel": {
+   "rawPostAddress": null,
+   "postAddress": null,
+   "emailAddress": null,
+   "phoneNumber": null,
+   "formUrl": "www.jobs.ch/de/stellenangebote/detail/edae77a3-6053-4067-8873-cb80a6ecb9d8/?utm_source=job-room.ch&inv=ppd-p&utm_medium=affiliate&utm_campaign=wb:jobs|tg:b2c|cn:ch|lg:de|ct:targeting,nonbrand,job|cd:feedonomics-jobroom|mg:job-application|pd:n|tt:organic",
+   "additionalInfo": null
+  }
+ },
+ "publication": {
+  "startDate": "2026-11-09"
+ }
+}

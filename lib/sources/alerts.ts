@@ -1,5 +1,5 @@
 /**
- * Job-alert emails from StepStone, Indeed, LinkedIn, XING (or any portal), read from a Gmail label.
+ * Job-alert emails from jobs.ch, Indeed, LinkedIn, XING (or any portal), read from a Gmail label.
  * The job seeker sets up alerts on the portals and a Gmail filter that labels them.
  */
 import { stripHtml } from "@/lib/text";
@@ -62,7 +62,7 @@ export function mailLinks(html: string): { text: string; url: string }[] {
 
 export function portalOf(sender: string, url = ""): Portal | "other" {
   const s = `${sender} ${url}`.toLowerCase();
-  return s.includes("stepstone") ? "stepstone" : s.includes("indeed") ? "indeed" : s.includes("linkedin") ? "linkedin" : s.includes("xing") ? "xing" : "other";
+  return s.includes("jobs.ch") || s.includes("jobup.ch") ? "jobsch" : s.includes("indeed") ? "indeed" : s.includes("linkedin") ? "linkedin" : s.includes("xing") ? "xing" : "other";
 }
 
 /** Stable id for a job link: the portal's job id if the URL carries one, else the URL without tracking parameters. */

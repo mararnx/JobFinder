@@ -28,8 +28,8 @@ test.after(async () => {
 });
 
 test("setup: settings, search profile, documents", async () => {
-  setSettings({ name: "Alex Neumann", email: "alex@example.com", phone: "+49 151 0000000", address: "Musterstraße 1, 20095 Hamburg", home: "Hamburg", salaryFloor: 60000, salaryExpectation: "€85,000", noticePeriod: "3 months", earliestStart: "Feb 1, 2027", blockKeywords: ["Werkstudent"], excludeAgencies: true });
-  run("INSERT INTO search_profiles(name, keywords, location, radius_km, enabled) VALUES ('Main', ?, 'Hamburg', 30, 0)", [JSON.stringify(["Product Owner"])]); // disabled: no network in tests
+  setSettings({ name: "Alex Neumann", email: "alex@example.com", phone: "+41 79 000 00 00", address: "Musterstrasse 1, 8004 Zürich", home: "Zürich", salaryFloor: 100000, salaryExpectation: "CHF 125'000", workload: "80–100 %", workPermit: "EU citizen, needs a B permit", noticePeriod: "3 months", earliestStart: "Feb 1, 2027", blockKeywords: ["Werkstudent"], excludeAgencies: true });
+  run("INSERT INTO search_profiles(name, keywords, location, radius_km, enabled) VALUES ('Main', ?, 'Zürich', 30, 0)", [JSON.stringify(["Product Owner"])]); // disabled: no network in tests
   for (const f of fs.readdirSync("tests/fixtures/docs")) saveUpload(f, fs.readFileSync(path.join("tests/fixtures/docs", f)));
   await drain(60_000);
   const docs = all<{ kind: string; status: string; note: string }>("SELECT kind, status, note FROM documents ORDER BY kind");
@@ -47,14 +47,14 @@ test("onboarding creates the first preference profile", async () => {
 });
 
 test("ingest: dedupe, hard filters, agency detection", () => {
-  const base = { source: "arbeitsagentur", company: "Contoro GmbH", location: "Hamburg", description: desc("Bewerbung an jobs@contoro.example") };
-  const a = ingest({ ...base, sourceId: "1", title: "Product Owner (m/w/d)", salaryText: "70000 – 85000 € pro Jahr" });
-  const dup = ingest({ ...base, source: "stepstone", sourceId: "ss-9", title: "Product Owner (w/m/d)", company: "Contoro" });
+  const base = { source: "jobroom", company: "Contoro AG", location: "Zürich", description: desc("Bewerbung an jobs@contoro.example") };
+  const a = ingest({ ...base, sourceId: "1", title: "Product Owner (m/w/d)", salaryText: "CHF 110'000 – 130'000 pro Jahr" });
+  const dup = ingest({ ...base, source: "jobsch", sourceId: "jc-9", title: "Product Owner (w/m/d)", company: "Contoro" });
   assert.ok(a.created && dup.merged && dup.jobId === a.jobId, "same job from two portals merges");
   assert.equal(ingest({ ...base, sourceId: "1", title: "x" }).created, false, "same posting twice is ignored");
   const agency = ingest({ ...base, sourceId: "2", title: "Product Owner", company: "Talent Partners", description: desc("Für unseren Kunden suchen wir") });
   assert.match(agency.excluded!, /Recruiter/);
-  const cheap = ingest({ ...base, sourceId: "3", title: "Junior PO", company: "Billig AG", salaryText: "30000 – 40000 €" });
+  const cheap = ingest({ ...base, sourceId: "3", title: "Junior PO", company: "Billig AG", salaryText: "CHF 60'000 – 70'000" });
   assert.match(cheap.excluded!, /Salary below/);
   const blocked = ingest({ ...base, sourceId: "4", title: "Werkstudent Product", company: "Uni Shop" });
   assert.match(blocked.excluded!, /Werkstudent/);
@@ -95,6 +95,8 @@ test("apply → draft with fact-check and a merged PDF bundle", async () => {
   const app = get<{ id: number; letter: string; factcheck_json: string; bundle_path: string; language: string }>("SELECT * FROM applications WHERE job_id = ?", [jobId])!;
   assert.equal(app.language, "de");
   assert.match(app.letter, /Alex Neumann/);
+  assert.match(app.letter, /Freundliche Grüsse/, "Swiss closing");
+  assert.doesNotMatch(app.letter, /ß/, "Swiss spelling: no ß");
   assert.ok(JSON.parse(app.factcheck_json).claims.length > 0, "letter was fact-checked");
   assert.ok(fs.existsSync(app.bundle_path), "bundle PDF written");
   assert.match(path.basename(app.bundle_path), /^Bewerbung_Neumann_Contoro/);
@@ -112,8 +114,8 @@ test("edit, rewrite with an instruction, approve, send", async () => {
   const v2 = get<{ id: number; version: number; instruction: string }>("SELECT id, version, instruction FROM applications WHERE job_id = ? ORDER BY version DESC", [jobId])!;
   assert.equal(v2.version, 2);
   assert.equal(v2.instruction, "shorter");
-  await dispatch("saveAnswers", { appId: v2.id, recipient: "Frau Jansen", salary: "€90,000" });
-  assert.match(get<{ answers_json: string }>("SELECT answers_json FROM applications WHERE id = ?", [v2.id])!.answers_json, /Frau Jansen.*|€90,000/);
+  await dispatch("saveAnswers", { appId: v2.id, recipient: "Frau Jansen", salary: "CHF 130'000" });
+  assert.match(get<{ answers_json: string }>("SELECT answers_json FROM applications WHERE id = ?", [v2.id])!.answers_json, /Frau Jansen.*|CHF 130'000/);
   await dispatch("approve", { appId: v2.id, seconds: 42 });
   assert.equal(getJob(jobId)!.stage, "ready", "approved drafts wait in Ready to send");
   await dispatch("unapprove", { jobId });
@@ -150,7 +152,7 @@ test("interview: moving to Round 1 creates a prep pack and an outcome signal", a
 });
 
 test("manual ad from pasted text, applied right away", async () => {
-  const r = (await dispatch("addManual", { text: "Product Owner Payments (m/w/d)\nNordbank AG, Hamburg\nWir suchen dich für unser Payments-Team. Bewerbung an karriere@nordbank.example", note: "Referred by Jana", applyNow: true })) as { jobId: number };
+  const r = (await dispatch("addManual", { text: "Product Owner Payments (m/w/d)\nNordbank AG, Zürich\nWir suchen dich für unser Payments-Team. Bewerbung an karriere@nordbank.example", note: "Referred by Jana", applyNow: true })) as { jobId: number };
   const j = getJob(r.jobId)!;
   assert.equal(j.manual, 1);
   assert.equal(j.note, "Referred by Jana");
@@ -181,7 +183,7 @@ test("job alerts from a Gmail label become jobs, each email once", async () => {
   const { runAlerts } = await import("@/lib/pipeline/sources");
   const { ALERT } = await import("./fixtures/alert-email");
   setSettings({ alertsLabel: "Job alerts", gmailAddress: "alex.neumann@gmail.com" });
-  const mails = [{ id: "<m1@linkedin.com>", sender: "LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>", subject: "Product Manager in Berlin", source: ALERT }];
+  const mails = [{ id: "<m1@linkedin.com>", sender: "LinkedIn Job Alerts <jobalerts-noreply@linkedin.com>", subject: "Product Manager in Zürich", source: ALERT }];
   assert.match(await runAlerts(async () => mails), /2 new of 2 from 1 email/);
   const j = get<{ title: string; source: string }>("SELECT j.title, p.source FROM jobs j JOIN postings p ON p.job_id = j.id WHERE p.source_id = 'linkedin:4012345678'");
   assert.equal(j?.source, "alert-linkedin");
@@ -240,10 +242,10 @@ test("Gmail draft: encoded subject, the PDF attached", async () => {
 
 test("an ad captured from the browser is added with its full text", async () => {
   const { addManualAd } = await import("@/lib/pipeline/sources");
-  const html = `<html><head><script type="application/ld+json">{"@type":"JobPosting","title":"Product Owner Checkout","hiringOrganization":{"name":"Zalando SE"},"jobLocation":{"address":{"addressLocality":"Berlin"}},"description":"${"Du gestaltest den Checkout. ".repeat(20)}"}</script></head><body>…</body></html>`;
-  const id = await addManualAd({ url: "https://de.indeed.com/viewjob?jk=1234567890abcdef", html });
+  const html = `<html><head><script type="application/ld+json">{"@type":"JobPosting","title":"Product Owner Checkout","hiringOrganization":{"name":"Galaxus AG"},"jobLocation":{"address":{"addressLocality":"Zürich"}},"description":"${"Du gestaltest den Checkout. ".repeat(20)}"}</script></head><body>…</body></html>`;
+  const id = await addManualAd({ url: "https://ch.indeed.com/viewjob?jk=1234567890abcdef", html });
   const j = getJob(id)!;
-  assert.equal(j.company, "Zalando SE");
+  assert.equal(j.company, "Galaxus AG");
   assert.equal(j.manual, 1);
   assert.match(j.description, /Checkout/);
 });

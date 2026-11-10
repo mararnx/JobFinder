@@ -28,12 +28,13 @@ const step = (s: string) => console.log(`[demo] ${s}`);
 /* ── person + documents ─────────────────────────────── */
 
 setSettings({
-  name: "Alex Neumann", email: "alex.neumann@example.com", phone: "+49 151 0000000", address: "Musterstraße 1, 20095 Hamburg",
-  home: "Hamburg", commuteKm: 40, remoteMin: 1, salaryFloor: 65000, salaryExpectation: "€85,000", noticePeriod: "3 months",
+  name: "Alex Neumann", email: "alex.neumann@example.com", phone: "+41 79 000 00 00", address: "Musterstrasse 1, 8004 Zürich",
+  home: "Zürich", commuteKm: 40, remoteMin: 1, salaryFloor: 100000, salaryExpectation: "CHF 125'000", noticePeriod: "3 months",
+  workload: "80–100 %", workPermit: "EU citizen, needs a B permit",
   earliestStart: "Feb 1, 2027", blockKeywords: ["Werkstudent", "Praktikum"], excludeAgencies: true, weeklyGoal: 30,
 });
 // disabled so the demo never pulls real ads
-run("INSERT INTO search_profiles(name, keywords, location, radius_km, enabled) VALUES ('Product roles Hamburg', ?, 'Hamburg', 40, 0)", [JSON.stringify(["Product Owner", "Produktmanager", "Product Manager"])]);
+run("INSERT INTO search_profiles(name, keywords, location, radius_km, enabled) VALUES ('Product roles Zürich', ?, 'Zürich', 40, 0)", [JSON.stringify(["Product Owner", "Produktmanager", "Product Manager"])]);
 for (const f of fs.readdirSync("tests/fixtures/docs")) saveUpload(f, fs.readFileSync(path.join("tests/fixtures/docs", f)));
 step("reading documents");
 await drain(120_000);
@@ -61,8 +62,8 @@ Dein Profil:
 • SQL- oder Analytics-Kenntnisse sind ein Plus
 • Sehr gutes Deutsch und gutes Englisch
 
-Wir bieten: ${a.remote ?? "Hybrides Arbeiten"}, 30 Urlaubstage, Weiterbildungsbudget.
-${a.salary ? `Gehalt: ${a.salary}\n` : ""}Bewerbung an jobs@${a.domain}`;
+Pensum: 80–100 %. Wir bieten: ${a.remote ?? "Hybrides Arbeiten"}, 5 Wochen Ferien, Weiterbildungsbudget.
+${a.salary ? `Lohn: ${a.salary}\n` : ""}Bewerbung an jobs@${a.domain}`;
 
 const en = (a: Ad) => `${a.company} builds software for ${a.extra ?? "European logistics teams"}. We're hiring a ${a.title} in ${a.city}.
 
@@ -77,57 +78,58 @@ What you bring:
 • Experience with agile delivery (Scrum/Kanban)
 • Comfortable with data – SQL is a plus
 • Fluent English; German is nice to have
+• EU/EFTA citizenship or a Swiss work permit
 
 ${a.remote ?? "Hybrid, 2 days in the office"}. ${a.salary ? `Salary: ${a.salary}. ` : ""}Apply via careers@${a.domain}`;
 
 const ads: Ad[] = [
-  { company: "Hafenwerk Software GmbH", title: "Senior Product Owner (m/w/d)", city: "Hamburg", salary: "80.000 – 95.000 € pro Jahr", domain: "hafenwerk.example", extra: "Hafenlogistik" },
-  { company: "Nordlicht Energy", title: "Product Manager Platform", city: "Hamburg", salary: "€85,000 – €100,000", en: true, domain: "nordlicht-energy.example", extra: "energy retailers" },
-  { company: "Kranich Health AG", title: "Product Owner Patientenportal (m/w/d)", city: "Hamburg", remote: "Bis zu 3 Tage Homeoffice", domain: "kranich-health.example", extra: "Kliniken und Praxen" },
-  { company: "Elbtal Payments", title: "Product Owner Payments", city: "Hamburg", salary: "75.000 – 90.000 €", domain: "elbtal-payments.example", extra: "Zahlungsabwicklung im E-Commerce" },
-  { company: "Fjord Analytics", title: "Senior Product Manager – Data Products", city: "Remote (Germany)", remote: "Fully remote within Germany", en: true, salary: "€90,000 – €110,000", domain: "fjord-analytics.example", extra: "retail analytics teams" },
-  { company: "Lotsenhaus Mobility", title: "Produktmanager:in Sharing-Plattform", city: "Hamburg", domain: "lotsenhaus.example", extra: "Carsharing-Anbieter" },
-  { company: "Brückner & Söhne Maschinenbau", title: "Product Owner IoT (m/w/d)", city: "Lüneburg", salary: "70.000 – 82.000 €", domain: "brueckner-soehne.example", extra: "vernetzte Maschinen" },
-  { company: "Wattwurm Labs", title: "Product Owner Mobile App", city: "Hamburg", domain: "wattwurm.example", extra: "Fitness-Apps", remote: "Remote-first" },
-  { company: "Alster Insurance Tech", title: "Product Owner Claims (m/w/d)", city: "Hamburg", salary: "78.000 – 92.000 €", domain: "alster-instech.example", extra: "Versicherer" },
-  { company: "Seeblick Commerce", title: "Product Manager Checkout", city: "Berlin", en: true, salary: "€80,000 – €95,000", remote: "Remote with monthly team days", domain: "seeblick.example", extra: "online fashion stores" },
-  { company: "Kompassrose Logistics", title: "Product Owner Transport Management", city: "Bremen", domain: "kompassrose.example", extra: "Speditionen" },
-  { company: "Möwe Learning", title: "Product Owner EdTech (m/w/d)", city: "Hamburg", salary: "68.000 – 78.000 €", domain: "moewe-learning.example", extra: "Schulen und Hochschulen" },
-  { company: "Deichgraf Bank", title: "Product Owner Digital Banking", city: "Hamburg", salary: "85.000 – 98.000 €", domain: "deichgraf-bank.example", extra: "Privatkunden im Online-Banking", remote: "2 Tage Homeoffice" },
-  { company: "Polarstern SaaS", title: "Lead Product Owner (m/w/d)", city: "Kiel", salary: "90.000 – 105.000 €", domain: "polarstern-saas.example", extra: "HR-Abteilungen" },
-  { company: "Tidewater Robotics", title: "Technical Product Manager", city: "Hamburg", en: true, domain: "tidewater.example", extra: "warehouse automation" },
-  { company: "Sandbank Media", title: "Product Owner Streaming", city: "Köln", domain: "sandbank-media.example", extra: "Verlage und Sender" },
-  { company: "Reeperbahn Ticketing", title: "Product Owner Ticketing (m/w/d)", city: "Hamburg", salary: "65.000 – 75.000 €", domain: "rb-ticketing.example", extra: "Veranstalter" },
-  { company: "Hanse Cloud Services", title: "Product Manager Developer Experience", city: "Hamburg", en: true, salary: "€88,000 – €102,000", domain: "hanse-cloud.example", extra: "platform engineering teams" },
-  { company: "Kutter Foods", title: "Product Owner E-Commerce", city: "Hamburg", domain: "kutter-foods.example", extra: "Lebensmittel-Onlinehandel" },
-  { company: "Leuchtturm Legal", title: "Product Owner LegalTech (m/w/d)", city: "Hamburg", remote: "Bis zu 4 Tage Homeoffice", domain: "leuchtturm-legal.example", extra: "Kanzleien" },
-  { company: "Gezeiten Energie", title: "Produktmanager Smart Home", city: "Hannover", salary: "72.000 – 84.000 €", domain: "gezeiten-energie.example", extra: "Stadtwerke" },
-  { company: "Ankerplatz Travel", title: "Product Owner Booking", city: "Hamburg", domain: "ankerplatz-travel.example", extra: "Reiseveranstalter" },
-  { company: "Speicherstadt Data", title: "Product Owner Data Platform", city: "Hamburg", salary: "82.000 – 96.000 €", domain: "speicherstadt-data.example", extra: "Datenteams" },
-  { company: "Watt & Wellen GmbH", title: "Product Owner Customer Portal", city: "Hamburg", domain: "watt-wellen.example", extra: "Energieversorger" },
+  { company: "Limmatwerk Software AG", title: "Senior Product Owner (m/w/d)", city: "Zürich", salary: "CHF 120'000 – 140'000 pro Jahr", domain: "limmatwerk.example", extra: "Logistikunternehmen" },
+  { company: "Firnlicht Energy", title: "Product Manager Platform", city: "Zürich", salary: "CHF 130,000 – 150,000", en: true, domain: "firnlicht-energy.example", extra: "energy utilities" },
+  { company: "Steinbock Health AG", title: "Product Owner Patientenportal 80–100 % (m/w/d)", city: "Bern", remote: "Bis zu 3 Tage Homeoffice", domain: "steinbock-health.example", extra: "Spitäler und Praxen" },
+  { company: "Aaretal Payments", title: "Product Owner Payments", city: "Zürich", salary: "CHF 115'000 – 135'000", domain: "aaretal-payments.example", extra: "Zahlungsabwicklung im E-Commerce" },
+  { company: "Gletscher Analytics", title: "Senior Product Manager – Data Products", city: "Remote (Schweiz)", remote: "Fully remote within Switzerland", en: true, salary: "CHF 135,000 – 160,000", domain: "gletscher-analytics.example", extra: "retail analytics teams" },
+  { company: "Seilbahn Mobility", title: "Produktmanager:in Sharing-Plattform", city: "Zürich", domain: "seilbahn-mobility.example", extra: "Carsharing-Anbieter" },
+  { company: "Brunner & Söhne Maschinenbau AG", title: "Product Owner IoT (m/w/d)", city: "Winterthur", salary: "CHF 105'000 – 120'000", domain: "brunner-soehne.example", extra: "vernetzte Maschinen" },
+  { company: "Murmeltier Labs", title: "Product Owner Mobile App", city: "Zürich", domain: "murmeltier.example", extra: "Fitness-Apps", remote: "Remote-first" },
+  { company: "Reuss Insurance Tech", title: "Product Owner Claims (m/w/d)", city: "Luzern", salary: "CHF 118'000 – 135'000", domain: "reuss-instech.example", extra: "Versicherungen" },
+  { company: "Seeblick Commerce", title: "Product Manager Checkout", city: "Basel", en: true, salary: "CHF 120,000 – 140,000", remote: "Remote with monthly team days", domain: "seeblick.example", extra: "online fashion stores" },
+  { company: "Rheinhafen Logistics", title: "Product Owner Transport Management", city: "Basel", domain: "rheinhafen.example", extra: "Speditionen" },
+  { company: "Edelweiss Learning", title: "Product Owner EdTech (m/w/d)", city: "Bern", salary: "CHF 100'000 – 115'000", domain: "edelweiss-learning.example", extra: "Schulen und Hochschulen" },
+  { company: "Zunfthaus Bank", title: "Product Owner Digital Banking", city: "Zürich", salary: "CHF 130'000 – 150'000", domain: "zunfthaus-bank.example", extra: "Privatkunden im Online-Banking", remote: "2 Tage Homeoffice" },
+  { company: "Polarstern SaaS", title: "Lead Product Owner (m/w/d)", city: "Zug", salary: "CHF 140'000 – 160'000", domain: "polarstern-saas.example", extra: "HR-Abteilungen" },
+  { company: "Föhn Robotics", title: "Technical Product Manager", city: "Zürich", en: true, domain: "foehn-robotics.example", extra: "warehouse automation" },
+  { company: "Léman Media", title: "Product Owner Streaming", city: "Genf", domain: "leman-media.example", extra: "Verlage und Sender" },
+  { company: "Bühnenlicht Ticketing", title: "Product Owner Ticketing (m/w/d)", city: "Zürich", salary: "CHF 95'000 – 105'000", domain: "buehnenlicht.example", extra: "Veranstalter" },
+  { company: "Säntis Cloud Services", title: "Product Manager Developer Experience", city: "St. Gallen", en: true, salary: "CHF 130,000 – 148,000", domain: "saentis-cloud.example", extra: "platform engineering teams" },
+  { company: "Rösti Foods", title: "Product Owner E-Commerce", city: "Zürich", domain: "roesti-foods.example", extra: "Lebensmittel-Onlinehandel" },
+  { company: "Lindenhof Legal", title: "Product Owner LegalTech (m/w/d)", city: "Zürich", remote: "Bis zu 4 Tage Homeoffice", domain: "lindenhof-legal.example", extra: "Kanzleien" },
+  { company: "Bergbach Energie", title: "Produktmanager Smart Home", city: "Luzern", salary: "CHF 105'000 – 118'000", domain: "bergbach-energie.example", extra: "Elektrizitätswerke" },
+  { company: "Bergpass Travel", title: "Product Owner Booking", city: "Zürich", domain: "bergpass-travel.example", extra: "Reiseveranstalter" },
+  { company: "Kornhaus Data", title: "Product Owner Data Platform", city: "Zürich", salary: "CHF 125'000 – 142'000", domain: "kornhaus-data.example", extra: "Datenteams" },
+  { company: "Wasser & Wind AG", title: "Product Owner Customer Portal", city: "Aarau", domain: "wasser-wind.example", extra: "Energieversorger" },
   // below the user's fit: they score low or get filtered
-  { company: "Containerhafen Logistik", title: "Disponent:in Nahverkehr", city: "Hamburg", domain: "ch-logistik.example", extra: "Spedition" },
-  { company: "Elbe Retail", title: "Filialleitung (m/w/d)", city: "Hamburg", domain: "elbe-retail.example", extra: "Einzelhandel" },
-  { company: "Brise Digital", title: "Werkstudent Product Management", city: "Hamburg", domain: "brise.example", extra: "Startups" },
-  { company: "Talentlotsen Personalberatung", title: "Product Owner (m/w/d)", city: "Hamburg", domain: "talentlotsen.example", extra: "Für unseren Kunden suchen wir" },
-  { company: "Kleinkram GmbH", title: "Junior Product Owner", city: "Hamburg", salary: "38.000 – 44.000 €", domain: "kleinkram.example", extra: "Bürobedarf" },
+  { company: "Güterbahnhof Logistik", title: "Disponent:in Nahverkehr", city: "Zürich", domain: "gueterbahnhof.example", extra: "Spedition" },
+  { company: "Sihl Retail", title: "Filialleitung (m/w/d)", city: "Zürich", domain: "sihl-retail.example", extra: "Detailhandel" },
+  { company: "Bise Digital", title: "Werkstudent Product Management", city: "Zürich", domain: "bise.example", extra: "Startups" },
+  { company: "Talentbrücke Personalberatung", title: "Product Owner (m/w/d)", city: "Zürich", domain: "talentbruecke.example", extra: "Für unseren Kunden suchen wir" },
+  { company: "Kleinkram GmbH", title: "Junior Product Owner", city: "Zürich", salary: "CHF 60'000 – 70'000", domain: "kleinkram.example", extra: "Bürobedarf" },
 ];
 
 const ago = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
 ads.forEach((a, i) => {
-  const isAgency = a.company.startsWith("Talentlotsen");
+  const isAgency = a.company.startsWith("Talentbrücke");
   ingest({
-    source: i % 5 === 3 ? "greenhouse" : i % 7 === 2 ? "stepstone" : "arbeitsagentur", sourceId: `demo-${i}`,
+    source: i % 5 === 3 ? "greenhouse" : i % 7 === 2 ? "jobsch" : "jobroom", sourceId: `demo-${i}`,
     url: `https://${a.domain}/jobs/${i}`, title: a.title, company: a.company, location: a.city, remote: a.remote ?? null,
     salaryText: a.salary ?? null, companyDomain: a.domain, publishedAt: ago(i % 12),
-    description: isAgency ? `Für unseren Kunden, ein Softwarehaus in Hamburg, suchen wir einen Product Owner. ${de(a)}` : a.en ? en(a) : de(a),
+    description: isAgency ? `Für unseren Kunden, ein Softwarehaus in Zürich, suchen wir einen Product Owner. ${de(a)}` : a.en ? en(a) : de(a),
   });
 });
 const manual = (await dispatch("addManual", {
-  text: "Senior Product Owner Fleet (m/w/d)\nMarlin Mobility GmbH, Hamburg\nWir digitalisieren Flottenmanagement. Du verantwortest Roadmap und Backlog, arbeitest mit Kunden und Engineering. Erfahrung als Product Owner, Scrum, SQL. Gehalt 85.000 – 95.000 €. Bewerbung an people@marlin-mobility.example",
+  text: "Senior Product Owner Fleet (m/w/d)\nMarlin Mobility AG, Zürich\nWir digitalisieren Flottenmanagement. Du verantwortest Roadmap und Backlog, arbeitest mit Kunden und Engineering. Erfahrung als Product Owner, Scrum, SQL. Lohn CHF 125'000 – 140'000. Bewerbung an people@marlin-mobility.example",
   note: "Tip from a former colleague",
 })) as { jobId: number };
-for (const c of ["Hafenwerk Software GmbH", "Fjord Analytics", "Deichgraf Bank"]) run("UPDATE companies SET watchlist = 1 WHERE name = ?", [c]);
+for (const c of ["Limmatwerk Software AG", "Gletscher Analytics", "Zunfthaus Bank"]) run("UPDATE companies SET watchlist = 1 WHERE name = ?", [c]);
 step("scoring ads");
 await drain(120_000);
 
@@ -136,15 +138,15 @@ await drain(120_000);
 const id = (company: string) => get<{ id: number }>("SELECT j.id FROM jobs j JOIN companies c ON c.id = j.company_id WHERE c.name LIKE ?", [`${company}%`])!.id;
 const decide = (company: string, kind: string, reason?: string) => dispatch("decide", { jobId: id(company), kind, reason });
 
-await decide("Hafenwerk", "dream");
-await decide("Deichgraf", "dream");
-for (const c of ["Hafenwerk", "Nordlicht", "Kranich", "Elbtal", "Fjord", "Alster", "Deichgraf", "Polarstern", "Speicherstadt", "Hanse Cloud", "Seeblick", "Wattwurm", "Leuchtturm", "Lotsenhaus"]) await decide(c, "apply");
+await decide("Limmatwerk", "dream");
+await decide("Zunfthaus", "dream");
+for (const c of ["Limmatwerk", "Firnlicht", "Steinbock", "Aaretal", "Gletscher", "Reuss", "Zunfthaus", "Polarstern", "Kornhaus", "Säntis Cloud", "Seeblick", "Murmeltier", "Lindenhof", "Seilbahn"]) await decide(c, "apply");
 await dispatch("decide", { jobId: manual.jobId, kind: "apply" });
-await decide("Containerhafen", "reject", "Wrong field");
-await decide("Elbe Retail", "reject", "Wrong field");
-await decide("Sandbank", "reject", "Too far away");
-await decide("Gezeiten", "skip");
-await decide("Kompassrose", "skip");
+await decide("Güterbahnhof", "reject", "Wrong field");
+await decide("Sihl Retail", "reject", "Wrong field");
+await decide("Léman", "reject", "Too far away");
+await decide("Bergbach", "skip");
+await decide("Rheinhafen", "skip");
 step("drafting applications (letters, fact-checks, PDFs)");
 await drain(300_000);
 
@@ -157,25 +159,25 @@ const send = async (company: string) => {
   return jobId;
 };
 // two approved and waiting in Ready to send: one by email, one through a form
-for (const c of ["Marlin", "Leuchtturm"]) {
+for (const c of ["Marlin", "Lindenhof"]) {
   const app = get<{ id: number }>("SELECT id FROM applications WHERE job_id = ? ORDER BY version DESC", [id(c)]);
   if (app) await dispatch("approve", { appId: app.id, seconds: 70 });
 }
-run("UPDATE jobs SET apply_email = NULL, apply_channel = 'form' WHERE id = ?", [id("Leuchtturm")]);
+run("UPDATE jobs SET apply_email = NULL, apply_channel = 'form' WHERE id = ?", [id("Lindenhof")]);
 
 const flow: [string, number, string[], string?][] = [
   // company, days ago sent, later stages, note
-  ["Nordlicht", 24, ["contact", "round1", "final"], "Final round with the CPO – Thu 14:00"],
-  ["Hafenwerk", 17, ["contact", "round1"], "On-site at the office, Tue 10:30"],
-  ["Kranich", 15, ["contact", "round1"], "Video call with the team lead, Wed 11:00"],
-  ["Elbtal", 12, ["contact"], "Recruiter call booked for Friday"],
-  ["Alster", 9, ["contact"]],
-  ["Fjord", 19, []],
+  ["Firnlicht", 24, ["contact", "round1", "final"], "Final round with the CPO – Thu 14:00"],
+  ["Limmatwerk", 17, ["contact", "round1"], "On-site at the office, Tue 10:30"],
+  ["Steinbock", 15, ["contact", "round1"], "Video call with the team lead, Wed 11:00"],
+  ["Aaretal", 12, ["contact"], "Recruiter call booked for Friday"],
+  ["Reuss", 9, ["contact"]],
+  ["Gletscher", 19, []],
   ["Polarstern", 6, []],
-  ["Speicherstadt", 3, []],
-  ["Hanse Cloud", 2, []],
+  ["Kornhaus", 3, []],
+  ["Säntis Cloud", 2, []],
   ["Seeblick", 1, []],
-  ["Wattwurm", 27, ["closed:rejected"]],
+  ["Murmeltier", 27, ["closed:rejected"]],
 ];
 for (const [company, days, stages, note] of flow) {
   const jobId = await send(company);
@@ -190,8 +192,8 @@ for (const [company, days, stages, note] of flow) {
   const evs = all<{ id: number }>("SELECT id FROM events WHERE job_id = ? AND type = 'stage' ORDER BY id", [jobId]);
   evs.forEach((e, i) => run(`UPDATE events SET at = datetime(${sent}, '+${i * Math.max(1, Math.floor(days / (evs.length + 1)))} days') WHERE id = ?`, [e.id]));
 }
-run("UPDATE jobs SET stage_changed_at = datetime('now','-36 days'), next_action = NULL WHERE id = ?", [id("Fjord")]);
-run("UPDATE applications SET sent_at = datetime('now','-36 days') WHERE job_id = ?", [id("Fjord")]);
+run("UPDATE jobs SET stage_changed_at = datetime('now','-36 days'), next_action = NULL WHERE id = ?", [id("Gletscher")]);
+run("UPDATE applications SET sent_at = datetime('now','-36 days') WHERE job_id = ?", [id("Gletscher")]);
 
 step("prep packs and follow-ups");
 run("DELETE FROM settings WHERE key = '_lastRun:followups'");
@@ -202,17 +204,17 @@ run("DELETE FROM tasks WHERE status = 'queued' AND type = 'fetch_source'");
 await drain(120_000);
 
 // a little learning: reject a few more so the profile has something to reflect on
-for (const c of ["Reeperbahn", "Kutter"]) await decide(c, "reject", "Salary too low");
+for (const c of ["Bühnenlicht", "Rösti"]) await decide(c, "reject", "Salary too low");
 await dispatch("reflectNow", {});
 await drain(60_000);
 
 /* ── source history so the Sources page isn't empty ─── */
 
-for (const [src, h, found, added] of [["arbeitsagentur", 3, 41, 6], ["arbeitsagentur", 6, 38, 4], ["watchlist", 20, 7, 1], ["arbeitsagentur", 9, 44, 9]] as const) {
+for (const [src, h, found, added] of [["jobroom", 3, 41, 6], ["jobroom", 6, 38, 4], ["watchlist", 20, 7, 1], ["jobroom", 9, 44, 9]] as const) {
   run(`INSERT INTO source_runs(source, started_at, finished_at, found, added, status) VALUES (?, datetime('now','-${h} hours'), datetime('now','-${h} hours','+40 seconds'), ?, ?, 'ok')`, [src, found, added]);
 }
 // tell the worker everything just ran, so it doesn't fetch on start
-for (const k of ["arbeitsagentur", "watchlist", "chrome", "reflect", "followups", "digest"]) setMeta(`lastRun:${k}`, new Date().toISOString());
+for (const k of ["jobroom", "watchlist", "chrome", "reflect", "followups", "digest"]) setMeta(`lastRun:${k}`, new Date().toISOString());
 
 await closePdfBrowser();
 const counts = all<{ stage: string; n: number }>("SELECT stage, COUNT(*) AS n FROM jobs GROUP BY stage ORDER BY n DESC");

@@ -1,4 +1,4 @@
-Summarise this German employment reference (Arbeitszeugnis) or certificate. Decode the German reference code language into a plain rating: "sehr gut" (stets zu unserer vollsten Zufriedenheit), "gut" (stets zu unserer vollen Zufriedenheit), "befriedigend", or "ausreichend" or lower. For certificates/degrees, rating is the grade or "n/a".
+Summarise this employment reference (Swiss or German Arbeitszeugnis, also Zwischenzeugnis) or certificate. Decode the reference code language, which Swiss and German references share, into a plain rating: "sehr gut" (stets zu unserer vollsten Zufriedenheit), "gut" (stets zu unserer vollen Zufriedenheit), "befriedigend", or "ausreichend" or lower. For certificates/degrees, rating is the grade or "n/a".
 
 <document>
 {{text}}

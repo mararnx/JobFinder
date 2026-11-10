@@ -13,7 +13,9 @@ function hardFacts(): string {
   return [
     s.home && `Lives in ${s.home}; max commute about ${s.commuteKm} km`,
     s.remoteMin ? `Wants at least ${s.remoteMin} remote days per week` : "",
-    s.salaryFloor ? `Salary floor ${s.salaryFloor} € gross/year; expectation ${s.salaryExpectation || "n/a"}` : "",
+    s.salaryFloor ? `Salary floor CHF ${s.salaryFloor} gross/year; expectation ${s.salaryExpectation || "n/a"}` : "",
+    s.workload ? `Wants a workload (Pensum) of ${s.workload}` : "",
+    s.workPermit ? `Work permit / nationality: ${s.workPermit}` : "",
     `Works in: ${s.languages.join(", ").toUpperCase()}`,
     s.excludeAgencies ? "Does not want recruiter/temp-agency positions" : "",
     `Search keywords: ${searchKeywords().join(", ") || "none set"}`,

@@ -1,4 +1,4 @@
-const LEGAL_FORMS = /\b(gmbh|ag|se|kg|kgaa|ohg|ug|e\.?\s?v|mbh|co|inc|ltd|llc|plc|bv|nv|sa|sarl|holding|group|gruppe|deutschland|germany)\b/g;
+const LEGAL_FORMS = /\b(gmbh|ag|se|kg|kgaa|ohg|ug|e\.?\s?v|mbh|co|inc|ltd|llc|plc|bv|nv|sa|sarl|holding|group|gruppe|deutschland|germany|schweiz|switzerland|suisse|svizzera)\b/g;
 
 export function normCompany(name: string): string {
   return name
@@ -76,24 +76,30 @@ export function detectLanguage(s: string): "de" | "en" {
   return de >= en ? "de" : "en";
 }
 
-/** Extracts an annual EUR salary range from free text. Returns null if none found. */
+/** Extracts an annual salary range (CHF; EUR is read the same way) from free text. Returns null if none found. */
 export function parseSalary(s: string): { min: number; max: number } | null {
-  const t = s.replace(/ /g, " ");
-  const re = /(\d{2,3}(?:[.,\s]\d{3})?|\d{5,6}|\d{2,3}\s?k)\s*(?:€|eur|euro)?\s*(?:-|–|bis|to)\s*(\d{2,3}(?:[.,\s]\d{3})?|\d{5,6}|\d{2,3}\s?k)\s*(?:€|eur|euro|k€)/i;
-  const m = t.match(re);
+  const t = s.replace(/[\u00a0\u202f]/g, " ");
+  const N = String.raw`\d{2,3}(?:['’.,\s]\d{3})?|\d{5,6}|\d{2,3}\s?k`;
+  const CUR = String.raw`(?:chf|sfr\.?|fr\.|€|eur|euro)`;
+  const DASH = String.raw`(?:\.[–-]+)?\s*(?:-|–|bis|to)\s*`;
   const num = (x: string) => {
     const k = /k/i.test(x);
-    const n = Number(x.replace(/k/i, "").replace(/[.,\s]/g, ""));
+    const n = Number(x.replace(/k/i, "").replace(/['’.,\s]/g, ""));
     return k || n < 1000 ? n * 1000 : n;
   };
-  if (m) {
+  const ok = (min: number, max: number) => min >= 15000 && max <= 500000 && max >= min;
+  // "90'000 – 110'000 CHF" or "CHF 90'000 – 110'000"
+  const after = t.match(new RegExp(`(${N})\\s*${CUR}?${DASH}(${N})(?:\\.[–-]+)?\\s*(?:${CUR}|k€)`, "i"));
+  const before = t.match(new RegExp(`${CUR}\\s*(${N})${DASH}(?:${CUR}\\s*)?(${N})(?![\\d'’])`, "i"));
+  for (const m of [after, before]) {
+    if (!m) continue;
     const min = num(m[1]), max = num(m[2]);
-    if (min >= 15000 && max <= 400000 && max >= min) return { min, max };
+    if (ok(min, max)) return { min, max };
   }
-  const single = t.match(/(\d{2,3}[.,]\d{3})\s*(?:€|eur)\s*(?:brutto|gross|p\.?\s?a\.?|jährlich|per year)/i);
+  const single = t.match(new RegExp(`(?:${CUR}\\s*(\\d{2,3}['’.,]\\d{3})|(\\d{2,3}['’.,]\\d{3})\\s*${CUR})(?:\\.[–-]+)?\\s*(?:brutto|gross|p\\.?\\s?a\\.?|jährlich|pro jahr|per year|/\\s?jahr)`, "i"));
   if (single) {
-    const n = num(single[1]);
-    if (n >= 15000 && n <= 400000) return { min: n, max: n };
+    const n = num(single[1] ?? single[2]);
+    if (n >= 15000 && n <= 500000) return { min: n, max: n };
   }
   return null;
 }
@@ -108,8 +114,11 @@ const AGENCY_PATTERNS = [
   /\bpersonaldienstleist/i,
   /\bzeitarbeit\b/i,
   /\bin festanstellung bei unserem kunden\b/i,
+  /\bpersonalberatung\b/i,
+  /\bstellenvermittlung\b/i,
+  /\btemporärstelle\b|\btemporäreinsatz\b/i,
 ];
-const KNOWN_AGENCIES = /\b(hays|randstad|adecco|manpower|orizon|dis ag|amadeus fire|robert half|michael page|page personnel|brunel|gulp|etengo|solcom|computer futures|harvey nash|experis|persona service|tempton|piening|avanti|westhouse|darwin recruitment|frank recruitment|jobot|stepstone services)\b/i;
+const KNOWN_AGENCIES = /\b(hays|randstad|adecco|manpower|orizon|dis ag|amadeus fire|robert half|michael page|page personnel|brunel|gulp|etengo|solcom|computer futures|harvey nash|experis|persona service|tempton|piening|avanti|westhouse|darwin recruitment|frank recruitment|jobot|kelly services|careerplus|universal-job|interiman|gi group|coople|yellowshark|valjob|mooser & partner|sago personal|personal sigma|jobfactory|pro personal|persigo|rocken|myitjob|it-people|swisselect|workselection|kennedy executive|consult & pepper|avec compétence)\b/i;
 
 export function looksLikeAgency(company: string, text: string): boolean {
   return KNOWN_AGENCIES.test(company) || AGENCY_PATTERNS.some((p) => p.test(text));

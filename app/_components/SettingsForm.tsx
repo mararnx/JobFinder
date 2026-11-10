@@ -36,23 +36,25 @@ export function SettingsForm({ initial, sections, onSaved, submitLabel = "Save" 
           <div className="form-sec wide">About you <span className="faint">– used in letters and forms</span></div>
           {txt("name", "Full name", "Alex Neumann")}
           {txt("email", "Email", "alex@example.com", "email")}
-          {txt("phone", "Phone", "+49 …", "tel")}
-          {txt("address", "Address (letter head)", "Musterstraße 1, 20095 Hamburg")}
-          {txt("home", "Where you live", "Hamburg")}
+          {txt("phone", "Phone", "+41 79 …", "tel")}
+          {txt("address", "Address (letter head)", "Musterstrasse 1, 8004 Zürich")}
+          {txt("home", "Where you live", "Zürich")}
         </>
       )}
       {sections.includes("application") && (
         <>
           <div className="form-sec wide">Application details</div>
-          {txt("salaryExpectation", "Salary expectation (as you'd write it)", "€85,000 gross per year")}
+          {txt("salaryExpectation", "Salary expectation (as you'd write it)", "CHF 120'000 gross per year (×13)")}
           {txt("noticePeriod", "Notice period", "3 months to the end of a month")}
           {txt("earliestStart", "Earliest start", "February 1, 2027")}
+          {txt("workload", "Workload (Pensum)", "80–100 %")}
+          {txt("workPermit", "Work permit / nationality", "Swiss citizen · C permit · EU citizen, needs a B permit")}
         </>
       )}
       {sections.includes("filters") && (
         <>
           <div className="form-sec wide">Hard filters <span className="faint">– ads that fail these never reach you</span></div>
-          {txt("salaryFloor", "Salary floor (€ / year, 0 = none)", "65000", "number")}
+          {txt("salaryFloor", "Salary floor (CHF / year, 0 = none)", "100000", "number")}
           {txt("remoteMin", "Remote days wanted (0 = don't care)", "2", "number")}
           {txt("commuteKm", "Max commute (km)", "40", "number")}
           <label className="fld"><span>Ad languages</span>
@@ -63,7 +65,7 @@ export function SettingsForm({ initial, sections, onSaved, submitLabel = "Save" 
           <label className="fld wide"><span>Blocked words <span className="faint">(comma-separated, e.g. Werkstudent, Praktikum, SAP)</span></span>
             <input className="input" value={s.blockKeywords.join(", ")} onChange={(e) => set("blockKeywords", e.target.value.split(",").map((x) => x.trim()).filter(Boolean))} />
           </label>
-          <label className="check wide"><input type="checkbox" checked={s.excludeAgencies} onChange={(e) => set("excludeAgencies", e.target.checked)} /><span>Hide recruiters and temp agencies (Personalvermittlung, Zeitarbeit)</span></label>
+          <label className="check wide"><input type="checkbox" checked={s.excludeAgencies} onChange={(e) => set("excludeAgencies", e.target.checked)} /><span>Hide recruiters and temp agencies (Personalberatung, Temporärstellen)</span></label>
         </>
       )}
       {sections.includes("writing") && (

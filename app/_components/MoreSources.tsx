@@ -12,19 +12,19 @@ export type MoreSourcesProps = {
 };
 
 const PORTALS = [
-  { key: "stepstone", name: "StepStone", save: "Jobagent erstellen", url: (k: string, c: string) => `https://www.stepstone.de/jobs/${encodeURIComponent(k.toLowerCase().replace(/\s+/g, "-"))}${c ? `/in-${encodeURIComponent(c.toLowerCase())}` : ""}` },
-  { key: "indeed", name: "Indeed", save: "Job-Alert erhalten", url: (k: string, c: string) => `https://de.indeed.com/jobs?q=${encodeURIComponent(k)}&l=${encodeURIComponent(c)}` },
-  { key: "linkedin", name: "LinkedIn", save: "Jobalert aktivieren (needs login)", url: (k: string, c: string) => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(k)}&location=${encodeURIComponent(c || "Deutschland")}` },
+  { key: "jobsch", name: "jobs.ch", save: "Job-Alarm aktivieren (free account)", url: (k: string, c: string) => `https://www.jobs.ch/de/stellenangebote/?term=${encodeURIComponent(k)}${c ? `&location=${encodeURIComponent(c)}` : ""}` },
+  { key: "indeed", name: "Indeed", save: "Job-Alert erhalten", url: (k: string, c: string) => `https://ch.indeed.com/jobs?q=${encodeURIComponent(k)}&l=${encodeURIComponent(c)}` },
+  { key: "linkedin", name: "LinkedIn", save: "Jobalert aktivieren (needs login)", url: (k: string, c: string) => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(k)}&location=${encodeURIComponent(c || "Schweiz")}` },
   { key: "xing", name: "XING", save: "Suchauftrag speichern", url: (k: string, c: string) => `https://www.xing.com/jobs/search?keywords=${encodeURIComponent(k)}&location=${encodeURIComponent(c)}` },
 ];
 
 // the senders of the portals' alert emails, as a Gmail search
-const ALERT_QUERY = "from:(stepstone.de OR indeed.com OR jobalerts-noreply@linkedin.com OR xing.com)";
+const ALERT_QUERY = "from:(jobs.ch OR jobup.ch OR indeed.com OR jobalerts-noreply@linkedin.com OR xing.com)";
 
 const CHROME_NOTE: Record<string, string> = {
   xing: "Works",
   linkedin: "Once a day, max. 5 ads – it limits automated visits",
-  stepstone: "Blocks automated browsing – use its email alerts",
+  jobsch: "Works – reads the newest ads for each keyword",
   indeed: "Blocks automated browsing – use its email alerts",
 };
 
@@ -94,7 +94,7 @@ export function MoreSources({ keyword, city, settings }: MoreSourcesProps) {
     <div className="more-sources">
       <section className="ms-card">
         <h3><Bell />Job alerts by email <span className="tag accent">recommended</span></h3>
-        <p className="faint">The official way to get everything from StepStone, Indeed, LinkedIn and XING. The portals email new matches to your Gmail; JobFinder reads them from one label.</p>
+        <p className="faint">The official way to get everything from jobs.ch, Indeed, LinkedIn and XING. The portals email new matches to your Gmail; JobFinder reads them from one label.</p>
         <ol className="ms-steps">
           <li>
             <b>Save a search with alerts on each portal.</b> Each button opens your search – click the alert button there.
@@ -118,7 +118,7 @@ export function MoreSources({ keyword, city, settings }: MoreSourcesProps) {
 
       <section className="ms-card">
         <h3><KeyRound />Job search APIs <span className="faint">– free keys, 2 minutes each</span></h3>
-        <p className="faint">Adzuna and Jooble collect ads from many German portals and company sites – a big share of what StepStone and Indeed list.</p>
+        <p className="faint">Adzuna and Jooble collect ads from many Swiss portals and company sites – a big share of what jobs.ch and Indeed list. For Jooble, choose Switzerland when you ask for the key.</p>
         <div className="ms-keys">
           <label className="fld"><span>Adzuna app ID <a href="https://developer.adzuna.com/signup" target="_blank" rel="noreferrer">get a free key</a></span><input className="input" value={keys.adzunaAppId} onChange={(e) => setKeys((k) => ({ ...k, adzunaAppId: e.target.value.trim() }))} aria-label="Adzuna app ID" autoComplete="off" /></label>
           <label className="fld"><span>Adzuna app key</span><input className="input" value={keys.adzunaAppKey} onChange={(e) => setKeys((k) => ({ ...k, adzunaAppKey: e.target.value.trim() }))} aria-label="Adzuna app key" autoComplete="off" /></label>
@@ -140,7 +140,7 @@ export function MoreSources({ keyword, city, settings }: MoreSourcesProps) {
         <h3><Globe />Chrome search on portals</h3>
         <p className="faint">JobFinder can also browse portals itself, slowly, like a person. Some don&apos;t allow that.</p>
         <ul className="ms-chrome">
-          {(["xing", "linkedin", "stepstone", "indeed"] as const).map((p) => (
+          {(["jobsch", "xing", "linkedin", "indeed"] as const).map((p) => (
             <li key={p}>
               <label className="switch"><input type="checkbox" checked={chrome.on && chrome.portals.includes(p)} onChange={(e) => togglePortal(p, e.target.checked)} aria-label={`Chrome search on ${PORTALS.find((x) => x.key === p)!.name}`} /><span>{PORTALS.find((x) => x.key === p)!.name}</span></label>
               <span className="faint">{CHROME_NOTE[p]}</span>

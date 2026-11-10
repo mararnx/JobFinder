@@ -160,6 +160,8 @@ export type Settings = {
   salaryExpectation: string;
   noticePeriod: string;
   earliestStart: string;
+  workload: string; // Pensum they want, e.g. "80–100 %"
+  workPermit: string; // e.g. "Swiss citizen", "C permit", "EU citizen, needs a B permit"
   languages: string[];
   excludeAgencies: boolean;
   blockKeywords: string[];
@@ -168,7 +170,7 @@ export type Settings = {
   claudeMode: "auto" | "real" | "mock";
   claudeParallel: number;
   chromeEnabled: boolean;
-  chromePortals: string[]; // which portals the Chrome search visits; Indeed and StepStone block it, so they start off
+  chromePortals: string[]; // which portals the Chrome search visits; Indeed blocks it, so it starts off
   chromeDailyPages: number;
   adzunaAppId: string; // free keys from developer.adzuna.com
   adzunaAppKey: string;
@@ -190,6 +192,8 @@ export const DEFAULT_SETTINGS: Settings = {
   salaryExpectation: "",
   noticePeriod: "",
   earliestStart: "",
+  workload: "",
+  workPermit: "",
   languages: ["de", "en"],
   excludeAgencies: true,
   blockKeywords: [],
@@ -198,7 +202,7 @@ export const DEFAULT_SETTINGS: Settings = {
   claudeMode: "auto",
   claudeParallel: 1,
   chromeEnabled: false,
-  chromePortals: ["xing", "linkedin"],
+  chromePortals: ["jobsch", "xing", "linkedin"],
   chromeDailyPages: 40,
   adzunaAppId: "",
   adzunaAppKey: "",

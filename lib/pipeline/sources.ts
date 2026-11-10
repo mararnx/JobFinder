@@ -6,7 +6,7 @@ import { notify } from "@/lib/notify";
 import { searchKeywords, searchProfiles } from "@/lib/profile";
 import { enqueue, meta, PRIORITY, setMeta } from "@/lib/queue";
 import { normCompany, stripHtml, truncate } from "@/lib/text";
-import { fetchArbeitsagentur } from "@/lib/sources/arbeitsagentur";
+import { fetchJobroom } from "@/lib/sources/jobroom";
 import { detectAts, fetchAts } from "@/lib/sources/ats";
 import { FrictionError, readPage, runCareersPage, runPortal } from "@/lib/sources/chrome";
 import { jobPostingFromHtml, PORTALS, type Portal } from "@/lib/sources/extract";
@@ -46,23 +46,23 @@ export async function parsePageWithClaude(html: string, url: string, source: str
   return { source, sourceId: url, url: p.apply_url || url, title: p.title, company: p.company, location: p.location, remote: p.remote, salaryText: p.salary_text, description: p.description, language: p.language, applyEmail: p.apply_email, employmentType: p.employment_type };
 }
 
-export async function runArbeitsagentur(): Promise<string> {
-  const s = getSettings();
+/** Job-Room, the Swiss employment service's job portal (RAV ads plus a large jobs.ch feed). */
+export async function runJobroom(): Promise<string> {
   const profiles = searchProfiles().filter((p) => p.enabled);
   if (!profiles.length) return "No search profile yet";
-  const id = startRun("arbeitsagentur");
-  const firstRun = !get("SELECT 1 FROM source_runs WHERE source = 'arbeitsagentur' AND status = 'ok'");
+  const id = startRun("jobroom");
+  const firstRun = !get("SELECT 1 FROM source_runs WHERE source = 'jobroom' AND status = 'ok'");
   let found = 0, added = 0;
   try {
     for (const p of profiles) {
       for (const kw of p.keywords) {
-        const raws = await fetchArbeitsagentur({ keyword: kw, location: p.location, radiusKm: p.radius_km, days: firstRun ? 28 : 7, excludeAgencies: s.excludeAgencies }, known("arbeitsagentur"), firstRun ? 2 : 1);
+        const raws = await fetchJobroom({ keyword: kw, location: p.location, radiusKm: p.radius_km, days: firstRun ? 28 : 7 }, known("jobroom"), firstRun ? 2 : 1);
         found += raws.length;
         added += ingestAll(raws);
       }
     }
     endRun(id, "ok", found, added);
-    return `Arbeitsagentur: ${added} new of ${found}`;
+    return `Job-Room: ${added} new of ${found}`;
   } catch (e) {
     endRun(id, "error", found, added, String(e instanceof Error ? e.message : e));
     throw e;
@@ -140,7 +140,7 @@ export async function runAlerts(readFn: (label: string, days: number) => Promise
   }
 }
 
-/** Arbeitnow, Berlin Startup Jobs and service.bund.de, filtered by every enabled search profile. */
+/** The public job feeds (SwissDevJobs), filtered by every enabled search profile. */
 export async function runFeeds(): Promise<string> {
   const profiles = searchProfiles().filter((p) => p.enabled);
   if (!profiles.length) return "No search profile yet";

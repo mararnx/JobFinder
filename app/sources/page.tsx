@@ -25,7 +25,7 @@ export default function Sources() {
     };
   };
   const sources = [
-    { key: "arbeitsagentur", name: "Arbeitsagentur", kind: "api" as const, detail: "Public job search API · every 3 hours", last: last("arbeitsagentur"), used: null, blocked: null },
+    { key: "jobroom", name: "Job-Room (RAV)", kind: "api" as const, detail: "Swiss public job portal, incl. jobs.ch ads · every 3 hours", last: last("jobroom"), used: null, blocked: null },
     { key: "feeds", name: "Job feeds", kind: "api" as const, detail: `${Object.values(FEEDS).join(", ")} · every 4 hours`, last: lastOf(Object.keys(FEEDS)), used: null, blocked: null },
     { key: "apis", name: "Job search APIs", kind: "api" as const, detail: (s.adzunaAppId && s.adzunaAppKey) || s.joobleKey ? `${[s.adzunaAppId && s.adzunaAppKey ? "Adzuna" : "", s.joobleKey ? "Jooble" : ""].filter(Boolean).join(", ")} · every 3 hours` : "Not set up – add free keys below", last: lastOf(["adzuna", "jooble"]), used: null, blocked: null },
     { key: "alerts", name: "Job alert emails", kind: "api" as const, detail: s.alertsLabel && s.gmailAddress ? `Gmail label “${s.alertsLabel}” · every 2 hours` : "Not set up – see below", last: last("alerts"), used: null, blocked: null },

@@ -24,7 +24,7 @@ export async function browser(headless = true): Promise<BrowserContext> {
   ctxPromise = (async () => {
     const { chromium } = await import("playwright");
     fs.mkdirSync(CHROME_PROFILE, { recursive: true });
-    const opts = { headless, viewport: { width: 1280, height: 900 }, locale: "de-DE", timezoneId: "Europe/Berlin" };
+    const opts = { headless, viewport: { width: 1280, height: 900 }, locale: "de-CH", timezoneId: "Europe/Zurich" };
     try {
       return await chromium.launchPersistentContext(CHROME_PROFILE, { ...opts, channel: "chrome" });
     } catch {
@@ -69,7 +69,7 @@ async function visit(page: Page, url: string, portal: string, budget: number): P
     const res = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45_000 });
     if (res && (res.status() === 403 || res.status() === 429)) reason = `Blocked by the site (HTTP ${res.status()})`;
   } catch (e) {
-    // a site that drops the connection for automated browsers (StepStone does) is a block, not a bug to retry
+    // a site that drops the connection for automated browsers (some portals do) is a block, not a bug to retry
     const m = String(e instanceof Error ? e.message : e).match(/net::(ERR_HTTP2_PROTOCOL_ERROR|ERR_CONNECTION_RESET|ERR_CONNECTION_CLOSED|ERR_EMPTY_RESPONSE|ERR_BLOCKED_BY_RESPONSE)/);
     if (!m) throw e;
     reason = `Site refused the automated browser (${m[1]})`;

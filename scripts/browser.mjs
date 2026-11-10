@@ -4,9 +4,9 @@ import path from "node:path";
 import { chromium } from "playwright";
 
 const dir = path.join(process.env.KOMPASS_DATA ?? path.join(process.cwd(), "data"), "chrome-profile");
-const opts = { headless: false, viewport: null, locale: "de-DE" };
+const opts = { headless: false, viewport: null, locale: "de-CH" };
 const ctx = await chromium.launchPersistentContext(dir, { ...opts, channel: "chrome" }).catch(() => chromium.launchPersistentContext(dir, opts));
 const page = ctx.pages()[0] ?? (await ctx.newPage());
-await page.goto("https://www.stepstone.de");
+await page.goto("https://www.jobs.ch");
 console.log("Log in to the portals you want in this window, then close it.");
 await new Promise((r) => ctx.on("close", r));

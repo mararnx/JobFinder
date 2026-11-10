@@ -58,9 +58,9 @@ export function SourcesClient(p: {
           </ul>
           {edit && (
             <form className="form-grid" onSubmit={async (e) => { e.preventDefault(); if (await run("saveSearch", { id: edit.id, name: edit.name, keywords: edit.kw, location: edit.location, radius: edit.radius_km }, "Search saved")) setEdit(null); }}>
-              <label className="fld"><span>Name</span><input className="input" value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder="e.g. Product roles Hamburg" /></label>
+              <label className="fld"><span>Name</span><input className="input" value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder="e.g. Product roles Zürich" /></label>
               <label className="fld wide"><span>Keywords <span className="faint">(comma-separated, each is one search)</span></span><input className="input" value={edit.kw ?? ""} onChange={(e) => setEdit({ ...edit, kw: e.target.value })} placeholder="Product Owner, Produktmanager, Product Manager" required /></label>
-              <label className="fld"><span>Location</span><input className="input" value={edit.location ?? ""} onChange={(e) => setEdit({ ...edit, location: e.target.value })} placeholder="Hamburg (empty = all of Germany)" /></label>
+              <label className="fld"><span>Location</span><input className="input" value={edit.location ?? ""} onChange={(e) => setEdit({ ...edit, location: e.target.value })} placeholder="Zürich (empty = all of Switzerland)" /></label>
               <label className="fld"><span>Radius (km)</span><input className="input" type="number" min={0} max={200} value={edit.radius_km ?? 30} onChange={(e) => setEdit({ ...edit, radius_km: Number(e.target.value) })} /></label>
               <div className="form-actions wide"><button type="button" className="btn ghost" onClick={() => setEdit(null)}><X />Cancel</button><button className="btn primary" type="submit"><Check />Save</button></div>
             </form>

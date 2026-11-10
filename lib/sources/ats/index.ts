@@ -1,6 +1,6 @@
 import type { RawJob } from "@/lib/jobs";
 import { stripHtml } from "@/lib/text";
-import { fetchJson, fetchText, inGermanyOrRemote, sleep, titleMatches } from "../http";
+import { fetchJson, fetchText, inSwitzerlandOrRemote, sleep, titleMatches } from "../http";
 
 export type AtsType = "greenhouse" | "lever" | "personio" | "smartrecruiters" | "recruitee" | "page";
 
@@ -29,7 +29,7 @@ export function detectAts(url: string): { type: AtsType; token: string } {
 
 type Ctx = { company: string; keywords: string[] };
 
-const keep = (title: string, location: string | null | undefined, ctx: Ctx) => titleMatches(title, ctx.keywords) && inGermanyOrRemote(location);
+const keep = (title: string, location: string | null | undefined, ctx: Ctx) => titleMatches(title, ctx.keywords) && inSwitzerlandOrRemote(location);
 
 async function greenhouse(token: string, ctx: Ctx): Promise<RawJob[]> {
   type G = { jobs: { id: number; title: string; absolute_url: string; location?: { name?: string }; content?: string; first_published?: string; updated_at?: string; company_name?: string }[] };
@@ -87,7 +87,7 @@ async function smartrecruiters(id: string, ctx: Ctx): Promise<RawJob[]> {
   const out: RawJob[] = [];
   for (let offset = 0; offset < 300; offset += 100) {
     const d = await fetchJson<S>(`https://api.smartrecruiters.com/v1/companies/${id}/postings?country=de&limit=100&offset=${offset}`);
-    for (const j of d.content.filter((x) => keep(x.name, x.location?.city ?? "Germany", ctx))) {
+    for (const j of d.content.filter((x) => keep(x.name, x.location?.city ?? "Switzerland", ctx))) {
       const det = await fetchJson<SD>(j.ref).catch(() => ({}) as SD);
       await sleep(200);
       const sections = Object.values(det.jobAd?.sections ?? {}).map((s) => `${s.title ?? ""}\n${stripHtml(s.text ?? "")}`);
@@ -111,7 +111,7 @@ async function recruitee(token: string, ctx: Ctx): Promise<RawJob[]> {
   }));
 }
 
-/** Fetches a watchlist company's open jobs from its ATS feed, filtered to the search keywords and Germany/remote. */
+/** Fetches a watchlist company's open jobs from its ATS feed, filtered to the search keywords and Switzerland/remote. */
 export async function fetchAts(type: AtsType, token: string, ctx: Ctx): Promise<RawJob[]> {
   switch (type) {
     case "greenhouse": return greenhouse(token, ctx);

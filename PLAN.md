@@ -1,6 +1,6 @@
 # JobFinder — local job-search funnel
 
-A local Mac app that finds German job ads, ranks them against what you actually want, drafts tailored applications for your approval, and tracks every job through to an offer. All AI runs through your Claude Max subscription via the Claude Code CLI.
+A local Mac app that finds Swiss job ads (German-speaking Switzerland), ranks them against what you actually want, drafts tailored applications for your approval, and tracks every job through to an offer. All AI runs through your Claude Max subscription via the Claude Code CLI.
 
 Visual prototype of the UI: [`design/prototype.html`](design/prototype.html)
 
@@ -12,11 +12,12 @@ Visual prototype of the UI: [`design/prototype.html`](design/prototype.html)
 |---|---|
 | Sending | Claude drafts → you approve → it goes out |
 | Volume | 30+ applications per week |
-| Sources (v1) | Arbeitsagentur API, company career-page watchlist, Chrome search on portals |
+| Sources (v1) | Job-Room API (RAV/SECO, includes jobs.ch ads), company career-page watchlist, Chrome search on portals |
 | Interface | Local web app on `localhost`, SQLite, background worker |
 | Language | Applications: same as the job ad (DE or EN). App UI: English |
 | Email tracking | Gmail (IMAP, app password): sent applications move to Applied, replies are classified and move the job on |
-| Materials | CV (PDF + Word), old cover letters, Zeugnisse/certificates |
+| Materials | CV (PDF + Word), old cover letters, Arbeitszeugnisse/certificates |
+| Market | Switzerland: CHF salaries, Pensum (workload %), work permit, Swiss Standard German letters (ss, never ß; "Freundliche Grüsse") |
 | Target roles | Learned from example ads + keywords you enter |
 
 ---
@@ -67,7 +68,7 @@ Sourced ─► Discover ─► Shortlist ─► Drafting ─► Review ─► Ap
 - **Worker:** a separate Node process started by a launchd agent so it runs while the browser is closed. It shares the DB with the app. Job queue = a `tasks` table with priority, retries, and a lock.
 - **Claude:** the `claude` CLI in headless mode (`claude -p --output-format json --model <m>`), started as a child process. Every prompt lives in `prompts/*.md`, versioned. Output is validated against a Zod schema; one automatic retry on invalid JSON.
 - **Browser:** Playwright driving a dedicated Chrome profile (`~/.kompass/chrome`). You log in to portals there once yourself. For hard pages, Claude runs headless with the Playwright MCP server and reads the page itself.
-- **PDF:** HTML templates → PDF via Playwright print. `pdf-lib` merges Anschreiben + Lebenslauf + Zeugnisse into one file (≤ 5 MB, which most German portals require).
+- **PDF:** HTML templates → PDF via Playwright print. `pdf-lib` merges Anschreiben + Lebenslauf + Zeugnisse into one Bewerbungsdossier (≤ 5 MB, which most portals require).
 - **Local embeddings:** `transformers.js` with a small multilingual model (e.g. `multilingual-e5-small`) for duplicate detection and similarity to liked and rejected ads. No quota used.
 - **Notifications:** macOS notifications via `osascript` for the morning digest and "action needed" (CAPTCHA, login wall, quota).
 
@@ -100,12 +101,13 @@ Max has rolling 5-hour windows and weekly caps. At 30+ applications a week plus 
 
 ## 5. Sources
 
-### 5.1 Arbeitsagentur API (primary, v1)
+### 5.1 Job-Room API (primary, v1)
 
-Public REST API of the Bundesagentur für Arbeit job board (documented at `jobsuche.api.bund.dev`; check the current endpoint and client-ID header when building). Search by keyword, place + radius, published-since, employment type, temp-agency flag. Ads come back structured (title, employer, place, dates, ref number); full text comes from the detail endpoint.
+Job-Room (job-room.ch) is the public job portal of the Swiss employment service (RAV / SECO). Besides the ads employers must report to the RAV it carries a large feed from jobs.ch and other portals. The search API its website uses is public and needs no key: `POST /jobadservice/api/jobAdvertisements/_search` with keyword (sent as one phrase), published-since and a radius around the town's coordinates (from `/referenceservice/api/_search/localities`). Full text (Markdown) comes from `GET /jobadservice/api/jobAdvertisements/{id}`.
 
 - Runs every 3 hours per search profile.
-- Excludes temp agencies (Arbeitnehmerüberlassung) at the API level when the profile says so.
+- No agency flag in the API: recruiters are detected by name and wording ("Personalberatung", "für unseren Kunden") and hidden when the setting says so.
+- Workload ("80 – 100 %") goes into the employment type, so scoring can compare it with the Pensum the job seeker wants.
 
 ### 5.2 Company watchlist (v1)
 
@@ -124,7 +126,7 @@ Runs daily. New ads from watchlist companies get a score boost and a "watchlist"
 
 ### 5.3 Chrome search on portals (v1, rate-limited)
 
-Covers StepStone, Indeed, LinkedIn, XING and careers pages without a feed.
+Covers jobs.ch, Indeed (ch.indeed.com), LinkedIn, XING and careers pages without a feed.
 
 - **Own Chrome profile** run by Playwright; you log in there yourself. The app never types passwords or creates accounts.
 - **Human pace:** random 4–12 s between page loads, max ~40 pages per portal per day, runs at most twice a day, never in parallel on one portal.
@@ -143,7 +145,8 @@ Ads found by hand: **Add job ad** (top bar, ⌘K, or key **N**) takes a link, or
 
 ### 5.5 Later
 
-- Arbeitnow / other open APIs.
+- jobup.ch / French-speaking Switzerland (needs French letters).
+- jobs.admin.ch and cantonal portals directly (most already reach Job-Room).
 
 ### 5.6 Deduplication
 
@@ -151,7 +154,7 @@ Ads found by hand: **Add job ad** (top bar, ⌘K, or key **N**) takes a link, or
 2. Strong: normalised company + normalised title + city.
 3. Fuzzy: embedding similarity > 0.92 on title + first 500 chars, same company.
 
-Merged ads keep all source links ("seen on StepStone, Indeed, Arbeitsagentur"). The best source for applying is chosen: the company's own careers page > Arbeitsagentur > portal. Reposted ads (same job, new date) get a "reposted ×3" badge, which is a negotiating signal.
+Merged ads keep all source links ("seen on jobs.ch, Indeed, Job-Room"). The best source for applying is chosen: the company's own careers page > Job-Room > portal. Reposted ads (same job, new date) get a "reposted ×3" badge, which is a negotiating signal.
 
 ---
 
@@ -207,7 +210,7 @@ Merged ads keep all source links ("seen on StepStone, Indeed, Arbeitsagentur"). 
 
 ### 7.2 Outputs
 
-1. **Anschreiben / cover letter** in the ad's language, one page. No generic AI phrases; a banned-phrase list ("Hiermit bewerbe ich mich", "mit großem Interesse", "passionate", …) plus your style guide.
+1. **Anschreiben / cover letter** in the ad's language, one page. No generic AI phrases; a banned-phrase list ("Hiermit bewerbe ich mich", "mit grossem Interesse", "passionate", …) plus your style guide.
 2. **Tailored CV:** same facts, reordered and re-emphasised for this ad (summary line, skill order, which achievements to show). Never adds facts.
 3. **Answers** for portal fields: salary expectation, start date, "why us" (short), notice period.
 4. **Bundle PDF:** letter + CV + selected Zeugnisse, file names like `Bewerbung_<Nachname>_<Firma>_<Stelle>.pdf`.
@@ -228,7 +231,7 @@ Every claim in the letter is checked against `cv_master.json`. In the Review scr
 |---|---|
 | Email | A Gmail draft is appended over IMAP: recipient, subject, short body text, bundle attached. Gmail opens in the browser; you press send. |
 | ATS form (Personio, Greenhouse…) | Chrome opens the apply page; Playwright fills known fields and uploads the files; stops before submit. You check and submit. |
-| Portal with account (Workday, StepStone…) | The form opens; the answers panel lets you copy each field. Account creation and passwords stay with you. |
+| Portal with account (Workday, jobs.ch…) | The form opens; the answers panel lets you copy each field. Account creation and passwords stay with you. |
 
 After submitting you click **Mark as sent** (or it's detected automatically: every 30 minutes JobFinder looks in Gmail for the sent email and for replies from the company's domain; Claude sorts replies into receipt, rejection, invitation or other).
 
@@ -287,7 +290,7 @@ Goal: feels like a product a top agency shipped in 2026. Calm, fast, keyboard-fi
 - **Shape and depth:** 14 px card radius, 10 px controls, pill tags. Hairline borders plus a 1 px inner top highlight instead of heavy shadows. Blur only behind overlays (command palette, drawers).
 - **Texture:** a 3 % film-grain overlay and one soft accent glow on Today. Nothing else decorative.
 - **Motion:** spring-based (Motion), 150–250 ms; triage cards fly out in the direction of the decision; kanban cards lift on drag; list entries stagger 30 ms. All disabled under `prefers-reduced-motion`.
-- **Signature elements:** score ring (colour + number + label, never colour alone); company monogram tiles; keyboard hints as `kbd` chips on every primary action; live agent activity feed ("Scoring 12 ads from Arbeitsagentur…").
+- **Signature elements:** score ring (colour + number + label, never colour alone); company monogram tiles; keyboard hints as `kbd` chips on every primary action; live agent activity feed ("Scoring 12 ads from Job-Room…").
 - **Navigation:** left sidebar (Today, Discover, Pipeline, Review, Insights, Unterlagen/Documents, Sources, Profile) with badges; ⌘K command palette for everything (jump to job, move stage, run source, switch theme). Every screen and job has a URL.
 - **Accessibility:** WCAG AA contrast in both themes, visible focus rings in accent, full keyboard operation including kanban (move with `[` / `]`), screen-reader labels on icon buttons, respects reduced motion.
 - **Responsive:** built for laptop/desktop; below 860 px the sidebar becomes a bottom bar and the board columns stack.
@@ -304,7 +307,7 @@ kompass/
 ├─ components/             ui/ (restyled shadcn), score-ring, kanban, triage-card, letter-editor, command-menu
 ├─ lib/db/                 drizzle schema, migrations
 ├─ lib/claude/             runner (spawn `claude -p`), schemas (zod), quota tracker
-├─ lib/sources/            arbeitsagentur.ts, ats/{personio,greenhouse,lever,smartrecruiters,recruitee}.ts, chrome/{stepstone,indeed,linkedin,xing}.ts
+├─ lib/sources/            jobroom.ts, apis.ts (Adzuna/Jooble CH), feeds.ts (SwissDevJobs), ats/{personio,greenhouse,lever,smartrecruiters,recruitee}.ts, chrome.ts + extract.ts (jobs.ch, Indeed, LinkedIn, XING)
 ├─ lib/pipeline/           dedupe, filters, scoring, drafting, factcheck, pdf, send
 ├─ worker/                 index.ts (task loop), schedules.ts
 ├─ prompts/                score.md, draft-letter.md, tailor-cv.md, factcheck.md, reflect-profile.md, company-brief.md, prep-pack.md
@@ -322,10 +325,10 @@ kompass/
 | Phase | Scope | Usable result |
 |---|---|---|
 | **0 · Setup** (½ day) | Install Claude Code CLI + log in; scaffold Next.js, Tailwind tokens, DB schema, worker skeleton, Claude runner with a smoke test | App starts; `claude -p` works from the worker |
-| **1 · Find** (2–3 days) | Arbeitsagentur source, watchlist + ATS feeds, dedupe, hard filters, Discover triage UI, job detail, Sources screen | Daily stream of real, de-duplicated ads you can triage by keyboard |
+| **1 · Find** (2–3 days) | Job-Room source, watchlist + ATS feeds, dedupe, hard filters, Discover triage UI, job detail, Sources screen | Daily stream of real, de-duplicated ads you can triage by keyboard |
 | **2 · Rank & learn** (2 days) | Unterlagen screen (upload, categories, parsing), onboarding (CV parse, example ads, filters), profile, batched Sonnet scoring, signals, nightly reflection, profile history | Ads arrive sorted by fit with reasons; it improves as you triage |
 | **3 · Apply** (3–4 days) | Company brief, style guide, letter + CV tailoring, fact-check, PDF bundle, Review screen, Gmail draft + ATS pre-fill | 30+/week applications at < 90 s review each |
-| **4 · Chrome sources** (2 days) | Playwright profile, StepStone/Indeed/XING/LinkedIn runners, friction detection, notifications | Portal ads in the same stream |
+| **4 · Chrome sources** (2 days) | Playwright profile, jobs.ch/Indeed/XING/LinkedIn runners, friction detection, notifications | Portal ads in the same stream |
 | **5 · Track** (2 days) | Pipeline kanban with drag + keys, timeline, follow-up drafts, ghosting, interview prep pack, Today digest, Insights | Full funnel to Final with analytics |
 | **Later** | Salary research; DSGVO requests | |
 
@@ -336,7 +339,7 @@ kompass/
 - Commute: home location and maximum travel time?
 - Salary floor and expectation range to state in applications?
 - Notice period / earliest start date?
-- Photo on the CV (still common in Germany, optional)?
+- Photo on the CV (common in Switzerland, optional)?
 - Which 10–20 companies go on the watchlist first?
 
 ---

@@ -240,10 +240,10 @@ try {
   await check("⌘K palette finds a company and opens it", async () => {
     await go(page, "/pipeline");
     await page.keyboard.press("Meta+k");
-    await page.getByRole("dialog", { name: "Command palette" }).getByLabel("Search").fill("Nordlicht");
-    await page.locator(".pal-item", { hasText: "Nordlicht" }).first().waitFor({ timeout: 8000 });
+    await page.getByRole("dialog", { name: "Command palette" }).getByLabel("Search").fill("Firnlicht");
+    await page.locator(".pal-item", { hasText: "Firnlicht" }).first().waitFor({ timeout: 8000 });
     await page.keyboard.press("Enter");
-    await page.getByText("Nordlicht Energy").first().waitFor();
+    await page.getByText("Firnlicht Energy").first().waitFor();
     await page.keyboard.press("Escape");
   });
   await check("N adds a pasted ad", async () => {
@@ -251,7 +251,7 @@ try {
     await page.keyboard.press("n");
     const dlg = page.locator("[aria-labelledby='addad-t']");
     await dlg.getByText(/Paste the text/).click();
-    await dlg.locator("textarea").fill("Product Owner Logistics (m/w/d)\nHafenkran GmbH, Hamburg\nDu verantwortest das Backlog. Bewerbung an jobs@hafenkran.example");
+    await dlg.locator("textarea").fill("Product Owner Logistics (m/w/d)\nHafenkran AG, Basel\nDu verantwortest das Backlog. Bewerbung an jobs@hafenkran.example");
     await dlg.getByRole("button", { name: /^Add/ }).click();
     await toast(page, /added|Hafenkran/i);
   });
@@ -319,8 +319,8 @@ try {
   });
   await check("“Add to JobFinder” button endpoint adds the posted page", async () => {
     const desc = "Du verantwortest den Checkout. ".repeat(20);
-    const html = `<html><head><script type="application/ld+json">{"@type":"JobPosting","title":"Product Owner Checkout","hiringOrganization":{"name":"Zalando SE"},"jobLocation":{"address":{"addressLocality":"Berlin"}},"description":"${desc}"}</script></head><body></body></html>`;
-    const r = await page.request.post(`${BASE}/api/capture`, { form: { url: "https://de.indeed.com/viewjob?jk=feedbeef12345678", title: "PO", html }, headers: { Origin: "https://de.indeed.com" } });
+    const html = `<html><head><script type="application/ld+json">{"@type":"JobPosting","title":"Product Owner Checkout","hiringOrganization":{"name":"Galaxus AG"},"jobLocation":{"address":{"addressLocality":"Zürich"}},"description":"${desc}"}</script></head><body></body></html>`;
+    const r = await page.request.post(`${BASE}/api/capture`, { form: { url: "https://ch.indeed.com/viewjob?jk=feedbeef12345678", title: "PO", html }, headers: { Origin: "https://ch.indeed.com" } });
     ok(r.ok() && (await r.text()).includes("Added to JobFinder"), `capture failed (${r.status()})`);
     await go(page, "/sources");
     await page.getByText("Set up more sources").waitFor();

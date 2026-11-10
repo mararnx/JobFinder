@@ -34,7 +34,7 @@ export function jobPostingFromHtml(html: string, url: string, source: string): R
       const addr = (locs[0]?.address ?? {}) as Ld;
       const salary = o.baseSalary as Ld | undefined;
       const sv = (salary?.value ?? {}) as Ld;
-      const salaryText = salary ? [str(sv.minValue) ?? str(sv.value), str(sv.maxValue)].filter(Boolean).join(" – ") + ` ${str(salary.currency) ?? "EUR"} ${str(sv.unitText) ?? ""}`.trimEnd() : null;
+      const salaryText = salary ? [str(sv.minValue) ?? str(sv.value), str(sv.maxValue)].filter(Boolean).join(" – ") + ` ${str(salary.currency) ?? "CHF"} ${str(sv.unitText) ?? ""}`.trimEnd() : null;
       const ident = o.identifier as Ld | string | undefined;
       const id = (typeof ident === "string" ? ident : str(ident?.value)) ?? url;
       return {
@@ -55,18 +55,18 @@ export function jobPostingFromHtml(html: string, url: string, source: string): R
   return null;
 }
 
-export type Portal = "stepstone" | "indeed" | "xing" | "linkedin";
+export type Portal = "jobsch" | "indeed" | "xing" | "linkedin";
 
 export const PORTALS: Record<Portal, { name: string; search: (kw: string, loc: string, radius: number) => string; detail: RegExp; idOf: (href: string) => string | null }> = {
-  stepstone: {
-    name: "StepStone",
-    search: (kw, loc, r) => `https://www.stepstone.de/jobs/${encodeURIComponent(kw.toLowerCase().replace(/\s+/g, "-"))}${loc ? `/in-${encodeURIComponent(loc.toLowerCase())}` : ""}?radius=${r}&sort=2&action=sort_publish`,
-    detail: /\/stellenangebote--[^"'?#]+-(\d{6,})-inline\.html/,
-    idOf: (h) => h.match(/-(\d{6,})-inline\.html/)?.[1] ?? null,
+  jobsch: {
+    name: "jobs.ch",
+    search: (kw, loc) => `https://www.jobs.ch/de/stellenangebote/?term=${encodeURIComponent(kw)}${loc ? `&location=${encodeURIComponent(loc)}` : ""}`,
+    detail: /\/(?:de|en|fr)\/(?:stellenangebote|vacancies|offres-emplois)\/detail\/([a-f0-9-]{36})/,
+    idOf: (h) => h.match(/\/detail\/([a-f0-9-]{36})/)?.[1] ?? null,
   },
   indeed: {
     name: "Indeed",
-    search: (kw, loc, r) => `https://de.indeed.com/jobs?q=${encodeURIComponent(kw)}&l=${encodeURIComponent(loc)}&radius=${r}&fromage=7&sort=date`,
+    search: (kw, loc, r) => `https://ch.indeed.com/jobs?q=${encodeURIComponent(kw)}&l=${encodeURIComponent(loc)}&radius=${r}&fromage=7&sort=date`,
     detail: /[?&]jk=([a-f0-9]{12,})/,
     idOf: (h) => h.match(/[?&]jk=([a-f0-9]{12,})/)?.[1] ?? null,
   },
@@ -78,7 +78,7 @@ export const PORTALS: Record<Portal, { name: string; search: (kw: string, loc: s
   },
   linkedin: {
     name: "LinkedIn",
-    search: (kw, loc) => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(kw)}&location=${encodeURIComponent(loc || "Deutschland")}&f_TPR=r604800`,
+    search: (kw, loc) => `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(kw)}&location=${encodeURIComponent(loc || "Schweiz")}&f_TPR=r604800`,
     detail: /\/jobs\/view\/(?:[a-z0-9-]+-)?(\d{8,})/,
     idOf: (h) => h.match(/\/jobs\/view\/(?:[a-z0-9-]+-)?(\d{8,})/)?.[1] ?? null,
   },
@@ -99,7 +99,7 @@ export function listingLinks(html: string, baseUrl: string, portal: Portal): { i
     } catch {
       continue;
     }
-    if (portal === "indeed") abs = `https://de.indeed.com/viewjob?jk=${id}`;
+    if (portal === "indeed") abs = `https://ch.indeed.com/viewjob?jk=${id}`;
     seen.set(id, abs);
   }
   return [...seen].map(([id, url]) => ({ id, url }));
@@ -130,7 +130,7 @@ export function careerPageLinks(html: string, baseUrl: string, keywords: string[
     if (keywords.length && !keywords.some((k) => k.toLowerCase().split(/\s+/).every((w) => text.includes(w)))) continue;
     try {
       const u = new URL(m[1].replace(/&amp;/g, "&"), baseUrl);
-      if (u.hostname.endsWith(host.split(".").slice(-2).join(".")) || /greenhouse|lever|personio|smartrecruiters|recruitee|workday|softgarden|join\.com/.test(u.hostname)) out.add(u.toString());
+      if (u.hostname.endsWith(host.split(".").slice(-2).join(".")) || /greenhouse|lever|personio|smartrecruiters|recruitee|workday|softgarden|join\.com|refline|prospective|umantis|onlyfy|successfactors/.test(u.hostname)) out.add(u.toString());
     } catch { /* skip */ }
   }
   return [...out].slice(0, 30);
