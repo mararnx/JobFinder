@@ -51,3 +51,11 @@ test("Swiss spelling replaces ß in German drafts", async () => {
   const d = swissSpelling({ subject: "Bewerbung – großes Interesse", letter: "Mit freundlichen Grüßen", email_body: "gemäß Anzeige" });
   assert.deepEqual(d, { subject: "Bewerbung – grosses Interesse", letter: "Mit freundlichen Grüssen", email_body: "gemäss Anzeige" });
 });
+
+test("French and Italian ads are recognised, so the language filter can drop them", async () => {
+  const { detectLanguage } = await import("@/lib/text");
+  assert.equal(detectLanguage("Nous recherchons pour notre équipe un Product Owner. Vous êtes responsable de la roadmap et des priorités avec les équipes."), "fr");
+  assert.equal(detectLanguage("Cerchiamo per il nostro team un Product Owner. Sei responsabile della roadmap e delle priorità con il team."), "it");
+  assert.equal(detectLanguage("Wir suchen für unser Team einen Product Owner, der die Roadmap mit uns gestaltet."), "de");
+  assert.equal(detectLanguage("We are looking for a Product Owner to own the roadmap with our team."), "en");
+});

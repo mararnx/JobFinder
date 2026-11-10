@@ -97,4 +97,6 @@ Indeed and LinkedIn limit programs that browse them, so JobFinder gets their job
 - **"Gmail didn't accept the address and app password"** – the app password is the 16 letters from myaccount.google.com/apppasswords, not the normal Google password. If that page says app passwords aren't available, turn on 2-Step Verification first (work and school accounts may have them switched off by the admin).
 - **"No label called … in Gmail"** – the name in Sources must match the Gmail label exactly, including capitals; a nested label is written `Parent/Child`.
 - **Where is the app password?** In the macOS Keychain (Keychain Access → "JobFinder Gmail"), not in `data/`. Disconnect in Sources removes it; revoking it in the Google account cuts JobFinder off at once.
+- **`npm install` warns "install scripts not yet covered by allowScripts"** (newer npm versions) – harmless; JobFinder needs no install scripts. Carry on.
+- **French or Italian ads** – JobFinder detects the ad language from the text and drops ads outside the languages you chose (Settings → Ad languages). Letters are written in German or English.
 - **Run the tests**: `npm test` (uses a temporary database and simulated AI; touches nothing in `data/`).

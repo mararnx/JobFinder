@@ -9,7 +9,7 @@ export const ParsedAd = z.object({
   location: str.nullable().optional(),
   remote: str.nullable().optional(),
   salary_text: str.nullable().optional(),
-  language: z.enum(["de", "en"]).catch("de"),
+  language: z.enum(["de", "en", "fr", "it"]).catch("de"),
   employment_type: str.nullable().optional(),
   apply_email: str.nullable().optional(),
   apply_url: str.nullable().optional(),
@@ -30,7 +30,7 @@ export const ScoreItem = z.object({
   reasons_for: strArr,
   reasons_against: strArr,
   red_flags: strArr,
-  language: z.enum(["de", "en"]).catch("de"),
+  language: z.enum(["de", "en", "fr", "it"]).catch("de"),
   apply_channel: z.enum(["email", "ats_form", "portal"]).catch("portal"),
   summary: str,
 });

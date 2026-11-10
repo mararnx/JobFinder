@@ -57,6 +57,8 @@ test("ingest: dedupe, hard filters, agency detection", () => {
   const cheap = ingest({ ...base, sourceId: "3", title: "Junior PO", company: "Billig AG", salaryText: "CHF 60'000 – 70'000" });
   assert.match(cheap.excluded!, /Salary below/);
   const blocked = ingest({ ...base, sourceId: "4", title: "Werkstudent Product", company: "Uni Shop" });
+  const french = ingest({ ...base, sourceId: "5", title: "Product Owner Produits IA (tous)", company: "Jobup", language: "fr" });
+  assert.match(french.excluded!, /Ad language FR/, "French ads are dropped when only DE/EN are chosen");
   assert.match(blocked.excluded!, /Werkstudent/);
   for (let i = 0; i < 9; i++) ingest({ ...base, sourceId: `x${i}`, company: `Firma ${i}`, title: i % 2 ? "Product Owner Data" : "Logistics Coordinator", description: i % 2 ? desc() : "Lager und Logistik, Staplerschein" });
   assert.equal(get<{ n: number }>("SELECT COUNT(*) AS n FROM jobs WHERE stage = 'new'")!.n, 10);

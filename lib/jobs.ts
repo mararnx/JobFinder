@@ -12,7 +12,7 @@ export type RawJob = {
   salaryText?: string | null;
   description: string;
   publishedAt?: string | null;
-  language?: "de" | "en" | null;
+  language?: "de" | "en" | "fr" | "it" | null;
   applyEmail?: string | null;
   employmentType?: string | null;
   companyDomain?: string | null;

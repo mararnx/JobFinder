@@ -20,4 +20,4 @@ Reasons must be specific and short (max ~14 words), and refer to concrete things
 apply_channel: "email" if applications go to an email address, "ats_form" if an online application form is linked, else "portal".
 
 Reply with ONLY JSON:
-{"results": [{"id": <ad id>, "score": 0-100, "dimensions": {"skills": 0-100, "seniority": 0-100, "domain": 0-100, "location": 0-100, "conditions": 0-100}, "reasons_for": ["…"], "reasons_against": ["…"], "red_flags": ["…"], "language": "de|en", "apply_channel": "email|ats_form|portal", "summary": "one line"}]}
+{"results": [{"id": <ad id>, "score": 0-100, "dimensions": {"skills": 0-100, "seniority": 0-100, "domain": 0-100, "location": 0-100, "conditions": 0-100}, "reasons_for": ["…"], "reasons_against": ["…"], "red_flags": ["…"], "language": "de|en|fr|it", "apply_channel": "email|ats_form|portal", "summary": "one line"}]}

@@ -68,12 +68,20 @@ export function similarity(a: string, b: string): number {
   return cosine(vectorize(a), vectorize(b));
 }
 
-/** Rough DE/EN guess from function words. */
-export function detectLanguage(s: string): "de" | "en" {
+export type AdLanguage = "de" | "en" | "fr" | "it";
+
+/** Rough DE/EN/FR/IT guess from function words (Swiss ads come in all four). */
+export function detectLanguage(s: string): AdLanguage {
   const t = ` ${s.toLowerCase().slice(0, 4000)} `;
-  const de = (t.match(/ (und|der|die|das|wir|sie|für|mit|ihre|deine|bei|eine|ist) /g) ?? []).length;
-  const en = (t.match(/ (and|the|we|you|for|with|our|your|are|is|will|to) /g) ?? []).length;
-  return de >= en ? "de" : "en";
+  const n = (re: RegExp) => (t.match(re) ?? []).length;
+  const scores: [AdLanguage, number][] = [
+    ["de", n(/ (und|der|die|das|wir|sie|für|mit|ihre|deine|bei|eine|ist) /g)],
+    ["en", n(/ (and|the|we|you|for|with|our|your|are|is|will|to) /g)],
+    ["fr", n(/ (et|le|la|les|des|nous|vous|pour|avec|une|est|du|au) /g)],
+    ["it", n(/ (e|il|la|gli|delle|noi|per|con|una|è|del|della|sono) /g)],
+  ];
+  // German wins ties: it's the default market
+  return scores.reduce((best, x) => (x[1] > best[1] ? x : best))[0];
 }
 
 /** Extracts an annual salary range (CHF; EUR is read the same way) from free text. Returns null if none found. */

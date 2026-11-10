@@ -49,7 +49,7 @@ export function jobschToRaw(d: JobschDetail): RawJob {
     source: "jobsch",
     sourceId: jobschId(d.job_id),
     url: d._links?.detail_de?.href ?? detailUrl(d.job_id),
-    title: d.title.trim(),
+    title: stripHtml(d.title),
     company: d.company_name?.trim() || "Unknown company",
     location: city ? `${city}${loc?.cantonCode && !city.endsWith(loc.cantonCode) ? ` ${loc.cantonCode}` : ""}` : null,
     description: [text, apply && /^https?:/i.test(apply) ? `Online-Bewerbung: ${apply}` : ""].filter(Boolean).join("\n\n"),

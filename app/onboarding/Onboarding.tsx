@@ -180,7 +180,7 @@ export function Onboarding({ settings, docs, profiles, claude, style }: { style:
       {step === 5 && (
         <section className="ob-card card wide">
           <h2>More places to find jobs</h2>
-          <p>JobFinder already searches Job-Room (the RAV job portal, which also carries most jobs.ch ads) and public job feeds. Indeed and LinkedIn don&apos;t like programs browsing them, so here are the ways that do work. Each one is optional – the alerts give you the most.</p>
+          <p>JobFinder already searches Job-Room (the RAV job portal), jobs.ch and public job feeds. Indeed and LinkedIn don&apos;t like programs browsing them, so here are the ways that do work. Each one is optional – the alerts give you the most.</p>
           <MoreSources keyword={kw.split(",")[0]?.trim() ?? ""} city={loc} settings={settings} />
           <div className="ob-actions"><button className="btn ghost" onClick={() => setStep(4)}><ArrowLeft />Back</button><button className="btn primary" onClick={() => setStep(6)}>Next<ArrowRight /></button></div>
         </section>

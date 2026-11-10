@@ -83,7 +83,8 @@ export function Shell({ status, children }: { status: ShellStatus; children: Rea
     const t = setInterval(() => {
       if (document.visibilityState !== "visible") return;
       const a = document.activeElement;
-      if (a && (a.closest("input, textarea, select, [contenteditable]") || document.querySelector(".palette.show, .drawer.show"))) return;
+      // only while typing: a file picker, checkbox or button keeps focus after use and must not stop the refresh
+      if (a && (a.closest("input:not([type=file]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]), textarea, select, [contenteditable]") || document.querySelector(".palette.show, .drawer.show"))) return;
       router.refresh();
     }, 6000);
     return () => clearInterval(t);

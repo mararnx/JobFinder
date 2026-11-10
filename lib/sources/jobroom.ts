@@ -4,6 +4,7 @@
  * The search API the website uses is public and needs no key.
  */
 import type { RawJob } from "@/lib/jobs";
+import { detectLanguage, stripHtml } from "@/lib/text";
 import { fetchJson, fetchText, sleep } from "./http";
 
 const BASE = "https://www.job-room.ch";
@@ -69,7 +70,7 @@ export function jobroomToRaw(a: JobroomAd): RawJob {
     source: "jobroom",
     sourceId: a.id,
     url: absUrl(c.externalUrl) ?? publicUrl(a.id),
-    title: (d.title ?? "").replace(/<\/?em>/g, "").trim(),
+    title: stripHtml(d.title ?? ""),
     company: c.company?.name?.trim() || "Unknown company",
     location: place,
     remote,
@@ -78,7 +79,8 @@ export function jobroomToRaw(a: JobroomAd): RawJob {
     publishedAt: a.publication?.startDate ?? a.createdTime?.slice(0, 10) ?? null,
     employmentType: type || null,
     applyEmail: c.applyChannel?.emailAddress || null,
-    language: d.languageIsoCode === "en" ? "en" : d.languageIsoCode === "de" ? "de" : undefined,
+    // the ad text decides: Job-Room tags some French and Italian ads as "de"
+    language: d.description && d.description.length > 200 ? detectLanguage(cleanDescription(d.description)) : (["de", "en", "fr", "it"] as const).find((l) => l === d.languageIsoCode),
   };
 }
 

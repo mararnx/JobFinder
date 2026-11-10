@@ -308,7 +308,7 @@ try {
     const href = (await page.locator("a.bookmarklet").getAttribute("href")) ?? "";
     ok(href.startsWith("javascript:") && decodeURIComponent(href).includes(`${BASE}/api/capture`), "bookmark button has no capture code");
     await page.getByRole("button", { name: /Connect & check/ }).click();
-    await toast(page, /dry run: would read "Job alerts"/);
+    await toast(page, /dry run: would read the label "Job alerts"/);
     const indeed = page.getByLabel("Chrome search on Indeed");
     await indeed.check();
     await page.waitForTimeout(800);

@@ -102,6 +102,9 @@ test("Job-Room detail maps to a raw job (real API sample)", () => {
   assert.doesNotMatch(raw.description, /meta-viewport|\\-|\*\*/, "front matter, escapes and bold markers removed");
   assert.match(raw.description, /• Selbständige Erarbeitung/);
   assert.equal(workload("80", "100"), "80 – 100 %");
+  const fr = jobroomToRaw({ id: "x", jobContent: { jobDescriptions: [{ languageIsoCode: "fr", title: "Business Analyst &amp; <em>Product Owner</em>", description: "x" }] } });
+  assert.equal(fr.title, "Business Analyst & Product Owner");
+  assert.equal(fr.language, "fr");
   assert.equal(cleanDescription("<em>PO</em> \\& Team"), "PO & Team");
   const body = searchBody({ keyword: "Product Owner", location: "Zürich", radiusKm: 25, days: 7 }, { lat: 47.36, lon: 8.49 });
   assert.deepEqual(body.keywords, ["Product Owner"]);
